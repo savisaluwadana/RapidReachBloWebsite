@@ -41,9 +41,60 @@ const categoryIcons: Record<string, string> = {
 export default function LiveInfrastructureFeed() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const [hasSupabase, setHasSupabase] = useState(true)
 
   useEffect(() => {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setHasSupabase(false)
+      setIsLoading(false)
+      // Use mock data for demo
+      setNewsItems([
+        {
+          id: '1',
+          title: 'Kubernetes 1.30 Released',
+          description: 'New features include improved scheduling and enhanced security controls',
+          url: 'https://kubernetes.io',
+          source: 'kubernetes',
+          category: 'kubernetes',
+          release_version: 'v1.30.0',
+          severity: 'important',
+          is_breaking: true,
+          announcement_date: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          title: 'Terraform AWS Provider 5.x Update',
+          description: 'Major version with breaking changes and new resource types',
+          url: 'https://registry.terraform.io',
+          source: 'terraform',
+          category: 'terraform',
+          release_version: 'v5.0.0',
+          severity: 'info',
+          is_breaking: false,
+          announcement_date: new Date(Date.now() - 900000).toISOString(),
+          created_at: new Date(Date.now() - 900000).toISOString(),
+        },
+        {
+          id: '3',
+          title: 'Istio 1.21 Security Update',
+          description: 'Critical security patches for service mesh',
+          url: 'https://istio.io',
+          source: 'istio',
+          category: 'security',
+          release_version: 'v1.21.0',
+          severity: 'critical',
+          is_breaking: false,
+          announcement_date: new Date(Date.now() - 3600000).toISOString(),
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+        },
+      ])
+      return
+    }
+
+    const supabase = createClient()
+
     // Fetch initial news items
     const fetchNews = async () => {
       const { data, error } = await supabase
@@ -102,12 +153,14 @@ export default function LiveInfrastructureFeed() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Live Feed</h2>
-            <p className="text-xs text-gray-500">Real-time infrastructure updates</p>
+            <p className="text-xs text-gray-500">
+              {hasSupabase ? 'Real-time infrastructure updates' : 'Demo mode - Connect Supabase for live updates'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-cyber-lime animate-pulse" />
-          <span className="text-xs text-gray-400">Live</span>
+          <div className={`w-2 h-2 rounded-full ${hasSupabase ? 'bg-cyber-lime' : 'bg-yellow-400'} animate-pulse`} />
+          <span className="text-xs text-gray-400">{hasSupabase ? 'Live' : 'Demo'}</span>
         </div>
       </div>
 
