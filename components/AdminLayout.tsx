@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { getUser, isAdmin, logout } from '@/lib/auth'
 import { 
   LayoutDashboard, 
   FileText, 
@@ -35,6 +36,25 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const currentUser = getUser()
+    if (!currentUser || !isAdmin()) {
+      router.push('/auth/signin')
+      return
+    }
+    setUser(currentUser)
+  }, [router])
+
+  const handleLogout = () => {
+    logout()
+  }
+
+  if (!user) {
+    return <div className="min-h-screen bg-deep-charcoal flex items-center justify-center"><div className="text-white">Loading...</div></div>
+  }
 
   return (
     <div className="min-h-screen bg-deep-charcoal">
@@ -92,14 +112,35 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
 
           {/* User Info */}
-          <div className="p-6 border-t border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-cyber" />
-              <div>
-                <p className="text-sm font-semibold text-white">Admin User</p>
-                <p className="text-xs text-gray-500">admin@rapidreach.dev</p>
+          {/* User Profile & Actions */}
+          <div className="p-4 border-t border-white/10 space-y-2">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 mb-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-cyber flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@rapidreach.dev'}</p>
               </div>
             </div>
+            
+            <Link
+              href="/"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="font-semibold">Back to Site</span>
+            </Link>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="font-semibold">Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
