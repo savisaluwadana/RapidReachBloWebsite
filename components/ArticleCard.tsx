@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Calendar, Clock, User, TrendingUp, Bookmark } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface ArticleCardProps {
   title: string
@@ -16,6 +17,7 @@ interface ArticleCardProps {
   readTime: string
   date: string
   image: string
+  slug: string
   featured?: boolean
   trending?: boolean
 }
@@ -28,17 +30,19 @@ export default function ArticleCard({
   readTime,
   date,
   image,
+  slug,
   featured = false,
   trending = false,
 }: ArticleCardProps) {
   return (
-    <motion.article
-      whileHover={{ y: -8 }}
-      className={`group cursor-pointer ${
-        featured ? 'md:col-span-2' : ''
-      }`}
-    >
-      <div className="relative h-full rounded-2xl overflow-hidden bg-deep-charcoal-50 border border-white/10 hover:border-electric-cyan/50 transition-all duration-300">
+    <Link href={`/blog/${slug}`}>
+      <motion.article
+        whileHover={{ y: -8 }}
+        className={`group cursor-pointer ${
+          featured ? 'md:col-span-2' : ''
+        }`}
+      >
+        <div className="relative h-full rounded-2xl overflow-hidden bg-deep-charcoal-50 border border-white/10 hover:border-electric-cyan/50 transition-all duration-300">
         {/* Image */}
         <div className="relative h-64 overflow-hidden bg-gradient-to-br from-electric-cyan/20 to-cyber-lime/20">
           <div className="absolute inset-0 bg-mesh-gradient opacity-50" />
@@ -104,6 +108,7 @@ export default function ArticleCard({
           </div>
         </div>
       </div>
-    </motion.article>
+      </motion.article>
+    </Link>
   )
 }

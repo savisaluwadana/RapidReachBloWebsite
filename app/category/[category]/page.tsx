@@ -80,6 +80,7 @@ export default async function CategoryPage({ params }: { params: { category: str
                   readTime={`${post.read_time} min read`}
                   date={new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   image={post.cover_image_url || '/blog/default.jpg'}
+                  slug={post.slug}
                   trending={post.trending}
                 />
               ))}
