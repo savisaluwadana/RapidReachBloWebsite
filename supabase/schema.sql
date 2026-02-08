@@ -1,32 +1,40 @@
 -- RapidReach Supabase Schema
 -- World-Class DevOps & Cloud Native Blog Platform
 -- Created: February 8, 2026
+-- Updated: February 8, 2026 - Added authentication, admin features, engagement metrics
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm"; -- For full-text search
+CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- For password hashing
 
 -- =====================================================
 -- ENUMS
 -- =====================================================
 
 CREATE TYPE user_role AS ENUM ('reader', 'contributor', 'editor', 'admin');
-CREATE TYPE post_status AS ENUM ('draft', 'published', 'archived');
+CREATE TYPE post_status AS ENUM ('draft', 'pending', 'published', 'archived', 'rejected');
 CREATE TYPE content_difficulty AS ENUM ('beginner', 'intermediate', 'advanced', 'expert');
-CREATE TYPE news_category AS ENUM ('kubernetes', 'terraform', 'aws', 'azure', 'gcp', 'cicd', 'security', 'observability', 'platform-engineering');
+CREATE TYPE news_category AS ENUM ('kubernetes', 'terraform', 'aws', 'azure', 'gcp', 'cicd', 'security', 'observability', 'platform-engineering', 'docker', 'monitoring');
+CREATE TYPE comment_status AS ENUM ('pending', 'approved', 'rejected', 'flagged');
+CREATE TYPE notification_type AS ENUM ('new_comment', 'new_post', 'post_approved', 'post_rejected', 'comment_approved', 'user_approved', 'new_follower');
 
 -- =====================================================
 -- CORE TABLES
 -- =====================================================
 
--- User Profiles
+-- User Profiles (Enhanced with authentication and admin features)
 CREATE TABLE user_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT, -- For custom auth (optional if using Supabase Auth)
     username TEXT UNIQUE NOT NULL,
-    full_name TEXT,
+    full_name TEXT NOT NULL,
     avatar_url TEXT,
     bio TEXT,
     role user_role DEFAULT 'reader',
+    
+    -- Social Links
     github_handle TEXT,
     twitter_handle TEXT,
     linkedin_url TEXT,
@@ -42,16 +50,32 @@ CREATE TABLE user_profiles (
     bookmarked_posts UUID[] DEFAULT '{}',
     completed_learning_paths UUID[] DEFAULT '{}',
     
-    -- Gamification
+    -- Gamification & Stats
     reputation_score INTEGER DEFAULT 0,
     badges JSONB DEFAULT '[]',
+    posts_written INTEGER DEFAULT 0,
+    comments_posted INTEGER DEFAULT 0,
+    total_views_received INTEGER DEFAULT 0,
+    total_likes_received INTEGER DEFAULT 0,
+    
+    -- Account Status
+    is_active BOOLEAN DEFAULT true,
+    is_verified BOOLEAN DEFAULT false,
+    email_verified_at TIMESTAMPTZ,
+    last_login_at TIMESTAMPTZ,
+    last_active_at TIMESTAMPTZ,
+    
+    -- Notification Preferences
+    email_notifications BOOLEAN DEFAULT true,
+    comment_notifications BOOLEAN DEFAULT true,
+    newsletter_subscribed BOOLEAN DEFAULT false,
     
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Blog Posts
+-- Blog Posts (Enhanced with approval workflow and engagement)
 CREATE TABLE posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug TEXT UNIQUE NOT NULL,
@@ -65,25 +89,38 @@ CREATE TABLE posts (
     category news_category NOT NULL,
     tags TEXT[] DEFAULT '{}',
     difficulty content_difficulty DEFAULT 'intermediate',
-    estimated_read_time INTEGER, -- in minutes
+    estimated_read_time INTEGER, -- in minutes (calculated as: word_count / 200)
+    word_count INTEGER DEFAULT 0,
+    character_count INTEGER DEFAULT 0,
     
-    -- SEO
+    -- SEO & Social
     meta_title TEXT,
     meta_description TEXT,
     og_image_url TEXT,
+    canonical_url TEXT,
     
-    -- Publishing
+    -- Publishing & Approval Workflow
     status post_status DEFAULT 'draft',
+    submitted_at TIMESTAMPTZ, -- When submitted for approval
+    approved_at TIMESTAMPTZ,
+    approved_by UUID REFERENCES user_profiles(id),
+    rejected_at TIMESTAMPTZ,
+    rejected_by UUID REFERENCES user_profiles(id),
+    rejection_reason TEXT,
     published_at TIMESTAMPTZ,
     featured BOOLEAN DEFAULT FALSE,
+    trending BOOLEAN DEFAULT FALSE,
     pinned BOOLEAN DEFAULT FALSE,
     
     -- Engagement Metrics
     view_count INTEGER DEFAULT 0,
+    unique_view_count INTEGER DEFAULT 0,
     like_count INTEGER DEFAULT 0,
     bookmark_count INTEGER DEFAULT 0,
     comment_count INTEGER DEFAULT 0,
     share_count INTEGER DEFAULT 0,
+    avg_reading_time INTEGER DEFAULT 0, -- Average time users spend reading
+    completion_rate DECIMAL DEFAULT 0, -- Percentage of users who read to the end
     
     -- Interactive Features
     code_snippets JSONB DEFAULT '[]', -- Array of {language, code, title}
@@ -92,8 +129,19 @@ CREATE TABLE posts (
     
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    last_viewed_at TIMESTAMPTZ
 );
+
+-- Create indexes for posts
+CREATE INDEX idx_posts_author ON posts(author_id);
+CREATE INDEX idx_posts_status ON posts(status);
+CREATE INDEX idx_posts_category ON posts(category);
+CREATE INDEX idx_posts_published_at ON posts(published_at DESC);
+CREATE INDEX idx_posts_trending ON posts(trending) WHERE trending = true;
+CREATE INDEX idx_posts_featured ON posts(featured) WHERE featured = true;
+CREATE INDEX idx_posts_tags ON posts USING gin(tags);
+CREATE INDEX idx_posts_slug ON posts(slug);
 
 -- Live Infrastructure News Feed
 CREATE TABLE news_feed (
@@ -173,7 +221,7 @@ CREATE TABLE learning_path_progress (
     UNIQUE(user_id, learning_path_id)
 );
 
--- Comments
+-- Comments (Enhanced with moderation and nested replies)
 CREATE TABLE comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
@@ -182,13 +230,36 @@ CREATE TABLE comments (
     
     content TEXT NOT NULL,
     
+    -- Moderation
+    status comment_status DEFAULT 'pending',
+    is_flagged BOOLEAN DEFAULT FALSE,
+    flag_count INTEGER DEFAULT 0,
+    flag_reasons TEXT[] DEFAULT '{}',
+    moderated_at TIMESTAMPTZ,
+    moderated_by UUID REFERENCES user_profiles(id),
+    moderation_notes TEXT,
+    
     -- Engagement
     like_count INTEGER DEFAULT 0,
+    reply_count INTEGER DEFAULT 0,
     is_edited BOOLEAN DEFAULT FALSE,
+    edited_at TIMESTAMPTZ,
+    
+    -- Spam Detection
+    is_spam BOOLEAN DEFAULT FALSE,
+    spam_score DECIMAL(3,2) DEFAULT 0.00,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for comments
+CREATE INDEX idx_comments_post ON comments(post_id);
+CREATE INDEX idx_comments_author ON comments(author_id);
+CREATE INDEX idx_comments_parent ON comments(parent_comment_id);
+CREATE INDEX idx_comments_status ON comments(status);
+CREATE INDEX idx_comments_flagged ON comments(is_flagged) WHERE is_flagged = true;
+CREATE INDEX idx_comments_created_at ON comments(created_at DESC);
 
 -- Post Reactions (Likes, Bookmarks)
 CREATE TABLE post_reactions (
@@ -263,18 +334,127 @@ CREATE TABLE newsletter_subscriptions (
     unsubscribed_at TIMESTAMPTZ
 );
 
+-- User Activity Log (for analytics)
+CREATE TABLE user_activity (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    activity_type TEXT NOT NULL, -- 'view', 'like', 'comment', 'share', 'bookmark'
+    resource_type TEXT NOT NULL, -- 'post', 'comment', 'user'
+    resource_id UUID NOT NULL,
+    
+    -- Additional context
+    metadata JSONB DEFAULT '{}', -- reading_time, scroll_depth, etc.
+    ip_address INET,
+    user_agent TEXT,
+    referrer TEXT,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for user activity
+CREATE INDEX idx_user_activity_user ON user_activity(user_id);
+CREATE INDEX idx_user_activity_type ON user_activity(activity_type);
+CREATE INDEX idx_user_activity_resource ON user_activity(resource_type, resource_id);
+CREATE INDEX idx_user_activity_created_at ON user_activity(created_at DESC);
+
+-- Notifications
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    type notification_type NOT NULL,
+    
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    
+    -- Related entities
+    related_post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+    related_comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+    related_user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for notifications
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
+CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
+
+-- Admin Activity Log
+CREATE TABLE admin_activity_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admin_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    action TEXT NOT NULL, -- 'approve_post', 'reject_post', 'ban_user', 'delete_comment', etc.
+    
+    resource_type TEXT NOT NULL, -- 'post', 'user', 'comment'
+    resource_id UUID NOT NULL,
+    
+    details JSONB DEFAULT '{}',
+    ip_address INET,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for admin activity
+CREATE INDEX idx_admin_activity_admin ON admin_activity_log(admin_id);
+CREATE INDEX idx_admin_activity_resource ON admin_activity_log(resource_type, resource_id);
+CREATE INDEX idx_admin_activity_created_at ON admin_activity_log(created_at DESC);
+
+-- Analytics Summary (for dashboard)
+CREATE TABLE analytics_summary (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    date DATE NOT NULL UNIQUE,
+    
+    -- Daily metrics
+    total_views INTEGER DEFAULT 0,
+    unique_visitors INTEGER DEFAULT 0,
+    total_posts_published INTEGER DEFAULT 0,
+    total_comments INTEGER DEFAULT 0,
+    total_signups INTEGER DEFAULT 0,
+    
+    -- Engagement
+    total_likes INTEGER DEFAULT 0,
+    total_shares INTEGER DEFAULT 0,
+    total_bookmarks INTEGER DEFAULT 0,
+    
+    -- Top content
+    top_posts JSONB DEFAULT '[]', -- Array of {post_id, views, engagement}
+    top_authors JSONB DEFAULT '[]',
+    
+    -- Traffic sources
+    traffic_sources JSONB DEFAULT '{}', -- {direct: 1000, google: 500, social: 300}
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for analytics
+CREATE INDEX idx_analytics_summary_date ON analytics_summary(date DESC);
+
 -- =====================================================
--- INDEXES FOR PERFORMANCE
+-- INDEXES FOR PERFORMANCE (Updated)
 -- =====================================================
 
--- Posts
-CREATE INDEX idx_posts_slug ON posts(slug);
-CREATE INDEX idx_posts_author ON posts(author_id);
-CREATE INDEX idx_posts_status ON posts(status);
-CREATE INDEX idx_posts_category ON posts(category);
-CREATE INDEX idx_posts_published ON posts(published_at DESC) WHERE status = 'published';
-CREATE INDEX idx_posts_featured ON posts(featured) WHERE featured = TRUE;
-CREATE INDEX idx_posts_tags ON posts USING GIN(tags);
+-- User Profiles
+CREATE INDEX idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX idx_user_profiles_username ON user_profiles(username);
+CREATE INDEX idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX idx_user_profiles_active ON user_profiles(is_active) WHERE is_active = true;
+
+-- Posts (already created above, keeping for reference)
+-- CREATE INDEX idx_posts_slug ON posts(slug);
+-- CREATE INDEX idx_posts_author ON posts(author_id);
+-- CREATE INDEX idx_posts_status ON posts(status);
+-- CREATE INDEX idx_posts_category ON posts(category);
+-- CREATE INDEX idx_posts_published_at ON posts(published_at DESC);
+-- CREATE INDEX idx_posts_trending ON posts(trending) WHERE trending = true;
+-- CREATE INDEX idx_posts_featured ON posts(featured) WHERE featured = true;
+-- CREATE INDEX idx_posts_tags ON posts USING gin(tags);
+
+-- Full-text search
 CREATE INDEX idx_posts_search ON posts USING GIN(to_tsvector('english', title || ' ' || excerpt || ' ' || content));
 
 -- News Feed
@@ -312,6 +492,10 @@ ALTER TABLE post_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE infrastructure_topologies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE incident_timelines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_activity_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_summary ENABLE ROW LEVEL SECURITY;
 
 -- User Profiles Policies
 CREATE POLICY "Public profiles are viewable by everyone"
@@ -345,13 +529,69 @@ CREATE POLICY "Authors can update their own posts"
     ON posts FOR UPDATE
     USING (author_id = auth.uid());
 
-CREATE POLICY "Editors and admins can update any post"
+CREATE POLICY "Admins can approve/reject posts"
     ON posts FOR UPDATE
     USING (
         EXISTS (
             SELECT 1 FROM user_profiles
             WHERE id = auth.uid()
-            AND role IN ('editor', 'admin')
+            AND role = 'admin'
+        )
+    );
+
+-- Notifications Policies
+CREATE POLICY "Users can view their own notifications"
+    ON notifications FOR SELECT
+    USING (user_id = auth.uid());
+
+CREATE POLICY "Users can update their own notifications"
+    ON notifications FOR UPDATE
+    USING (user_id = auth.uid());
+
+-- User Activity Policies (Analytics)
+CREATE POLICY "Users can insert their own activity"
+    ON user_activity FOR INSERT
+    WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Admins can view all activity"
+    ON user_activity FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid()
+            AND role = 'admin'
+        )
+    );
+
+-- Admin Activity Log Policies
+CREATE POLICY "Admins can view admin logs"
+    ON admin_activity_log FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid()
+            AND role = 'admin'
+        )
+    );
+
+CREATE POLICY "Admins can insert admin logs"
+    ON admin_activity_log FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid()
+            AND role = 'admin'
+        )
+    );
+
+-- Analytics Summary Policies
+CREATE POLICY "Admins can view analytics"
+    ON analytics_summary FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid()
+            AND role = 'admin'
         )
     );
 
@@ -472,6 +712,250 @@ CREATE OR REPLACE FUNCTION update_post_metrics()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
+        -- Update comment count when new comment is added
+        UPDATE posts
+        SET comment_count = comment_count + 1
+        WHERE id = NEW.post_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        -- Update comment count when comment is deleted
+        UPDATE posts
+        SET comment_count = GREATEST(0, comment_count - 1)
+        WHERE id = OLD.post_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_posts_comment_count
+AFTER INSERT OR DELETE ON comments
+FOR EACH ROW EXECUTE FUNCTION update_post_metrics();
+
+-- Auto-update user stats when they create content
+CREATE OR REPLACE FUNCTION update_user_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF TG_TABLE_NAME = 'posts' THEN
+            UPDATE user_profiles
+            SET posts_written = posts_written + 1
+            WHERE id = NEW.author_id;
+        ELSIF TG_TABLE_NAME = 'comments' THEN
+            UPDATE user_profiles
+            SET comments_posted = comments_posted + 1
+            WHERE id = NEW.author_id;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_user_posts_count
+AFTER INSERT ON posts
+FOR EACH ROW EXECUTE FUNCTION update_user_stats();
+
+CREATE TRIGGER update_user_comments_count
+AFTER INSERT ON comments
+FOR EACH ROW EXECUTE FUNCTION update_user_stats();
+
+-- Auto-update comment reply count
+CREATE OR REPLACE FUNCTION update_comment_reply_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' AND NEW.parent_comment_id IS NOT NULL THEN
+        UPDATE comments
+        SET reply_count = reply_count + 1
+        WHERE id = NEW.parent_comment_id;
+    ELSIF TG_OP = 'DELETE' AND OLD.parent_comment_id IS NOT NULL THEN
+        UPDATE comments
+        SET reply_count = GREATEST(0, reply_count - 1)
+        WHERE id = OLD.parent_comment_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_comments_reply_count
+AFTER INSERT OR DELETE ON comments
+FOR EACH ROW EXECUTE FUNCTION update_comment_reply_count();
+
+-- Calculate reading time based on word count
+CREATE OR REPLACE FUNCTION calculate_reading_time()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Average reading speed: 200 words per minute
+    NEW.read_time = CEIL(NEW.word_count::FLOAT / 200);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER calculate_posts_reading_time
+BEFORE INSERT OR UPDATE OF word_count ON posts
+FOR EACH ROW EXECUTE FUNCTION calculate_reading_time();
+
+-- Auto-create notification on new comment
+CREATE OR REPLACE FUNCTION create_comment_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    post_author_id UUID;
+    post_title TEXT;
+    commenter_name TEXT;
+BEGIN
+    -- Get post author and title
+    SELECT author_id, title INTO post_author_id, post_title
+    FROM posts WHERE id = NEW.post_id;
+    
+    -- Get commenter name
+    SELECT full_name INTO commenter_name
+    FROM user_profiles WHERE id = NEW.author_id;
+    
+    -- Only notify if comment author is not the post author
+    IF NEW.author_id != post_author_id THEN
+        INSERT INTO notifications (
+            user_id,
+            type,
+            title,
+            message,
+            link,
+            related_post_id,
+            related_comment_id,
+            related_user_id
+        ) VALUES (
+            post_author_id,
+            'new_comment',
+            'New Comment',
+            commenter_name || ' commented on your post "' || post_title || '"',
+            '/blog/' || (SELECT slug FROM posts WHERE id = NEW.post_id),
+            NEW.post_id,
+            NEW.id,
+            NEW.author_id
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER create_new_comment_notification
+AFTER INSERT ON comments
+FOR EACH ROW EXECUTE FUNCTION create_comment_notification();
+
+-- Log admin actions
+CREATE OR REPLACE FUNCTION log_admin_action()
+RETURNS TRIGGER AS $$
+DECLARE
+    action_name TEXT;
+    admin_user_id UUID;
+BEGIN
+    -- Determine the action type
+    IF NEW.status = 'approved' AND OLD.status = 'pending' THEN
+        action_name := 'approve_post';
+    ELSIF NEW.status = 'rejected' AND OLD.status = 'pending' THEN
+        action_name := 'reject_post';
+    ELSE
+        RETURN NEW;
+    END IF;
+    
+    -- Get the admin user ID (assuming it's stored in approved_by or rejected_by)
+    IF NEW.approved_by IS NOT NULL THEN
+        admin_user_id := NEW.approved_by;
+    ELSIF NEW.rejected_by IS NOT NULL THEN
+        admin_user_id := NEW.rejected_by;
+    END IF;
+    
+    -- Log the action
+    IF admin_user_id IS NOT NULL THEN
+        INSERT INTO admin_activity_log (
+            admin_id,
+            action,
+            resource_type,
+            resource_id,
+            details
+        ) VALUES (
+            admin_user_id,
+            action_name,
+            'post',
+            NEW.id,
+            jsonb_build_object(
+                'post_title', NEW.title,
+                'author_id', NEW.author_id,
+                'rejection_reason', NEW.rejection_reason
+            )
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER log_post_moderation
+AFTER UPDATE OF status ON posts
+FOR EACH ROW EXECUTE FUNCTION log_admin_action();
+
+-- =====================================================
+-- SAMPLE DATA (Optional - for testing)
+-- =====================================================
+
+-- Note: Uncomment the following to populate with sample data
+-- This is useful for development and testing
+
+/*
+-- Sample admin user
+INSERT INTO user_profiles (id, email, password_hash, full_name, username, role, bio, is_active, is_verified)
+VALUES (
+    uuid_generate_v4(),
+    'admin@rapidreach.blog',
+    crypt('admin123', gen_salt('bf')),
+    'Admin User',
+    'admin',
+    'admin',
+    'Platform Administrator',
+    true,
+    true
+);
+
+-- Sample editor user
+INSERT INTO user_profiles (id, email, password_hash, full_name, username, role, bio, is_active, is_verified)
+VALUES (
+    uuid_generate_v4(),
+    'editor@rapidreach.blog',
+    crypt('editor123', gen_salt('bf')),
+    'Editor User',
+    'editor',
+    'editor',
+    'Content Editor',
+    true,
+    true
+);
+
+-- Sample contributor users
+INSERT INTO user_profiles (id, email, password_hash, full_name, username, role, bio, is_active, is_verified)
+VALUES 
+(
+    uuid_generate_v4(),
+    'john@example.com',
+    crypt('password123', gen_salt('bf')),
+    'John Doe',
+    'johndoe',
+    'contributor',
+    'Cloud Infrastructure Specialist',
+    true,
+    true
+),
+(
+    uuid_generate_v4(),
+    'jane@example.com',
+    crypt('password123', gen_salt('bf')),
+    'Jane Smith',
+    'janesmith',
+    'contributor',
+    'DevOps Engineer',
+    true,
+    true
+);
+
+-- Note: To add sample posts, comments, etc., you would insert them here
+-- Make sure to use appropriate foreign key references
+*/
         IF NEW.reaction_type = 'like' THEN
             UPDATE posts SET like_count = like_count + 1 WHERE id = NEW.post_id;
         ELSIF NEW.reaction_type = 'bookmark' THEN
