@@ -3,8 +3,9 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import HeroBentoGrid from '@/components/HeroBentoGrid'
-import { TrendingUp, Zap, BookOpen, Users } from 'lucide-react'
+import { TrendingUp, Zap, BookOpen, Users, Rocket, Terminal, Cloud, Shield, GitBranch, Layers } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
+import Link from 'next/link'
 
 const sampleKubernetesYAML = `apiVersion: apps/v1
 kind: Deployment
@@ -39,6 +40,9 @@ export default async function Home() {
 
   // Fetch recent articles
   const recentPosts = await getPosts({ status: 'published', limit: 6 })
+  
+  // Fetch trending articles
+  const trendingPosts = await getPosts({ trending: true, status: 'published', limit: 3 })
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
@@ -74,10 +78,41 @@ export default async function Home() {
                 <stat.icon className="w-8 h-8 text-electric-cyan mx-auto mb-3" />
                 <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
                 <div className="text-sm text-gray-400">{stat.label}</div>
-              </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-16 bg-deep-charcoal">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Explore by Category</h2>
+            <p className="text-gray-400">Deep dive into the topics that matter most to you</p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { name: 'Kubernetes', icon: Layers, color: 'electric-cyan', count: '120+' },
+              { name: 'Terraform', icon: Terminal, color: 'purple-400', count: '85+' },
+              { name: 'CI/CD', icon: GitBranch, color: 'cyber-lime', count: '95+' },
+              { name: 'Security', icon: Shield, color: 'red-400', count: '70+' },
+              { name: 'Cloud', icon: Cloud, color: 'blue-400', count: '110+' },
+              { name: 'Platform', icon: Rocket, color: 'orange-400', count: '65+' },
+            ].map((category) => (
+              <Link
+                key={category.name}
+                href={`/category/${category.name.toLowerCase()}`}
+                className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+              >
+                <category.icon className={`w-10 h-10 text-${category.color} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
+                <h3 className="text-white font-bold text-center mb-1">{category.name}</h3>
+                <p className="text-gray-400 text-xs text-center">{category.count} articles</p>
+              </Link>
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Main Content */}
       </section>
 
       {/* Main Content */}
@@ -87,25 +122,98 @@ export default async function Home() {
             {/* Articles Column */}
             <div className="lg:col-span-2 space-y-12">
               {/* Featured Article */}
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <Zap className="w-6 h-6 text-cyber-lime" />
-                  Featured Article
-                </h2>
-                <ArticleCard {...featuredArticle} />
-              </div>
+              {/* Featured Article */}
+              {featuredArticle && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <Zap className="w-6 h-6 text-cyber-lime" />
+                    Featured Article
+                  </h2>
+                  <ArticleCard
+                    title={featuredArticle.title}
+                    excerpt={featuredArticle.excerpt}
+                    author={{
+                      name: featuredArticle.author?.full_name || 'Anonymous',
+                      avatar: featuredArticle.author?.avatar_url || '/avatars/default.png',
+                      role: featuredArticle.author?.role || 'Contributor',
+                    }}
+                    category={featuredArticle.category}
+                    readTime={`${featuredArticle.read_time} min read`}
+                    date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    image={featuredArticle.cover_image_url || '/blog/default.jpg'}
+                    featured={featuredArticle.featured}
+                    trending={featuredArticle.trending}
+                  />
+                </div>
+              )}
 
               {/* Latest Articles */}
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-electric-cyan" />
-                  Latest Articles
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {articles.map((article, i) => (
-                    <ArticleCard key={i} {...article} />
-                  ))}
+                )}
+              </div>
+
+              {/* Trending This Week */}
+              {trendingPosts.length > 0 && (
+                <div className="rounded-3xl backdrop-blur-xl bg-gradient-to-br from-electric-cyan/10 to-cyber-lime/10 border border-electric-cyan/20 p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <TrendingUp className="w-6 h-6 text-electric-cyan" />
+                    Trending This Week
+                  </h2>
+                  <div className="space-y-4">
+                    {trendingPosts.map((post, index) => (
+                      <Link
+                        key={post.id}
+                        href={`/blog/${post.slug}`}
+                        className="flex gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all group"
+                      >
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-cyber flex items-center justify-center text-white font-bold text-xl">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-white group-hover:text-electric-cyan transition-colors line-clamp-2 mb-1">
+                            {post.title}
+                          </h3>
+                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                            <span>{post.author?.full_name || 'Anonymous'}</span>
+                            <span>•</span>
+                            <span>{post.view_count} views</span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Code Example Section */}
+                {recentPosts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {recentPosts.map((article) => (
+                      <ArticleCard
+                        key={article.id}
+                        title={article.title}
+                        excerpt={article.excerpt}
+                        author={{
+                          name: article.author?.full_name || 'Anonymous',
+                          avatar: article.author?.avatar_url || '/avatars/default.png',
+                          role: article.author?.role || 'Contributor',
+                        }}
+                        category={article.category}
+                        readTime={`${article.read_time} min read`}
+                        date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        image={article.cover_image_url || '/blog/default.jpg'}
+                        trending={article.trending}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-12 text-center">
+                    <BookOpen className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">No Articles Yet</h3>
+                    <p className="text-gray-400 mb-4">Check back soon for exciting DevOps content!</p>
+                    <p className="text-sm text-electric-cyan">💡 Configure Supabase to load real posts (see SETUP_GUIDE.md)</p>
+                  </div>
+                )}
               </div>
 
               {/* Code Example Section */}
@@ -133,10 +241,57 @@ export default async function Home() {
                   </h3>
                   <p className="text-white/90 mb-6">
                     Get weekly insights on Kubernetes, Platform Engineering, and Cloud Native tech.
-                  </p>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-cyber opacity-20" />
+        <div className="absolute inset-0 bg-mesh-gradient opacity-30" />
+        
+        <div className="relative container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Ready to Level Up Your DevOps Skills?
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              Join thousands of engineers learning Kubernetes, Platform Engineering, and Cloud Native best practices.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/auth/signup"
+                className="px-8 py-4 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-lg hover:shadow-glow-xl transition-all hover:scale-105"
+              >
+                Get Started Free
+              </Link>
+              <Link
+                href="/blog"
+                className="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold hover:bg-white/20 transition-all"
+              >
+                Browse Articles
+              </Link>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="text-3xl font-bold gradient-text mb-1">500+</div>
+                <div className="text-sm text-gray-400">Technical Articles</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold gradient-text mb-1">50K+</div>
+                <div className="text-sm text-gray-400">Active Readers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold gradient-text mb-1">24/7</div>
+                <div className="text-sm text-gray-400">Live Updates</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}placeholder="your@email.com"
                     className="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-xl border border-white/30 text-white placeholder:text-white/60 mb-3 focus:outline-none focus:ring-2 focus:ring-white/50"
                   />
                   <button className="w-full px-6 py-3 rounded-xl bg-white text-electric-cyan font-semibold hover:bg-white/90 transition-colors">
