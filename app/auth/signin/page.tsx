@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { signIn } from '@/lib/actions/auth'
 
 export default function SignIn() {
   const router = useRouter()
@@ -19,42 +20,22 @@ export default function SignIn() {
     setError('')
 
     try {
-      // Demo mode - check for admin credentials
-      if (email === 'admin@rapidreach.blog' && password === 'admin123') {
-        // Store user session in localStorage for demo
-        const adminUser = {
-          id: '1',
-          email: 'admin@rapidreach.blog',
-          name: 'Admin User',
-          role: 'admin',
-          avatar: '/avatars/admin.png',
+      const result = await signIn(email, password)
+      
+      // Successful login - redirect based on role
+      if (result?.user) {
+        const userRole = result.user.user_metadata?.role || 'reader'
+        if (userRole === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/')
         }
-        localStorage.setItem('user', JSON.stringify(adminUser))
-        localStorage.setItem('isAuthenticated', 'true')
-        
-        // Redirect to admin dashboard
-        router.push('/admin')
-        router.refresh()
-      } else if (email && password) {
-        // Regular user login
-        const user = {
-          id: '2',
-          email: email,
-          name: email.split('@')[0],
-          role: 'reader',
-          avatar: '/avatars/user.png',
-        }
-        localStorage.setItem('user', JSON.stringify(user))
-        localStorage.setItem('isAuthenticated', 'true')
-        
-        // Redirect to homepage
-        router.push('/')
         router.refresh()
       } else {
-        setError('Please enter your email and password')
+        setError('Invalid email or password')
       }
-    } catch (err) {
-      setError('Failed to sign in. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in. Please try again.')
     } finally {
       setIsLoading(false)
     }

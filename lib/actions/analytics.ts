@@ -62,7 +62,7 @@ export async function getDashboardStats() {
     .select('view_count')
     .eq('status', 'published')
 
-  const totalViews = viewsData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0
+  const totalViews = viewsData?.reduce((sum: number, post: any) => sum + (post.view_count || 0), 0) || 0
 
   return {
     totalPosts: totalPosts || 0,
@@ -140,7 +140,7 @@ export async function getUserGrowthData(months: number = 6) {
   // Group by month
   const monthlyData: Record<string, number> = {}
   
-  data?.forEach(user => {
+  data?.forEach((user: any) => {
     const month = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short' })
     monthlyData[month] = (monthlyData[month] || 0) + 1
   })

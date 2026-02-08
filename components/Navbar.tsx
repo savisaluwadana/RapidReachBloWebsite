@@ -4,31 +4,30 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Search, Menu, X, ChevronRight, LayoutDashboard, LogOut, User as UserIcon } from 'lucide-react'
-import { getUser, isAdmin, logout } from '@/lib/auth'
-import type { User } from '@/lib/auth'
+import { getCurrentUser, signOut } from '@/lib/actions/auth'
+import type { UserProfile } from '@/lib/types/database'
 
 const categories = ['All', 'Kubernetes', 'Platform Engineering', 'Terraform', 'CI/CD', 'Security', 'Cloud Native']
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserProfile | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   useEffect(() => {
-    setUser(getUser())
-    const handleStorageChange = () => setUser(getUser())
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('focus', handleStorageChange)
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('focus', handleStorageChange)
-    }
+    loadUser()
   }, [])
 
-  const handleLogout = () => {
-    logout()
+  const loadUser = async () => {
+    const currentUser = await getCurrentUser()
+    setUser(currentUser)
+  }
+
+  const handleLogout = async () => {
+    await signOut()
     setUser(null)
     setShowUserMenu(false)
+    window.location.href = '/'
   }
 
   return (
@@ -75,8 +74,10 @@ export default function Navbar() {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-cyber" />
-                  <span className="font-semibold text-white">{user.name.split(' ')[0]}</span>
+                  <div className="w-8 h-8 rounded-full bg-gradient-cyber flex items-center justify-center text-white font-bold">
+                    {user.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-white">{user.full_name.split(' ')[0]}</span>
                 </button>
                 
                 {showUserMenu && (
@@ -87,12 +88,12 @@ export default function Navbar() {
                     />
                     <div className="absolute right-0 mt-2 w-64 rounded-xl bg-deep-charcoal border border-white/10 shadow-glow-lg p-2 z-50">
                       <div className="px-4 py-3 border-b border-white/10">
-                        <p className="font-semibold text-white">{user.name}</p>
+                        <p className="font-semibold text-white">{user.full_name}</p>
                         <p className="text-sm text-gray-400 truncate">{user.email}</p>
                         <p className="text-xs text-electric-cyan mt-1 capitalize">{user.role}</p>
                       </div>
                       
-                      {isAdmin() && (
+                      {user.role === 'admin' && (
                         <Link
                           href="/admin"
                           className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-all"
@@ -180,7 +181,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-cyber" />
                   <div>
-                    <p className="font-semibold text-white">{user.name}</p>
+                    <p className="font-semibold text-white">{user.full_name}</p>
                     <p className="text-sm text-gray-400">{user.email}</p>
                   </div>
                 </div>
@@ -201,7 +202,7 @@ export default function Navbar() {
               About
             </Link>
 
-            {user && isAdmin() && (
+            {user && user.role === 'admin' && (
               <Link
                 href="/admin"
                 className="flex items-center gap-2 text-electric-cyan hover:text-cyber-lime font-semibold transition-colors"

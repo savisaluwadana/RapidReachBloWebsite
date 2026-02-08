@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, Shield, User } from 'lucide-react'
 import Link from 'next/link'
+import { signUp } from '@/lib/actions/auth'
 
 export default function SignUp() {
   const router = useRouter()
@@ -36,23 +37,17 @@ export default function SignUp() {
     }
 
     try {
-      // Demo mode - create user account
-      const newUser = {
-        id: Date.now().toString(),
-        email: formData.email,
-        name: formData.name,
-        role: 'reader',
-        avatar: '/avatars/user.png',
+      const result = await signUp(formData.email, formData.password, formData.name)
+      
+      if (result?.user) {
+        // Successful signup - redirect to homepage
+        router.push('/')
+        router.refresh()
+      } else {
+        setError('Failed to create account')
       }
-      
-      localStorage.setItem('user', JSON.stringify(newUser))
-      localStorage.setItem('isAuthenticated', 'true')
-      
-      // Redirect to homepage
-      router.push('/')
-      router.refresh()
-    } catch (err) {
-      setError('Failed to create account. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account. Please try again.')
     } finally {
       setIsLoading(false)
     }

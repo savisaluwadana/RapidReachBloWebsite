@@ -112,7 +112,7 @@ export default async function NewsPage() {
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }

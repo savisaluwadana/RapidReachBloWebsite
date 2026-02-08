@@ -26,7 +26,7 @@ export async function getCommentsByPostId(postId: string) {
 
   // Fetch replies for each comment
   const commentsWithReplies = await Promise.all(
-    (data || []).map(async (comment) => {
+    (data || []).map(async (comment: any) => {
       const { data: replies } = await supabase
         .from('comments')
         .select(`
