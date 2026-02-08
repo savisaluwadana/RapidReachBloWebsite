@@ -2,82 +2,9 @@ import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
+import HeroBentoGrid from '@/components/HeroBentoGrid'
 import { TrendingUp, Zap, BookOpen, Users } from 'lucide-react'
-
-const featuredArticle = {
-  title: 'Building Production-Ready Kubernetes Clusters: A Complete Guide',
-  excerpt: 'Learn how to set up, secure, and scale Kubernetes clusters for production workloads. This comprehensive guide covers everything from initial setup to advanced GitOps workflows with ArgoCD.',
-  author: {
-    name: 'Sarah Chen',
-    avatar: '/avatars/sarah.png',
-    role: 'Platform Engineering Lead',
-  },
-  category: 'Kubernetes',
-  readTime: '12 min read',
-  date: 'Feb 8, 2026',
-  image: '/blog/k8s-guide.jpg',
-  featured: true,
-  trending: true,
-}
-
-const articles = [
-  {
-    title: 'Terraform State Management: Best Practices for Teams',
-    excerpt: 'Discover how to manage Terraform state effectively in team environments with remote backends, state locking, and versioning strategies.',
-    author: { name: 'Alex Kumar', avatar: '/avatars/alex.png', role: 'DevOps Engineer' },
-    category: 'Terraform',
-    readTime: '8 min read',
-    date: 'Feb 7, 2026',
-    image: '/blog/terraform.jpg',
-    trending: true,
-  },
-  {
-    title: 'Implementing Zero-Trust Security in Cloud Native Apps',
-    excerpt: 'A practical guide to implementing zero-trust architecture using service mesh, mTLS, and policy-based access control.',
-    author: { name: 'Maria Rodriguez', avatar: '/avatars/maria.png', role: 'Security Architect' },
-    category: 'Security',
-    readTime: '10 min read',
-    date: 'Feb 6, 2026',
-    image: '/blog/security.jpg',
-  },
-  {
-    title: 'Observability Stack: Prometheus, Grafana & Loki',
-    excerpt: 'Build a complete observability platform with metrics, logs, and tracing for your microservices architecture.',
-    author: { name: 'James Wilson', avatar: '/avatars/james.png', role: 'SRE' },
-    category: 'Observability',
-    readTime: '15 min read',
-    date: 'Feb 5, 2026',
-    image: '/blog/observability.jpg',
-  },
-  {
-    title: 'Platform Engineering: Building Internal Developer Platforms',
-    excerpt: 'Create self-service platforms that empower developers while maintaining security and compliance standards.',
-    author: { name: 'Lisa Park', avatar: '/avatars/lisa.png', role: 'Platform Architect' },
-    category: 'Platform Engineering',
-    readTime: '11 min read',
-    date: 'Feb 4, 2026',
-    image: '/blog/platform.jpg',
-    trending: true,
-  },
-  {
-    title: 'CI/CD Pipeline Optimization: From Hours to Minutes',
-    excerpt: 'Learn how to optimize your CI/CD pipelines using caching, parallelization, and smart build strategies.',
-    author: { name: 'Tom Zhang', avatar: '/avatars/tom.png' },
-    category: 'CI/CD',
-    readTime: '9 min read',
-    date: 'Feb 3, 2026',
-    image: '/blog/cicd.jpg',
-  },
-  {
-    title: 'Multi-Cloud Strategy: AWS, Azure, and GCP Together',
-    excerpt: 'Navigate the complexities of multi-cloud deployments with practical patterns and tool recommendations.',
-    author: { name: 'Emma Davis', avatar: '/avatars/emma.png' },
-    category: 'Cloud Native',
-    readTime: '13 min read',
-    date: 'Feb 2, 2026',
-    image: '/blog/multicloud.jpg',
-  },
-]
+import { getPosts } from '@/lib/actions/posts'
 
 const sampleKubernetesYAML = `apiVersion: apps/v1
 kind: Deployment
@@ -105,7 +32,13 @@ spec:
             memory: "256Mi"
             cpu: "500m"`
 
-export default function Home() {
+export default async function Home() {
+  // Fetch featured post
+  const featuredPosts = await getPosts({ featured: true, status: 'published', limit: 1 })
+  const featuredArticle = featuredPosts[0]
+
+  // Fetch recent articles
+  const recentPosts = await getPosts({ status: 'published', limit: 6 })
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
