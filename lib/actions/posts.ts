@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Post, UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { demoPosts } from '@/lib/demo-data'
 
 // =====================================================
 // POST ACTIONS
@@ -18,6 +19,26 @@ export async function getPosts(options?: {
   offset?: number
 }) {
   const supabase = await createClient()
+  
+  // Return demo data if Supabase is not configured
+  if (!supabase) {
+    console.warn('⚠️  Supabase not configured. Returning demo posts.')
+    console.warn('📖 Check SETUP_GUIDE.md for configuration instructions.')
+    
+    let filteredPosts = [...demoPosts]
+    
+    if (options?.featured !== undefined) {
+      filteredPosts = filteredPosts.filter(p => p.featured === options.featured)
+    }
+    if (options?.trending !== undefined) {
+      filteredPosts = filteredPosts.filter(p => p.trending === options.trending)
+    }
+    if (options?.limit) {
+      filteredPosts = filteredPosts.slice(0, options.limit)
+    }
+    
+    return filteredPosts
+  }
   
   let query = supabase
     .from('posts')
