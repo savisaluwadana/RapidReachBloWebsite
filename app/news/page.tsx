@@ -8,7 +8,7 @@ export default async function NewsPage() {
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
-      
+
       <div className="container mx-auto px-6 pt-32 pb-20">
         {/* Header */}
         <div className="max-w-4xl mx-auto text-center mb-16">
@@ -93,26 +93,25 @@ export default async function NewsPage() {
           )}
         </div>
 
-          {/* Coming Soon Features */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
-              <Newspaper className="w-12 h-12 text-electric-cyan mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-white mb-2">Newsletter Archive</h3>
-              <p className="text-gray-400 text-sm">Coming Soon</p>
-            </div>
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
-              <TrendingUp className="w-12 h-12 text-cyber-lime mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-white mb-2">Trending Topics</h3>
-              <p className="text-gray-400 text-sm">Coming Soon</p>
-            </div>
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
-              <Newspaper className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-white mb-2">Release Notes</h3>
-              <p className="text-gray-400 text-sm">Coming Soon</p>
-            </div>
+        {/* Coming Soon Features */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
+            <Newspaper className="w-12 h-12 text-electric-cyan mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-white mb-2">Newsletter Archive</h3>
+            <p className="text-gray-400 text-sm">Coming Soon</p>
+          </div>
+          <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
+            <TrendingUp className="w-12 h-12 text-cyber-lime mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-white mb-2">Trending Topics</h3>
+            <p className="text-gray-400 text-sm">Coming Soon</p>
+          </div>
+          <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 text-center">
+            <Newspaper className="w-12 h-12 text-purple-400 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-white mb-2">Release Notes</h3>
+            <p className="text-gray-400 text-sm">Coming Soon</p>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }

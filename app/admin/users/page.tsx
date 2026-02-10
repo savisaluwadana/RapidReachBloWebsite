@@ -1,66 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { Plus, Search, Shield, UserCheck, UserX, Mail, Calendar, TrendingUp } from 'lucide-react'
-
-const mockUsers = [
-  {
-    id: 1,
-    name: 'Sarah Chen',
-    email: 'sarah.chen@example.com',
-    role: 'contributor',
-    status: 'active',
-    posts: 12,
-    comments: 45,
-    joined: 'Jan 2026',
-    avatar: '/avatars/sarah.png',
-  },
-  {
-    id: 2,
-    name: 'Alex Kumar',
-    email: 'alex.kumar@example.com',
-    role: 'contributor',
-    status: 'active',
-    posts: 8,
-    comments: 23,
-    joined: 'Dec 2025',
-    avatar: '/avatars/alex.png',
-  },
-  {
-    id: 3,
-    name: 'Maria Rodriguez',
-    email: 'maria.r@example.com',
-    role: 'editor',
-    status: 'active',
-    posts: 15,
-    comments: 67,
-    joined: 'Nov 2025',
-    avatar: '/avatars/maria.png',
-  },
-  {
-    id: 4,
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    role: 'reader',
-    status: 'pending',
-    posts: 0,
-    comments: 5,
-    joined: 'Feb 2026',
-    avatar: '/avatars/john.png',
-  },
-]
+import { getUsers, updateUserRole } from '@/lib/actions/users'
+import type { UserProfile } from '@/lib/types/database'
 
 export default function UsersManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [users, setUsers] = useState<UserProfile[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const filteredUsers = mockUsers.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers({ limit: 50 })
+      setUsers(data)
+    } catch (error) {
+      console.error('Failed to load users:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     return matchesSearch && matchesRole
   })
+
+  const totalCount = users.length
+  const contributorCount = users.filter(u => u.role === 'contributor' || u.role === 'editor').length
+  const pendingCount = users.filter(u => !u.is_active).length
+  const newThisMonth = users.filter(u => {
+    const created = new Date(u.created_at)
+    const now = new Date()
+    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
+  }).length
 
   const roleColors = {
     admin: 'bg-red-500/20 text-red-400',
