@@ -74,10 +74,10 @@ export default function UsersManagement() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { label: 'Total Users', value: '1,234', icon: UserCheck, color: 'electric-cyan' },
-            { label: 'Contributors', value: '89', icon: TrendingUp, color: 'cyber-lime' },
-            { label: 'Pending Approval', value: '12', icon: UserX, color: 'yellow-400' },
-            { label: 'New This Month', value: '+45', icon: Calendar, color: 'electric-cyan' },
+            { label: 'Total Users', value: totalCount.toLocaleString(), icon: UserCheck, color: 'electric-cyan' },
+            { label: 'Contributors', value: contributorCount.toString(), icon: TrendingUp, color: 'cyber-lime' },
+            { label: 'Pending Approval', value: pendingCount.toString(), icon: UserX, color: 'yellow-400' },
+            { label: 'New This Month', value: `+${newThisMonth}`, icon: Calendar, color: 'electric-cyan' },
           ].map((stat) => (
             <div key={stat.label} className="rounded-2xl bg-white/5 border border-white/10 p-6">
               <div className="flex items-center justify-between mb-3">
@@ -120,67 +120,80 @@ export default function UsersManagement() {
 
         {/* Users Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="rounded-2xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.07] transition-all group"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-cyber" />
-                  <div>
-                    <h3 className="font-semibold text-white group-hover:text-electric-cyan transition-colors">
-                      {user.name}
-                    </h3>
-                    <p className="text-sm text-gray-400">{user.email}</p>
+          {isLoading ? (
+            <div className="col-span-full flex justify-center py-12">
+              <div className="w-12 h-12 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <UserX className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No users found</p>
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="rounded-2xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.07] transition-all group"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-cyber flex items-center justify-center text-white font-bold">
+                      {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white group-hover:text-electric-cyan transition-colors">
+                        {user.full_name}
+                      </h3>
+                      <p className="text-sm text-gray-400">{user.email}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Badges */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${roleColors[user.role as keyof typeof roleColors]}`}>
-                  <Shield className="w-3 h-3 inline mr-1" />
-                  {user.role}
-                </span>
-                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${statusColors[user.status as keyof typeof statusColors]}`}>
-                  {user.status}
-                </span>
-              </div>
+                {/* Badges */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${roleColors[user.role as keyof typeof roleColors]}`}>
+                    <Shield className="w-3 h-3 inline mr-1" />
+                    {user.role}
+                  </span>
+                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${user.is_active ? statusColors.active : statusColors.pending}`}>
+                    {user.is_active ? 'active' : 'pending'}
+                  </span>
+                </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-4 py-4 border-t border-b border-white/10">
-                <div className="text-center">
-                  <p className="text-xl font-bold text-white">{user.posts}</p>
-                  <p className="text-xs text-gray-400">Posts</p>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-4 py-4 border-t border-b border-white/10">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">{user.posts_written || 0}</p>
+                    <p className="text-xs text-gray-400">Posts</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">{user.comments_posted || 0}</p>
+                    <p className="text-xs text-gray-400">Comments</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-300">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                    <p className="text-xs text-gray-400">Joined</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-white">{user.comments}</p>
-                  <p className="text-xs text-gray-400">Comments</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-gray-300">{user.joined}</p>
-                  <p className="text-xs text-gray-400">Joined</p>
-                </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button className="flex-1 px-4 py-2 rounded-lg bg-electric-cyan/20 text-electric-cyan hover:bg-electric-cyan/30 transition-colors font-semibold text-sm">
-                  Edit
-                </button>
-                <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-                  <Mail className="w-4 h-4" />
-                </button>
-                {user.status === 'pending' && (
-                  <button className="px-4 py-2 rounded-lg bg-cyber-lime/20 text-cyber-lime hover:bg-cyber-lime/30 transition-colors">
-                    <UserCheck className="w-4 h-4" />
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button className="flex-1 px-4 py-2 rounded-lg bg-electric-cyan/20 text-electric-cyan hover:bg-electric-cyan/30 transition-colors font-semibold text-sm">
+                    Edit
                   </button>
-                )}
+                  <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                    <Mail className="w-4 h-4" />
+                  </button>
+                  {!user.is_active && (
+                    <button className="px-4 py-2 rounded-lg bg-cyber-lime/20 text-cyber-lime hover:bg-cyber-lime/30 transition-colors">
+                      <UserCheck className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </AdminLayout>
