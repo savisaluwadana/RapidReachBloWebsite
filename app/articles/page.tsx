@@ -85,7 +85,7 @@ export default async function ArticlesPage({
                   role: article.author?.role || 'Contributor',
                 }}
                 category={article.category}
-                readTime={`${article.read_time} min read`}
+                readTime={`${article.estimated_read_time || 5} min read`}
                 date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 image={article.cover_image_url || '/blog/default.jpg'}
                 slug={article.slug}

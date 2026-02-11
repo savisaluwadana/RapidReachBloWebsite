@@ -56,7 +56,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5" />
-                <span>{post.read_time} min read</span>
+                <span>{post.estimated_read_time} min read</span>
               </div>
             </div>
 

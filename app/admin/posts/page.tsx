@@ -161,7 +161,7 @@ export default function PostsManagement() {
                               <span className="px-2 py-0.5 rounded bg-electric-cyan/10 text-electric-cyan text-xs font-semibold">
                                 {post.category}
                               </span>
-                              <span className="text-gray-500 text-xs">{post.read_time} min</span>
+                              <span className="text-gray-500 text-xs">{post.estimated_read_time || 5} min</span>
                             </div>
                           </div>
                         </td>

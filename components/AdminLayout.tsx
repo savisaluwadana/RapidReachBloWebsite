@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { getUser, isAdmin, logout } from '@/lib/auth'
+import { getCurrentUser, signOut } from '@/lib/actions/auth'
+import type { UserProfile } from '@/lib/types/database'
 import { 
   LayoutDashboard, 
   FileText, 
@@ -37,23 +38,41 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const currentUser = getUser()
-    if (!currentUser || !isAdmin()) {
-      router.push('/auth/signin')
-      return
+    const loadUser = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+          router.push('/auth/signin')
+          return
+        }
+        setUser(currentUser)
+      } catch {
+        router.push('/auth/signin')
+      } finally {
+        setLoading(false)
+      }
     }
-    setUser(currentUser)
+    loadUser()
   }, [router])
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    try {
+      await signOut()
+    } catch {
+      window.location.href = '/auth/signin'
+    }
   }
 
-  if (!user) {
-    return <div className="min-h-screen bg-deep-charcoal flex items-center justify-center"><div className="text-white">Loading...</div></div>
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-deep-charcoal flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -117,8 +136,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 mb-3">
               <div className="w-10 h-10 rounded-full bg-gradient-cyber flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@rapidreach.dev'}</p>
+                <p className="text-sm font-semibold text-white truncate">{user.full_name}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
             </div>
             

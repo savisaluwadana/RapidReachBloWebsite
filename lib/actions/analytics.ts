@@ -86,7 +86,7 @@ export async function getTopPosts(limit: number = 5) {
       view_count,
       like_count,
       comment_count,
-      author:user_profiles(full_name)
+      author:user_profiles!posts_author_id_fkey(full_name)
     `)
     .eq('status', 'published')
     .order('view_count', { ascending: false })

@@ -74,7 +74,7 @@ export default async function BlogPage() {
                     role: post.author?.role || 'Contributor',
                   }}
                   category={post.category}
-                  readTime={`${post.read_time} min read`}
+                  readTime={`${post.estimated_read_time || 5} min read`}
                   date={new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   image={post.cover_image_url || '/blog/default.jpg'}
                   slug={post.slug}

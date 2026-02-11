@@ -9,11 +9,19 @@ export interface NewsFeedItem {
   source: string
   url?: string
   category: string
-  published_at: string
+  announcement_date: string
   image_url?: string
   tags: string[]
-  is_featured: boolean
+  is_breaking: boolean
+  release_version?: string
+  severity?: string
+  changelog_url?: string
+  upvote_count: number
+  view_count: number
   created_at: string
+  // Computed property for backwards compatibility
+  published_at?: string
+  is_featured?: boolean
 }
 
 // Demo news feed for when Supabase is not configured
@@ -26,10 +34,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'The latest Kubernetes release brings improved security controls and performance optimizations.',
       source: 'CNCF',
       url: 'https://kubernetes.io/blog',
-      category: 'Kubernetes',
-      published_at: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+      category: 'kubernetes',
+      announcement_date: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
       tags: ['kubernetes', 'release', 'security'],
-      is_featured: true,
+      is_breaking: true,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString()
     },
     {
@@ -38,10 +48,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'New runner sizes with up to 64 cores and 256GB RAM now available for GitHub Enterprise customers.',
       source: 'GitHub',
       url: 'https://github.blog',
-      category: 'CI/CD',
-      published_at: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+      category: 'ci_cd',
+      announcement_date: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
       tags: ['github', 'ci-cd', 'devops'],
-      is_featured: false,
+      is_breaking: false,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString()
     },
     {
@@ -50,10 +62,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'HashiCorp announces enhanced variable validation capabilities in the latest Terraform release.',
       source: 'HashiCorp',
       url: 'https://hashicorp.com/blog',
-      category: 'Infrastructure',
-      published_at: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
+      category: 'terraform',
+      announcement_date: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
       tags: ['terraform', 'infrastructure', 'iac'],
-      is_featured: false,
+      is_breaking: false,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString()
     },
     {
@@ -62,10 +76,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'Faster container startup times and reduced memory usage in the latest Docker Desktop update.',
       source: 'Docker',
       url: 'https://docker.com/blog',
-      category: 'Containers',
-      published_at: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
+      category: 'cloud_native',
+      announcement_date: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
       tags: ['docker', 'containers', 'performance'],
-      is_featured: false,
+      is_breaking: false,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString()
     },
     {
@@ -74,10 +90,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'New features include improved rollback mechanisms and better multi-cluster support.',
       source: 'Argo Project',
       url: 'https://argo-cd.readthedocs.io',
-      category: 'GitOps',
-      published_at: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      category: 'cloud_native',
+      announcement_date: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
       tags: ['argocd', 'gitops', 'kubernetes'],
-      is_featured: true,
+      is_breaking: true,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
     },
     {
@@ -86,10 +104,12 @@ function getDemoNewsFeed(): NewsFeedItem[] {
       description: 'Optimized instances with latest NVIDIA GPUs for machine learning and AI applications.',
       source: 'AWS',
       url: 'https://aws.amazon.com/blogs',
-      category: 'Cloud',
-      published_at: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(),
+      category: 'cloud_native',
+      announcement_date: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(),
       tags: ['aws', 'cloud', 'ml'],
-      is_featured: false,
+      is_breaking: false,
+      upvote_count: 0,
+      view_count: 0,
       created_at: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString()
     }
   ]
@@ -107,7 +127,7 @@ export async function getNewsFeed(options?: {
     let filtered = getDemoNewsFeed()
     
     if (options?.category) filtered = filtered.filter(item => item.category === options.category)
-    if (options?.featured) filtered = filtered.filter(item => item.is_featured)
+    if (options?.featured) filtered = filtered.filter(item => item.is_breaking)
     if (options?.limit) filtered = filtered.slice(0, options.limit)
     
     return filtered
@@ -117,10 +137,10 @@ export async function getNewsFeed(options?: {
     let query = supabase
       .from('news_feed')
       .select('*')
-      .order('published_at', { ascending: false })
+      .order('announcement_date', { ascending: false })
 
     if (options?.category) query = query.eq('category', options.category)
-    if (options?.featured) query = query.eq('is_featured', true)
+    if (options?.featured) query = query.eq('is_breaking', true)
     if (options?.limit) query = query.limit(options.limit)
 
     const { data, error } = await query

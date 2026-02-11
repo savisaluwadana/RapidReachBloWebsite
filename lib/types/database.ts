@@ -56,7 +56,7 @@ export interface Post {
   comment_count: number
   share_count: number
   bookmark_count: number
-  read_time: number
+  estimated_read_time: number
   word_count: number
   character_count: number
   completion_rate?: number

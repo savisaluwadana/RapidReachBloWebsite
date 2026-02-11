@@ -195,7 +195,7 @@ export default async function Home() {
                       role: featuredArticle.author?.role || 'Contributor',
                     }}
                     category={featuredArticle.category}
-                    readTime={`${featuredArticle.read_time} min read`}
+                    readTime={`${featuredArticle.estimated_read_time || 5} min read`}
                     date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     image={featuredArticle.cover_image_url || '/blog/default.jpg'}
                     slug={featuredArticle.slug}
@@ -224,7 +224,7 @@ export default async function Home() {
                           role: article.author?.role || 'Contributor',
                         }}
                         category={article.category}
-                        readTime={`${article.read_time} min read`}
+                        readTime={`${article.estimated_read_time || 5} min read`}
                         date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         image={article.cover_image_url || '/blog/default.jpg'}
                         slug={article.slug}

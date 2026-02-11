@@ -40,17 +40,17 @@ export default async function NewsPage() {
                         <span className="text-gray-400 text-sm">{item.source}</span>
                         <span className="flex items-center gap-1 text-gray-500 text-sm">
                           <Clock className="w-3 h-3" />
-                          {new Date(item.published_at).toLocaleDateString('en-US', { 
+                          {new Date(item.announcement_date || item.created_at).toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </span>
-                        {item.is_featured && (
+                        {item.is_breaking && (
                           <span className="flex items-center gap-1 text-cyber-lime text-sm">
                             <TrendingUp className="w-4 h-4" />
-                            Featured
+                            Breaking
                           </span>
                         )}
                       </div>

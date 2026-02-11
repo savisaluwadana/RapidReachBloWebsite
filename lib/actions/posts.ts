@@ -46,6 +46,7 @@ function getDemoPosts(): Post[] {
     share_count: 0,
     bookmark_count: 0,
     read_time: 5,
+    estimated_read_time: 5,
     word_count: 100,
     character_count: 500,
     published_at: new Date().toISOString(),
