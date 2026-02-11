@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { Bookmark, Heart, Share2, Twitter, Linkedin, Link as LinkIcon, Check } from 'lucide-react'
 
 interface ArticleActionsProps {
-  postId?: string
+  postId: string
   title?: string
 }
 
-export default function ArticleActions({ postId = '1', title = 'Article' }: ArticleActionsProps) {
+export default function ArticleActions({ postId, title = 'Article' }: ArticleActionsProps) {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  const [likes, setLikes] = useState(42)
+  const [likes, setLikes] = useState(0)
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copied, setCopied] = useState(false)
 

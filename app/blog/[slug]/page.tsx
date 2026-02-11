@@ -119,7 +119,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
             {/* Sidebar Actions */}
             <div className="hidden lg:block">
-              <ArticleActions />
+              <ArticleActions postId={post.id} title={post.title} />
             </div>
           </div>
         </article>
