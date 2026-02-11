@@ -153,8 +153,9 @@ export default function Navbar() {
         {/* Categories Bar */}
         <div className="hidden md:flex items-center gap-4 pb-4 overflow-x-auto">
           {categories.map((category) => (
-            <button
+            <Link
               key={category}
+              href={category === 'All' ? '/articles' : `/articles?category=${encodeURIComponent(category)}`}
               className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
                 category === 'All'
                   ? 'bg-electric-cyan/20 text-electric-cyan'
@@ -162,7 +163,7 @@ export default function Navbar() {
               }`}
             >
               {category}
-            </button>
+            </Link>
           ))}
         </div>
       </div>

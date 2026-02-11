@@ -58,20 +58,57 @@ function getDemoPosts(): Post[] {
     {
       ...basePost,
       id: 'demo-2',
-      title: 'Configure Your Supabase Connection',
-      slug: 'configure-supabase',
-      excerpt: 'Follow the SETUP_GUIDE.md to connect your Supabase database and enable all features.',
+      title: 'Kubernetes Resource Management Best Practices',
+      slug: 'kubernetes-resource-management',
+      excerpt: 'Learn how to properly configure resource limits, requests, and quotas for production Kubernetes clusters.',
+      category: 'Kubernetes',
+      tags: ['kubernetes', 'resources', 'production'],
       featured: false,
       trending: true,
     },
     {
       ...basePost,
       id: 'demo-3',
-      title: 'Explore Admin Features',
-      slug: 'admin-features',
-      excerpt: 'Once connected, explore post management, user administration, and analytics.',
+      title: 'Terraform State Management in Production',
+      slug: 'terraform-state-management',
+      excerpt: 'Best practices for managing Terraform state files securely in team environments with remote backends.',
+      category: 'Terraform',
+      tags: ['terraform', 'infrastructure', 'state'],
       featured: false,
       trending: false,
+    },
+    {
+      ...basePost,
+      id: 'demo-4',
+      title: 'Building CI/CD Pipelines with GitHub Actions',
+      slug: 'cicd-github-actions',
+      excerpt: 'A comprehensive guide to setting up continuous integration and deployment pipelines using GitHub Actions.',
+      category: 'CI/CD',
+      tags: ['ci-cd', 'github-actions', 'automation'],
+      featured: false,
+      trending: true,
+    },
+    {
+      ...basePost,
+      id: 'demo-5',
+      title: 'Cloud Security Best Practices for DevOps Teams',
+      slug: 'cloud-security-devops',
+      excerpt: 'Essential security practices every DevOps team should implement to protect cloud-native applications.',
+      category: 'Security',
+      tags: ['security', 'cloud', 'devops'],
+      featured: false,
+      trending: false,
+    },
+    {
+      ...basePost,
+      id: 'demo-6',
+      title: 'GitOps with ArgoCD: A Complete Guide',
+      slug: 'gitops-argocd-guide',
+      excerpt: 'Implement GitOps workflows using ArgoCD for automated, declarative Kubernetes deployments.',
+      category: 'Cloud Native',
+      tags: ['gitops', 'argocd', 'kubernetes'],
+      featured: false,
+      trending: true,
     },
   ]
 }
@@ -98,6 +135,9 @@ export async function getPosts(options?: {
     
     let filteredPosts = getDemoPosts()
     
+    if (options?.category) {
+      filteredPosts = filteredPosts.filter(p => p.category.toLowerCase() === options.category!.toLowerCase())
+    }
     if (options?.featured !== undefined) {
       filteredPosts = filteredPosts.filter(p => p.featured === options.featured)
     }
@@ -153,6 +193,18 @@ export async function getPosts(options?: {
 
 export async function getPostBySlug(slug: string) {
   const supabase = await createClient()
+  
+  // Demo mode fallback
+  if (!supabase) {
+    const demoPost = getDemoPosts().find(p => p.slug === slug)
+    if (demoPost) {
+      return {
+        ...demoPost,
+        content: `# ${demoPost.title}\n\n${demoPost.excerpt}\n\n## Getting Started\n\nThis is a demo article. Connect your Supabase database to see real content with full formatting.\n\n### What You'll Learn\n\n- How to set up your development environment\n- Best practices for production deployments\n- Advanced configuration techniques\n- Monitoring and observability\n\n### Prerequisites\n\nBefore diving in, make sure you have:\n\n1. A working knowledge of DevOps fundamentals\n2. Access to a cloud provider (AWS, GCP, or Azure)\n3. Basic command-line experience\n\n> 💡 **Tip:** Follow the SETUP_GUIDE.md to connect your Supabase database and unlock all features including comments, likes, and bookmarks.\n\n---\n\n*This demo content will be replaced with your real articles once Supabase is configured.*`,
+      } as Post
+    }
+    return null
+  }
   
   const { data, error } = await supabase
     .from('posts')
@@ -302,6 +354,8 @@ export async function rejectPost(postId: string, adminId: string, reason: string
 
 export async function incrementPostView(postId: string) {
   const supabase = await createClient()
+  
+  if (!supabase) return // Demo mode - no-op
   
   const { error } = await supabase.rpc('increment_post_view', {
     post_id: postId

@@ -99,11 +99,11 @@ export default async function Home() {
               { name: 'CI/CD', icon: GitBranch, color: 'cyber-lime', count: '95+' },
               { name: 'Security', icon: Shield, color: 'red-400', count: '70+' },
               { name: 'Cloud', icon: Cloud, color: 'blue-400', count: '110+' },
-              { name: 'Platform', icon: Rocket, color: 'orange-400', count: '65+' },
+              { name: 'Platform Engineering', icon: Rocket, color: 'orange-400', count: '65+' },
             ].map((category) => (
               <Link
                 key={category.name}
-                href={`/category/${category.name.toLowerCase()}`}
+                href={`/articles?category=${encodeURIComponent(category.name)}`}
                 className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
               >
                 <category.icon className={`w-10 h-10 text-${category.color} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
@@ -263,12 +263,13 @@ export default async function Home() {
                   <h3 className="text-lg font-bold text-white mb-4">Popular Topics</h3>
                   <div className="flex flex-wrap gap-2">
                     {['Kubernetes', 'Terraform', 'GitOps', 'Docker', 'Istio', 'ArgoCD', 'AWS', 'Platform Engineering'].map((topic) => (
-                      <button
+                      <Link
                         key={topic}
+                        href={`/articles?category=${encodeURIComponent(topic)}`}
                         className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-sm hover:bg-electric-cyan/20 hover:text-electric-cyan transition-colors"
                       >
                         #{topic}
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -338,10 +339,10 @@ export default async function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Content</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">All Articles</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Learning Paths</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">News & Updates</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Tutorials</li>
+                <li><Link href="/articles" className="hover:text-electric-cyan transition-colors">All Articles</Link></li>
+                <li><Link href="/learning-paths" className="hover:text-electric-cyan transition-colors">Learning Paths</Link></li>
+                <li><Link href="/news" className="hover:text-electric-cyan transition-colors">News & Updates</Link></li>
+                <li><Link href="/articles?category=Tutorials" className="hover:text-electric-cyan transition-colors">Tutorials</Link></li>
               </ul>
             </div>
             <div>
