@@ -930,8 +930,6 @@ DROP TRIGGER IF EXISTS update_comments_reply_count ON comments;
 CREATE TRIGGER update_comments_reply_count
 AFTER INSERT OR DELETE ON comments
 FOR EACH ROW EXECUTE FUNCTION update_comment_reply_count();
-AFTER INSERT OR DELETE ON comments
-FOR EACH ROW EXECUTE FUNCTION update_comment_reply_count();
 -- Calculate reading time based on word count
 CREATE OR REPLACE FUNCTION calculate_reading_time()
 RETURNS TRIGGER AS $$
@@ -945,7 +943,6 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS calculate_posts_reading_time ON posts;
 CREATE TRIGGER calculate_posts_reading_time
 BEFORE INSERT OR UPDATE OF word_count ON posts
-FOR EACH ROW EXECUTE FUNCTION calculate_reading_time();
 FOR EACH ROW EXECUTE FUNCTION calculate_reading_time();
 
 -- Auto-create notification on new comment
@@ -985,14 +982,13 @@ BEGIN
             NEW.id,
             NEW.author_id
         );
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS create_new_comment_notification ON comments;
 CREATE TRIGGER create_new_comment_notification
-AFTER INSERT ON comments
-FOR EACH ROW EXECUTE FUNCTION create_comment_notification();
 AFTER INSERT ON comments
 FOR EACH ROW EXECUTE FUNCTION create_comment_notification();
 
@@ -1038,14 +1034,13 @@ BEGIN
                 'rejection_reason', NEW.rejection_reason
             )
         );
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS log_post_moderation ON posts;
 CREATE TRIGGER log_post_moderation
-AFTER UPDATE OF status ON posts
-FOR EACH ROW EXECUTE FUNCTION log_admin_action();
 AFTER UPDATE OF status ON posts
 FOR EACH ROW EXECUTE FUNCTION log_admin_action();
 
@@ -1068,7 +1063,8 @@ VALUES (
     'Platform Administrator',
     true,
     true
-);
+)
+ON CONFLICT (email) DO NOTHING;
 
 /*
 -- Sample admin user (commented out)
@@ -1147,14 +1143,14 @@ BEGIN
         ELSIF OLD.reaction_type = 'bookmark' THEN
             UPDATE posts SET bookmark_count = bookmark_count - 1 WHERE id = OLD.post_id;
         ELSIF OLD.reaction_type = 'share' THEN
+            UPDATE posts SET share_count = share_count - 1 WHERE id = OLD.post_id;
+        END IF;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS update_post_reactions_metrics ON post_reactions;
-CREATE TRIGGER update_post_reactions_metrics
-    AFTER INSERT OR DELETE ON post_reactions
-    FOR EACH ROW EXECUTE FUNCTION update_post_reaction_metrics();
 CREATE TRIGGER update_post_reactions_metrics
     AFTER INSERT OR DELETE ON post_reactions
     FOR EACH ROW EXECUTE FUNCTION update_post_reaction_metrics();
@@ -1165,6 +1161,9 @@ RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
         UPDATE posts SET comment_count = comment_count + 1 WHERE id = NEW.post_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE posts SET comment_count = GREATEST(0, comment_count - 1) WHERE id = OLD.post_id;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -1173,17 +1172,23 @@ DROP TRIGGER IF EXISTS update_post_comment_count ON comments;
 CREATE TRIGGER update_post_comment_count
     AFTER INSERT OR DELETE ON comments
     FOR EACH ROW EXECUTE FUNCTION update_comment_count();
-CREATE TRIGGER update_post_comment_count
-    AFTER INSERT OR DELETE ON comments
-    FOR EACH ROW EXECUTE FUNCTION update_comment_count();
 
 -- =====================================================
 -- REALTIME SUBSCRIPTIONS
 -- =====================================================
 
--- Enable realtime for news feed
-ALTER PUBLICATION supabase_realtime ADD TABLE news_feed;
-ALTER PUBLICATION supabase_realtime ADD TABLE incident_timelines;
+-- Enable realtime for news feed (skip if already added)
+DO $$ BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE news_feed;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE incident_timelines;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- =====================================================
 -- SEED DATA (Optional - for development)
