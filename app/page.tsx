@@ -3,7 +3,7 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import HeroBentoGrid from '@/components/HeroBentoGrid'
-import { TrendingUp, Zap, BookOpen, Rocket, Terminal, Cloud, ShieldCheck, GitBranch, Box, Blocks, CloudCog, Wrench } from 'lucide-react'
+import { TrendingUp, Zap, BookOpen } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
 
@@ -79,23 +79,96 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Kubernetes', icon: Box, colorClass: 'text-electric-cyan' },
-              { name: 'Terraform', icon: Blocks, colorClass: 'text-purple-400' },
-              { name: 'CI/CD', icon: GitBranch, colorClass: 'text-cyber-lime' },
-              { name: 'Security', icon: ShieldCheck, colorClass: 'text-red-400' },
-              { name: 'Cloud', icon: CloudCog, colorClass: 'text-blue-400' },
-              { name: 'Platform Engineering', icon: Wrench, colorClass: 'text-orange-400' },
-            ].map((category) => (
-              <Link
-                key={category.name}
-                href={`/articles?category=${encodeURIComponent(category.name)}`}
-                className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
-              >
-                <category.icon className={`w-10 h-10 ${category.colorClass} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
-                <h3 className="text-white font-bold text-center">{category.name}</h3>
-              </Link>
-            ))}
+            {/* Kubernetes */}
+            <Link
+              href="/articles?category=Kubernetes"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 256 249" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M128.025 0C121.443 0 114.861 1.678 109.278 5.034L30.088 50.646C18.922 57.358 12.34 69.404 12.34 82.452v91.223c0 13.049 6.582 25.094 17.748 31.807l79.19 45.611c11.166 6.713 24.932 6.713 36.098 0l79.19-45.611c11.166-6.713 17.748-18.758 17.748-31.807V82.452c0-13.048-6.582-25.094-17.748-31.806L145.376 5.034C139.607 1.678 132.839 0 128.025 0z" fill="#326CE5"/>
+                  <path d="M128.025 23.632a9.86 9.86 0 0 0-3.07.498c-.093.03-.181.073-.273.107a9.932 9.932 0 0 0-1.97.994l-.107.073-79.19 45.611-.07.04c-.09.054-.174.116-.262.172a9.924 9.924 0 0 0-4.14 6.17c-.024.108-.059.213-.08.322a9.865 9.865 0 0 0-.195 1.955v91.227c0 .67.073 1.325.192 1.968.02.106.053.208.076.313a9.89 9.89 0 0 0 4.16 6.2c.076.05.148.106.226.154l.08.047 79.192 45.611.098.064a9.92 9.92 0 0 0 2.014 1.014c.08.03.155.067.236.094a9.874 9.874 0 0 0 6.149 0c.08-.027.155-.064.236-.094a9.92 9.92 0 0 0 2.014-1.014l.098-.064 79.192-45.611.08-.048c.078-.047.15-.103.225-.153a9.89 9.89 0 0 0 4.16-6.2c.024-.106.057-.208.077-.314.119-.643.192-1.298.192-1.968V79.574c0-.67-.073-1.326-.192-1.968-.02-.107-.053-.208-.077-.314a9.89 9.89 0 0 0-4.16-6.2c-.076-.05-.147-.105-.225-.153l-.08-.048-79.19-45.611-.1-.064a9.914 9.914 0 0 0-2.013-1.013c-.081-.031-.157-.068-.237-.095a9.86 9.86 0 0 0-3.08-.498v.021z" fill="#fff"/>
+                  <path d="M128.025 58.853c-2.379 0-4.326 1.673-4.572 3.858l-2.478 19.224c-7.267 1.38-13.92 4.12-19.825 7.985l-16.14-10.57a4.59 4.59 0 0 0-5.81.724L67.064 92.21a4.59 4.59 0 0 0-.143 5.873l12.614 15.14c-3.01 5.9-5.122 12.33-6.049 19.133l-18.644 3.955a4.572 4.572 0 0 0-3.527 4.778l1.38 16.963a4.572 4.572 0 0 0 4.303 4.07l19.153 1.024c2.476 6.446 5.977 12.325 10.295 17.474l-9.066 17.184a4.572 4.572 0 0 0 1.488 5.675l14.058 9.862a4.572 4.572 0 0 0 5.83-.697l12.876-14.342c5.788 2.505 12.068 4.076 18.671 4.504l4.99 18.512a4.572 4.572 0 0 0 4.778 3.394l16.828-1.963a4.572 4.572 0 0 0 3.872-4.525l-.129-19.16c6.221-2.76 11.86-6.523 16.712-11.088l16.81 8.318a4.572 4.572 0 0 0 5.57-1.618l9.335-14.38a4.572 4.572 0 0 0-.975-5.865l-14.96-11.737c2.135-5.937 3.348-12.3 3.434-18.92l18.063-5.86a4.572 4.572 0 0 0 3.085-5.005l-2.543-16.697a4.572 4.572 0 0 0-4.627-3.76l-19.076.653c-3.236-5.795-7.381-11.035-12.239-15.512l7.86-17.87a4.572 4.572 0 0 0-1.86-5.537l-14.634-8.668a4.572 4.572 0 0 0-5.725 1.046l-12.268 14.916c-5.5-1.661-11.332-2.578-17.373-2.68V62.71a4.572 4.572 0 0 0-4.572-3.858z" fill="#326CE5"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">Kubernetes</h3>
+            </Link>
+
+            {/* Terraform */}
+            <Link
+              href="/articles?category=Terraform"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 256 289" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M89.727 54.915v82.07L0 91.949V9.879l89.727 45.036z" fill="#5C4EE5"/>
+                  <path d="M166.182 99.951v82.07l-76.455-45.036V54.915l76.455 45.036z" fill="#4040B2"/>
+                  <path d="M166.182 9.879v82.07l76.455-45.035V9.879L166.182 54.915V9.879z" fill="#5C4EE5"/>
+                  <path d="M166.182 197.057v82.07l-76.455-45.036v-82.07l76.455 45.036z" fill="#4040B2"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">Terraform</h3>
+            </Link>
+
+            {/* CI/CD */}
+            <Link
+              href="/articles?category=CI%2FCD"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <circle cx="128" cy="128" r="128" fill="#FC6D26"/>
+                  <path d="M128 34.86L96.47 131.14h63.06L128 34.86z" fill="#E24329"/>
+                  <path d="M128 220.14l31.53-89H96.47L128 220.14z" fill="#FCA326"/>
+                  <path d="M61.94 131.14L51.7 162.62a7.15 7.15 0 0 0 2.6 8l73.7 53.56-66.06-93.04z" fill="#FC6D26"/>
+                  <path d="M61.94 131.14h34.53L77.63 74.34a3.58 3.58 0 0 0-6.82 0L61.94 131.14z" fill="#E24329"/>
+                  <path d="M194.06 131.14l10.24 31.48a7.15 7.15 0 0 1-2.6 8L128 224.18l66.06-93.04z" fill="#FC6D26"/>
+                  <path d="M194.06 131.14h-34.53l18.84-56.8a3.58 3.58 0 0 1 6.82 0l8.87 56.8z" fill="#E24329"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">CI/CD</h3>
+            </Link>
+
+            {/* Security */}
+            <Link
+              href="/articles?category=Security"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="M9 12l2 2 4-4"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">Security</h3>
+            </Link>
+
+            {/* Cloud (AWS/GCP/Azure) */}
+            <Link
+              href="/articles?category=Cloud"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 256 171" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M76.8 148.2c-6.1 4.6-14.7 5.8-22.2 3.3C47 149 41 143.5 38.4 136.2c-6.3 1-12.8-.5-17.8-4.2-5-3.8-8.2-9.5-8.8-15.7C5 117.3 0 111.5 0 104.6c0-5.5 3-10.5 7.8-13.2-.8-6.8 1.8-13.6 7-18.2 5.2-4.6 12.3-6.3 18.9-4.6C37.3 59.5 46 52.8 56.2 51c10.2-1.7 20.7 2 28.1 9.8 3-1 6.3-1.1 9.3-.3 3 .8 5.7 2.6 7.5 5.1 7.2-2.2 15-1.3 21.3 2.6 6.3 3.8 10.5 10.2 11.5 17.4 5.2 1.3 9.6 4.8 12 9.5 2.3 4.7 2.5 10.2.4 15C152 113 155 117 156.3 121.6c1.3 4.7.8 9.7-1.3 14.1-5 9.3-15.5 14.5-26.1 12.7-3.7 6-10.4 9.3-17.2 8.5-6.8-.8-12.5-5.4-14.8-11.7-5.8 4.8-13.6 6.6-20.1 3z" fill="#60A5FA"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">Cloud</h3>
+            </Link>
+
+            {/* Platform Engineering */}
+            <Link
+              href="/articles?category=Platform%20Engineering"
+              className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
+            >
+              <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-center">Platform Engineering</h3>
+            </Link>
           </div>
         </div>
       </section>
