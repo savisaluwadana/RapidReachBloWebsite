@@ -1,10 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 import { Save, Eye, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as LinkIcon } from 'lucide-react'
+import { createPost } from '@/lib/actions/posts'
+import { getCurrentUser } from '@/lib/actions/auth'
 
 export default function NewPost() {
+  const router = useRouter()
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
@@ -12,6 +16,9 @@ export default function NewPost() {
   const [tags, setTags] = useState<string[]>([])
   const [difficulty, setDifficulty] = useState('intermediate')
   const [coverImage, setCoverImage] = useState('')
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const categories = ['Kubernetes', 'Terraform', 'CI/CD', 'Security', 'Platform Engineering', 'Cloud Native', 'Observability']
   const difficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert']
@@ -20,6 +27,104 @@ export default function NewPost() {
     const wordsPerMinute = 200
     const wordCount = content.trim().split(/\s+/).length
     return Math.ceil(wordCount / wordsPerMinute)
+  }
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+  }
+
+  const handlePublish = async () => {
+    if (!title || !excerpt || !content) {
+      setError('Please fill in title, excerpt, and content')
+      return
+    }
+
+    setIsPublishing(true)
+    setError('')
+
+    try {
+      const user = await getCurrentUser()
+      if (!user) {
+        throw new Error('You must be logged in to publish')
+      }
+
+      const wordCount = content.trim().split(/\s+/).length
+      const characterCount = content.length
+
+      await createPost({
+        title,
+        slug: generateSlug(title),
+        excerpt,
+        content,
+        author_id: user.id,
+        category: category.toLowerCase(),
+        tags,
+        difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        status: 'published',
+        featured: false,
+        trending: false,
+        word_count: wordCount,
+        character_count: characterCount,
+        cover_image_url: coverImage || undefined,
+        published_at: new Date().toISOString(),
+      })
+
+      router.push('/admin/posts')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || 'Failed to publish post')
+      console.error('Publish error:', err)
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
+  const handleSaveDraft = async () => {
+    if (!title) {
+      setError('Please enter a title')
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const user = await getCurrentUser()
+      if (!user) {
+        throw new Error('You must be logged in to save')
+      }
+
+      const wordCount = content.trim().split(/\s+/).length
+      const characterCount = content.length
+
+      await createPost({
+        title,
+        slug: generateSlug(title),
+        excerpt,
+        content,
+        author_id: user.id,
+        category: category.toLowerCase(),
+        tags,
+        difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        status: 'draft',
+        featured: false,
+        trending: false,
+        word_count: wordCount,
+        character_count: characterCount,
+        cover_image_url: coverImage || undefined,
+      })
+
+      router.push('/admin/posts')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || 'Failed to save draft')
+      console.error('Save error:', err)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -36,16 +141,31 @@ export default function NewPost() {
               <Eye className="w-4 h-4" />
               Preview
             </button>
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-all flex items-center gap-2">
+            <button 
+              onClick={handleSaveDraft}
+              disabled={isSaving}
+              className="px-4 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Save className="w-4 h-4" />
-              Save Draft
+              {isSaving ? 'Saving...' : 'Save Draft'}
             </button>
-            <button className="px-6 py-2 rounded-lg bg-gradient-cyber text-white font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
+            <button 
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className="px-6 py-2 rounded-lg bg-gradient-cyber text-white font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Send className="w-4 h-4" />
-              Publish
+              {isPublishing ? 'Publishing...' : 'Publish'}
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
 
         {/* Main Form */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
