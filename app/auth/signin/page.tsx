@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react'
 import Link from 'next/link'
-import { signIn } from '@/lib/actions/auth'
+import { signIn, getCurrentUser } from '@/lib/actions/auth'
 
 export default function SignIn() {
   const router = useRouter()
@@ -22,10 +22,11 @@ export default function SignIn() {
     try {
       const result = await signIn(email, password)
       
-      // Successful login - redirect based on role
+      // Successful login - get user profile to check role
       if (result?.user) {
-        const userRole = result.user.user_metadata?.role || 'reader'
-        if (userRole === 'admin') {
+        const userProfile = await getCurrentUser()
+        const userRole = userProfile?.role || 'reader'
+        if (userRole === 'admin' || userRole === 'editor') {
           router.push('/admin')
         } else {
           router.push('/')

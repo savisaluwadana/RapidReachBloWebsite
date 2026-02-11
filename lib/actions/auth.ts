@@ -1,16 +1,17 @@
 'use server'
 
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { UserProfile } from '@/lib/types/database'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-// Create a Supabase client for auth operations
-const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)
+import { redirect } from 'next/navigation'
 
 export async function signUp(email: string, password: string, fullName: string) {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -46,6 +47,12 @@ export async function signUp(email: string, password: string, fullName: string) 
 }
 
 export async function signIn(email: string, password: string) {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -67,18 +74,23 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
+  const supabase = await createClient()
   
-  if (error) {
-    throw error
+  if (!supabase) {
+    return
   }
 
-  const cookieStore = await cookies()
-  cookieStore.delete('sb-access-token')
-  cookieStore.delete('sb-refresh-token')
+  await supabase.auth.signOut()
+  redirect('/auth/signin')
 }
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    return null
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -95,6 +107,12 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    return false
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
   return !!user
 }
@@ -105,6 +123,12 @@ export async function isAdmin(): Promise<boolean> {
 }
 
 export async function updatePassword(newPassword: string) {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
   const { error } = await supabase.auth.updateUser({
     password: newPassword,
   })
@@ -115,6 +139,12 @@ export async function updatePassword(newPassword: string) {
 }
 
 export async function resetPassword(email: string) {
+  const supabase = await createClient()
+  
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
   })
