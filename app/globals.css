@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 :root {
   --background: #0B0B0B;
@@ -10,6 +11,55 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Colors */
+  --color-deep-charcoal: #0B0B0B;
+  --color-deep-charcoal-50: #1A1A1A;
+  --color-deep-charcoal-100: #0F0F0F;
+  --color-deep-charcoal-200: #0B0B0B;
+  --color-deep-charcoal-300: #080808;
+  --color-deep-charcoal-400: #050505;
+
+  --color-electric-cyan: #326CE5;
+  --color-electric-cyan-50: #E8F0FE;
+  --color-electric-cyan-100: #B8D4FD;
+  --color-electric-cyan-200: #88B8FC;
+  --color-electric-cyan-300: #589CFA;
+  --color-electric-cyan-400: #3D84F1;
+  --color-electric-cyan-500: #326CE5;
+  --color-electric-cyan-600: #2858C4;
+  --color-electric-cyan-700: #1E44A3;
+  --color-electric-cyan-800: #143082;
+  --color-electric-cyan-900: #0A1C61;
+
+  --color-cyber-lime: #00FF88;
+  --color-cyber-lime-50: #E5FFF5;
+  --color-cyber-lime-100: #B3FFE0;
+  --color-cyber-lime-200: #80FFCC;
+  --color-cyber-lime-300: #4DFFB8;
+  --color-cyber-lime-400: #1AFFA4;
+  --color-cyber-lime-500: #00FF88;
+  --color-cyber-lime-600: #00CC6E;
+  --color-cyber-lime-700: #009954;
+  --color-cyber-lime-800: #00663A;
+  --color-cyber-lime-900: #003320;
+
+  --color-glass-light: rgba(255, 255, 255, 0.1);
+  --color-glass-medium: rgba(255, 255, 255, 0.05);
+  --color-glass-dark: rgba(0, 0, 0, 0.2);
+
+  /* Background Images / Gradients */
+  --background-image-gradient-cyber: linear-gradient(135deg, #326CE5 0%, #00FF88 100%);
+  --background-image-gradient-dark: linear-gradient(180deg, #0B0B0B 0%, #1A1A1A 100%);
+  --background-image-mesh-gradient: radial-gradient(at 40% 20%, rgba(50, 108, 229, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(0, 255, 136, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(50, 108, 229, 0.2) 0px, transparent 50%);
+
+  /* Box Shadows */
+  --shadow-glow-sm: 0 0 10px rgba(50, 108, 229, 0.5);
+  --shadow-glow-md: 0 0 20px rgba(50, 108, 229, 0.6);
+  --shadow-glow-lg: 0 0 40px rgba(50, 108, 229, 0.7);
+  --shadow-glow-cyber: 0 0 30px rgba(0, 255, 136, 0.6);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-bento: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
