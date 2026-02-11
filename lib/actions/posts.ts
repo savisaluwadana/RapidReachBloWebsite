@@ -372,23 +372,37 @@ export async function searchPosts(query: string, limit = 5) {
   if (!supabase) {
     const q = query.toLowerCase()
     return getDemoPosts()
-      .filter(p => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q))
+      .filter(p => 
+        p.title.toLowerCase().includes(q) || 
+        p.excerpt.toLowerCase().includes(q) ||
+        p.tags?.some(tag => tag.toLowerCase().includes(q))
+      )
       .slice(0, limit)
-      .map(p => ({ id: p.id, title: p.title, slug: p.slug, category: p.category }))
   }
 
   try {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, title, slug, category')
+      .select(`
+        *,
+        author:user_profiles!posts_author_id_fkey(*)
+      `)
       .eq('status', 'published')
-      .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%`)
+      .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%,tags.cs.{${query}}`)
+      .order('created_at', { ascending: false })
       .limit(limit)
 
     if (error) throw error
-    return data || []
+    return (data || []) as Post[]
   } catch (error) {
     console.error('Error searching posts:', error)
-    return []
+    // Fallback to demo data on error
+    const q = query.toLowerCase()
+    return getDemoPosts()
+      .filter(p => 
+        p.title.toLowerCase().includes(q) || 
+        p.excerpt.toLowerCase().includes(q)
+      )
+      .slice(0, limit)
   }
 }
