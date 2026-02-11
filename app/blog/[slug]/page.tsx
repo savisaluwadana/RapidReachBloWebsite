@@ -5,6 +5,7 @@ import ArticleActions from '@/components/ArticleActions'
 import CommentsSection from '@/components/CommentsSection'
 import { Calendar, Clock, User, Tag, TrendingUp } from 'lucide-react'
 import { getPostBySlug, incrementPostView } from '@/lib/actions/posts'
+import MarkdownContent from './MarkdownContent'
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -88,10 +89,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             {/* Main Content */}
             <div className="max-w-4xl">
               <div className="prose prose-invert prose-lg max-w-none">
-                <div 
-                  className="text-gray-300 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                />
+                <MarkdownContent content={post.content} />
               </div>
 
               {/* Author Bio */}

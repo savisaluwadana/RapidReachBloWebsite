@@ -7,7 +7,7 @@ import { Search, Menu, X, ChevronRight, LayoutDashboard, LogOut, User as UserIco
 import { getCurrentUser, signOut } from '@/lib/actions/auth'
 import type { UserProfile } from '@/lib/types/database'
 
-const categories = ['All', 'Kubernetes', 'Platform Engineering', 'Terraform', 'CI/CD', 'Security', 'Cloud Native']
+const categories = ['All', 'Kubernetes', 'Platform Engineering', 'Terraform', 'CI/CD', 'Security', 'Observability']
 
 const categoryToSlug: Record<string, string> = {
   'Kubernetes': 'kubernetes',
@@ -15,7 +15,7 @@ const categoryToSlug: Record<string, string> = {
   'Terraform': 'terraform',
   'CI/CD': 'cicd',
   'Security': 'security',
-  'Cloud Native': 'cloud_native',
+  'Observability': 'observability',
 }
 
 export default function Navbar() {

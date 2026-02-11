@@ -26,51 +26,63 @@ export async function getAnalyticsSummary(days: number = 7) {
 export async function getDashboardStats() {
   const supabase = await createClient()
   
-  // Get total posts
-  const { count: totalPosts } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'published')
+  try {
+    // Get total posts
+    const { count: totalPosts } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'published')
 
-  // Get total users
-  const { count: totalUsers } = await supabase
-    .from('user_profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
+    // Get total users
+    const { count: totalUsers } = await supabase
+      .from('user_profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
 
-  // Get total comments
-  const { count: totalComments } = await supabase
-    .from('comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'approved')
+    // Get total comments
+    const { count: totalComments } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'approved')
 
-  // Get pending posts
-  const { count: pendingPosts } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending')
+    // Get pending posts
+    const { count: pendingPosts } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
 
-  // Get flagged comments
-  const { count: flaggedComments } = await supabase
-    .from('comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_flagged', true)
+    // Get flagged comments
+    const { count: flaggedComments } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_flagged', true)
 
-  // Get total views (sum of all posts)
-  const { data: viewsData } = await supabase
-    .from('posts')
-    .select('view_count')
-    .eq('status', 'published')
+    // Get total views (sum of all posts)
+    const { data: viewsData } = await supabase
+      .from('posts')
+      .select('view_count')
+      .eq('status', 'published')
 
-  const totalViews = viewsData?.reduce((sum: number, post: any) => sum + (post.view_count || 0), 0) || 0
+    const totalViews = viewsData?.reduce((sum: number, post: any) => sum + (post.view_count || 0), 0) || 0
 
-  return {
-    totalPosts: totalPosts || 0,
-    totalUsers: totalUsers || 0,
-    totalComments: totalComments || 0,
-    totalViews,
-    pendingPosts: pendingPosts || 0,
-    flaggedComments: flaggedComments || 0,
+    return {
+      totalPosts: totalPosts || 0,
+      totalUsers: totalUsers || 0,
+      totalComments: totalComments || 0,
+      totalViews,
+      pendingPosts: pendingPosts || 0,
+      flaggedComments: flaggedComments || 0,
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
+    return {
+      totalPosts: 0,
+      totalUsers: 0,
+      totalComments: 0,
+      totalViews: 0,
+      pendingPosts: 0,
+      flaggedComments: 0,
+    }
   }
 }
 
@@ -107,7 +119,7 @@ export async function getRecentActivity(limit: number = 10) {
     .from('admin_activity_log')
     .select(`
       *,
-      admin:user_profiles(full_name, email)
+      admin:user_profiles!admin_activity_log_admin_id_fkey(full_name, email)
     `)
     .order('created_at', { ascending: false })
     .limit(limit)

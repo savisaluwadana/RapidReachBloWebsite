@@ -26,7 +26,6 @@ export default function NewPost() {
     { label: 'CI/CD', value: 'cicd' },
     { label: 'Security', value: 'security' },
     { label: 'Platform Engineering', value: 'platform-engineering' },
-    { label: 'Cloud Native', value: 'cloud_native' },
     { label: 'Observability', value: 'observability' },
     { label: 'AWS', value: 'aws' },
     { label: 'Azure', value: 'azure' },

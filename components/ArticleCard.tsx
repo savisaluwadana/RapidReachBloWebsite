@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Calendar, Clock, User, TrendingUp, Bookmark } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { formatCategory } from '@/lib/utils'
 
 interface ArticleCardProps {
   title: string
@@ -62,7 +63,7 @@ export default function ArticleCard({
           {/* Category */}
           <div className="flex items-center gap-3 mb-4">
             <span className="px-3 py-1 rounded-lg bg-electric-cyan/10 text-electric-cyan text-xs font-semibold uppercase tracking-wider">
-              {category}
+              {formatCategory(category)}
             </span>
             {featured && (
               <span className="px-3 py-1 rounded-lg bg-cyber-lime/10 text-cyber-lime text-xs font-semibold">

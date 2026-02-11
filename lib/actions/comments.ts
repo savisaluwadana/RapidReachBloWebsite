@@ -11,7 +11,7 @@ export async function getCommentsByPostId(postId: string) {
     .from('comments')
     .select(`
       *,
-      author:user_profiles(*),
+      author:user_profiles!comments_author_id_fkey(*),
       post:posts(id, title, slug)
     `)
     .eq('post_id', postId)
@@ -31,7 +31,7 @@ export async function getCommentsByPostId(postId: string) {
         .from('comments')
         .select(`
           *,
-          author:user_profiles(*)
+          author:user_profiles!comments_author_id_fkey(*)
         `)
         .eq('parent_comment_id', comment.id)
         .eq('status', 'approved')
@@ -58,7 +58,7 @@ export async function getAllComments(options?: {
     .from('comments')
     .select(`
       *,
-      author:user_profiles(*),
+      author:user_profiles!comments_author_id_fkey(*),
       post:posts(id, title, slug)
     `)
     .order('created_at', { ascending: false })
@@ -99,7 +99,7 @@ export async function createComment(comment: {
     }])
     .select(`
       *,
-      author:user_profiles(*)
+      author:user_profiles!comments_author_id_fkey(*)
     `)
     .single()
 
