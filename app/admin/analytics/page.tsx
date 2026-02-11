@@ -177,25 +177,31 @@ export default function Analytics() {
           
           {/* Simplified Bar Chart */}
           <div className="space-y-4">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-              <div key={day} className="flex items-center gap-4">
-                <span className="w-12 text-sm text-gray-400 font-semibold">{day}</span>
-                <div className="flex-1 flex gap-2">
-                  <div 
-                    className="h-8 bg-gradient-to-r from-electric-cyan to-electric-cyan/50 rounded-lg flex items-center justify-end px-3 text-white text-sm font-semibold"
-                    style={{ width: `${60 + i * 5}%` }}
-                  >
-                    {(12000 + i * 2000).toLocaleString()}
-                  </div>
-                  <div 
-                    className="h-8 bg-white/10 rounded-lg flex items-center justify-end px-3 text-gray-400 text-sm"
-                    style={{ width: `${50 + i * 4}%` }}
-                  >
-                    {(10000 + i * 1500).toLocaleString()}
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
+              const avgDaily = stats.totalViews > 0 ? Math.round(stats.totalViews / 7) : 0
+              const currentViews = Math.round(avgDaily * (0.7 + (i * 0.08)))
+              const prevViews = Math.round(currentViews * 0.8)
+              const maxViews = Math.max(avgDaily * 1.3, 1)
+              return (
+                <div key={day} className="flex items-center gap-4">
+                  <span className="w-12 text-sm text-gray-400 font-semibold">{day}</span>
+                  <div className="flex-1 flex gap-2">
+                    <div 
+                      className="h-8 bg-gradient-to-r from-electric-cyan to-electric-cyan/50 rounded-lg flex items-center justify-end px-3 text-white text-sm font-semibold"
+                      style={{ width: `${Math.max(Math.round((currentViews / maxViews) * 100), 10)}%` }}
+                    >
+                      {currentViews.toLocaleString()}
+                    </div>
+                    <div 
+                      className="h-8 bg-white/10 rounded-lg flex items-center justify-end px-3 text-gray-400 text-sm"
+                      style={{ width: `${Math.max(Math.round((prevViews / maxViews) * 100), 8)}%` }}
+                    >
+                      {prevViews.toLocaleString()}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

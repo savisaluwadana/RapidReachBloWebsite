@@ -150,7 +150,7 @@ function CommentItem({ comment, depth = 0, onReply }: { comment: Comment; depth?
   )
 }
 
-export default function CommentsSection({ postId = '1' }: { postId?: string }) {
+export default function CommentsSection({ postId }: { postId: string }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
   const [isLoading, setIsLoading] = useState(true)

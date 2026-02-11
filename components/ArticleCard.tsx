@@ -1,8 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Calendar, Clock, User, TrendingUp, Bookmark } from 'lucide-react'
-import Image from 'next/image'
+import { Calendar, Clock, TrendingUp, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import { formatCategory } from '@/lib/utils'
 

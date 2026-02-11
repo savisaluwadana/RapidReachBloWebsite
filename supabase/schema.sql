@@ -590,6 +590,35 @@ EXCEPTION
     WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+    CREATE POLICY "Admins can view all posts"
+        ON posts FOR SELECT
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('admin', 'editor')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    CREATE POLICY "Admins can delete posts"
+        ON posts FOR DELETE
+        USING (
+            author_id = auth.uid() OR
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
 -- Notifications Policies
 DO $$ BEGIN
     CREATE POLICY "Users can view their own notifications"

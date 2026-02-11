@@ -5,6 +5,7 @@ import ArticleActions from '@/components/ArticleActions'
 import CommentsSection from '@/components/CommentsSection'
 import { Calendar, Clock, User, Tag, TrendingUp } from 'lucide-react'
 import { getPostBySlug, incrementPostView } from '@/lib/actions/posts'
+import { formatCategory } from '@/lib/utils'
 import MarkdownContent from './MarkdownContent'
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
@@ -30,7 +31,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             {/* Category & Trending Badge */}
             <div className="flex items-center gap-3 mb-6">
               <span className="px-4 py-2 rounded-lg bg-electric-cyan/20 text-electric-cyan font-semibold text-sm">
-                {post.category}
+                {formatCategory(post.category)}
               </span>
               {post.trending && (
                 <span className="px-4 py-2 rounded-lg bg-cyber-lime/20 text-cyber-lime font-semibold text-sm flex items-center gap-2">

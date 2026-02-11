@@ -70,13 +70,13 @@ export default async function BlogPage() {
                   excerpt={post.excerpt}
                   author={{
                     name: post.author?.full_name || 'Anonymous',
-                    avatar: post.author?.avatar_url || '/avatars/default.png',
+                    avatar: post.author?.avatar_url || '',
                     role: post.author?.role || 'Contributor',
                   }}
                   category={post.category}
                   readTime={`${post.estimated_read_time || 5} min read`}
                   date={new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  image={post.cover_image_url || '/blog/default.jpg'}
+                  image={post.cover_image_url || ''}
                   slug={post.slug}
                   trending={post.trending}
                 />

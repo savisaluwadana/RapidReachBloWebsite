@@ -191,13 +191,13 @@ export default async function Home() {
                     excerpt={featuredArticle.excerpt}
                     author={{
                       name: featuredArticle.author?.full_name || 'Anonymous',
-                      avatar: featuredArticle.author?.avatar_url || '/avatars/default.png',
+                      avatar: featuredArticle.author?.avatar_url || '',
                       role: featuredArticle.author?.role || 'Contributor',
                     }}
                     category={featuredArticle.category}
                     readTime={`${featuredArticle.estimated_read_time || 5} min read`}
                     date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    image={featuredArticle.cover_image_url || '/blog/default.jpg'}
+                    image={featuredArticle.cover_image_url || ''}
                     slug={featuredArticle.slug}
                     featured={featuredArticle.featured}
                     trending={featuredArticle.trending}
@@ -220,13 +220,13 @@ export default async function Home() {
                         excerpt={article.excerpt}
                         author={{
                           name: article.author?.full_name || 'Anonymous',
-                          avatar: article.author?.avatar_url || '/avatars/default.png',
+                          avatar: article.author?.avatar_url || '',
                           role: article.author?.role || 'Contributor',
                         }}
                         category={article.category}
                         readTime={`${article.estimated_read_time || 5} min read`}
                         date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        image={article.cover_image_url || '/blog/default.jpg'}
+                        image={article.cover_image_url || ''}
                         slug={article.slug}
                         trending={article.trending}
                       />

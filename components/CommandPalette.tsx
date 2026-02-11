@@ -14,19 +14,19 @@ interface CommandItem {
   icon: any
 }
 
-const mockItems: CommandItem[] = [
-  { id: '1', title: 'Kubernetes Deployment Patterns', category: 'Articles', url: '/blog/k8s-patterns', icon: FileText },
-  { id: '2', title: 'Platform Engineering Guide', category: 'Learning Paths', url: '/learning/platform-eng', icon: BookOpen },
-  { id: '3', title: 'Latest Kubernetes Release', category: 'News', url: '/news/k8s-latest', icon: Zap },
-  { id: '4', title: 'Terraform Best Practices', category: 'Articles', url: '/blog/terraform', icon: FileText },
-  { id: '5', title: 'Infrastructure as Code Mastery', category: 'Learning Paths', url: '/learning/iac', icon: BookOpen },
-  { id: '6', title: 'AWS EKS Update', category: 'News', url: '/news/eks-update', icon: TrendingUp },
+// Static navigation items always available
+const staticItems: CommandItem[] = [
+  { id: 'nav-blog', title: 'All Articles', category: 'Navigation', url: '/blog', icon: FileText },
+  { id: 'nav-learning', title: 'Learning Paths', category: 'Navigation', url: '/learning-paths', icon: BookOpen },
+  { id: 'nav-news', title: 'DevOps News', category: 'Navigation', url: '/news', icon: Zap },
+  { id: 'nav-subscribe', title: 'Subscribe', category: 'Navigation', url: '/subscribe', icon: TrendingUp },
 ]
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [filteredItems, setFilteredItems] = useState(mockItems)
+  const [filteredItems, setFilteredItems] = useState(staticItems)
+  const [dynamicItems, setDynamicItems] = useState<CommandItem[]>([])
   const router = useRouter()
 
   // Toggle with CMD/CTRL + K
@@ -42,19 +42,20 @@ export default function CommandPalette() {
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  // Filter items based on search
+  // Search posts dynamically when search query changes
   useEffect(() => {
     if (!search) {
-      setFilteredItems(mockItems)
+      setFilteredItems(staticItems)
+      setDynamicItems([])
       return
     }
 
-    const filtered = mockItems.filter((item) =>
+    const filtered = staticItems.filter((item) =>
       item.title.toLowerCase().includes(search.toLowerCase()) ||
       item.category.toLowerCase().includes(search.toLowerCase())
     )
-    setFilteredItems(filtered)
-  }, [search])
+    setFilteredItems([...filtered, ...dynamicItems])
+  }, [search, dynamicItems])
 
   const handleSelect = useCallback((url: string) => {
     setOpen(false)
