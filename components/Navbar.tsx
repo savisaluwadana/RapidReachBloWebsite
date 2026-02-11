@@ -73,8 +73,13 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-white/5 transition-colors hidden md:block">
-              <Search className="w-5 h-5 text-gray-400" />
+            <button 
+              onClick={() => document.dispatchEvent(new CustomEvent('open-command-palette'))}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 border border-white/10 transition-colors hidden md:flex"
+            >
+              <Search className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Search...</span>
+              <kbd className="ml-2 px-1.5 py-0.5 rounded bg-white/10 text-white/40 text-xs font-mono">⌘K</kbd>
             </button>
             
             {user ? (
@@ -202,7 +207,7 @@ export default function Navbar() {
             <Link href="/blog" className="block text-lg text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(false)}>
               Articles
             </Link>
-            <Link href="/learning-paths" className="block text-lg text-gray-300 hover:text-white">
+            <Link href="/learning-paths" className="block text-lg text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(false)}>
               Learning Paths
             </Link>
             <Link href="/news" className="block text-lg text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(false)}>

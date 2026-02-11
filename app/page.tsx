@@ -3,6 +3,7 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import HeroBentoGrid from '@/components/HeroBentoGrid'
+import Footer from '@/components/Footer'
 import { TrendingUp, Zap, BookOpen } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
@@ -369,55 +370,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative py-12 bg-deep-charcoal border-t border-white/10">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-bold gradient-text mb-4">RapidReach</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Your trusted source for DevOps, Platform Engineering, and Cloud Native expertise.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Content</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/blog" className="hover:text-electric-cyan transition-colors">All Articles</Link></li>
-                <li><Link href="/learning-paths" className="hover:text-electric-cyan transition-colors">Learning Paths</Link></li>
-                <li><Link href="/news" className="hover:text-electric-cyan transition-colors">News & Updates</Link></li>
-                <li><Link href="/blog?category=tutorials" className="hover:text-electric-cyan transition-colors">Tutorials</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Resources</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Documentation</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Code Examples</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Community</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Newsletter</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">About Us</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Write for Us</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Careers</li>
-                <li className="hover:text-electric-cyan transition-colors cursor-pointer">Contact</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-white/10 text-center">
-            <p className="text-gray-500 text-sm">
-              © 2026 RapidReach. Made with ❤️ for the DevOps community.
-            </p>
-            <p className="text-gray-600 text-xs mt-2">
-              Press <kbd className="px-2 py-1 rounded bg-white/10 text-gray-400 font-mono">⌘K</kbd> for quick navigation
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }
-

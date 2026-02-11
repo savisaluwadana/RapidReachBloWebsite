@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { getCurrentUser, signOut } from '@/lib/actions/auth'
 import { updateUserProfile } from '@/lib/actions/users'
 import Link from 'next/link'
+import Navbar from '@/components/Navbar'
 import type { UserProfile } from '@/lib/types/database'
 
 export default function ProfilePage() {
@@ -11,6 +12,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [prefs, setPrefs] = useState({
+    emailNotifications: true,
+    weeklyNewsletter: true,
+    commentNotifications: false,
+  })
 
   useEffect(() => {
     loadUser()
@@ -34,7 +40,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-deep-charcoal flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="animate-spin w-8 h-8 border-2 border-electric-cyan border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -44,7 +50,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-deep-charcoal py-12 px-6">
+    <div className="min-h-screen bg-deep-charcoal">
+      <Navbar />
+      <div className="pt-24 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -191,8 +199,11 @@ export default function ProfilePage() {
                 <p className="font-semibold text-white">Email Notifications</p>
                 <p className="text-sm text-gray-400">Receive email updates about new content</p>
               </div>
-              <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+              <button 
+                onClick={() => setPrefs(p => ({ ...p, emailNotifications: !p.emailNotifications }))}
+                className={`w-14 h-8 rounded-full relative transition-colors ${prefs.emailNotifications ? 'bg-electric-cyan/30' : 'bg-white/10'}`}
+              >
+                <div className={`w-6 h-6 rounded-full absolute top-1 transition-all ${prefs.emailNotifications ? 'right-1 bg-electric-cyan' : 'left-1 bg-gray-400'}`} />
               </button>
             </div>
 
@@ -201,8 +212,11 @@ export default function ProfilePage() {
                 <p className="font-semibold text-white">Weekly Newsletter</p>
                 <p className="text-sm text-gray-400">Get curated DevOps content weekly</p>
               </div>
-              <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+              <button 
+                onClick={() => setPrefs(p => ({ ...p, weeklyNewsletter: !p.weeklyNewsletter }))}
+                className={`w-14 h-8 rounded-full relative transition-colors ${prefs.weeklyNewsletter ? 'bg-electric-cyan/30' : 'bg-white/10'}`}
+              >
+                <div className={`w-6 h-6 rounded-full absolute top-1 transition-all ${prefs.weeklyNewsletter ? 'right-1 bg-electric-cyan' : 'left-1 bg-gray-400'}`} />
               </button>
             </div>
 
@@ -211,12 +225,16 @@ export default function ProfilePage() {
                 <p className="font-semibold text-white">Comment Notifications</p>
                 <p className="text-sm text-gray-400">Get notified when someone replies to your comments</p>
               </div>
-              <button className="w-14 h-8 bg-white/10 rounded-full relative">
-                <div className="w-6 h-6 bg-gray-400 rounded-full absolute top-1 left-1" />
+              <button 
+                onClick={() => setPrefs(p => ({ ...p, commentNotifications: !p.commentNotifications }))}
+                className={`w-14 h-8 rounded-full relative transition-colors ${prefs.commentNotifications ? 'bg-electric-cyan/30' : 'bg-white/10'}`}
+              >
+                <div className={`w-6 h-6 rounded-full absolute top-1 transition-all ${prefs.commentNotifications ? 'right-1 bg-electric-cyan' : 'left-1 bg-gray-400'}`} />
               </button>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

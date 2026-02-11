@@ -38,8 +38,15 @@ export default function CommandPalette() {
       }
     }
 
+    // Allow other components (e.g. Navbar search button) to open the palette
+    const handleOpenEvent = () => setOpen(true)
+
     document.addEventListener('keydown', down)
-    return () => document.removeEventListener('keydown', down)
+    document.addEventListener('open-command-palette', handleOpenEvent)
+    return () => {
+      document.removeEventListener('keydown', down)
+      document.removeEventListener('open-command-palette', handleOpenEvent)
+    }
   }, [])
 
   // Search posts dynamically when search query changes
@@ -114,7 +121,7 @@ export default function CommandPalette() {
                 )}
 
                 {/* Group by category */}
-                {['Articles', 'Learning Paths', 'News'].map((category) => {
+                {['Navigation', 'Articles', 'Learning Paths', 'News'].map((category) => {
                   const categoryItems = filteredItems.filter((item) => item.category === category)
                   
                   if (categoryItems.length === 0) return null
