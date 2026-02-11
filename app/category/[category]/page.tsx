@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
+import Footer from '@/components/Footer'
 import { ArrowLeft, Filter } from 'lucide-react'
 import Link from 'next/link'
 import { getPosts } from '@/lib/actions/posts'
@@ -117,6 +118,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           )}
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }

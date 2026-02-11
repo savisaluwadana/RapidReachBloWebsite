@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar'
 import ReadingProgress from '@/components/ReadingProgress'
 import ArticleActions from '@/components/ArticleActions'
 import CommentsSection from '@/components/CommentsSection'
+import Footer from '@/components/Footer'
 import { Calendar, Clock, User, Tag, TrendingUp } from 'lucide-react'
 import { getPostBySlug, incrementPostView } from '@/lib/actions/posts'
 import { formatCategory } from '@/lib/utils'
@@ -124,6 +125,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           </div>
         </article>
       </main>
+
+      <Footer />
     </>
   )
 }

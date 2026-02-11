@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Command } from 'cmdk'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, FileText, Zap, BookOpen, TrendingUp, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { searchPosts } from '@/lib/actions/posts'
 
 interface CommandItem {
   id: string
@@ -27,6 +28,8 @@ export default function CommandPalette() {
   const [search, setSearch] = useState('')
   const [filteredItems, setFilteredItems] = useState(staticItems)
   const [dynamicItems, setDynamicItems] = useState<CommandItem[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
   // Toggle with CMD/CTRL + K
@@ -54,15 +57,46 @@ export default function CommandPalette() {
     if (!search) {
       setFilteredItems(staticItems)
       setDynamicItems([])
+      setIsSearching(false)
       return
     }
 
+    // Filter static items immediately
     const filtered = staticItems.filter((item) =>
       item.title.toLowerCase().includes(search.toLowerCase()) ||
       item.category.toLowerCase().includes(search.toLowerCase())
     )
-    setFilteredItems([...filtered, ...dynamicItems])
-  }, [search, dynamicItems])
+
+    // Debounce dynamic search
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    setIsSearching(true)
+
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await searchPosts(search, 5)
+        const postItems: CommandItem[] = results.map((post) => ({
+          id: `post-${post.id}`,
+          title: post.title,
+          category: 'Articles',
+          url: `/blog/${post.slug}`,
+          icon: FileText,
+        }))
+        setDynamicItems(postItems)
+        setFilteredItems([...filtered, ...postItems])
+      } catch {
+        setFilteredItems(filtered)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300)
+
+    // Show static results immediately while dynamic loads
+    setFilteredItems(filtered)
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    }
+  }, [search])
 
   const handleSelect = useCallback((url: string) => {
     setOpen(false)
@@ -114,10 +148,17 @@ export default function CommandPalette() {
               </div>
 
               <Command.List className="max-h-[400px] overflow-y-auto p-3">
-                {filteredItems.length === 0 && (
+                {filteredItems.length === 0 && !isSearching && (
                   <Command.Empty className="py-8 text-center text-gray-500">
                     No results found.
                   </Command.Empty>
+                )}
+
+                {isSearching && (
+                  <div className="py-8 text-center text-gray-500">
+                    <div className="animate-spin w-5 h-5 border-2 border-electric-cyan border-t-transparent rounded-full mx-auto mb-2" />
+                    Searching articles...
+                  </div>
                 )}
 
                 {/* Group by category */}

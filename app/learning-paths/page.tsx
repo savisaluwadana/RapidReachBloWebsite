@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { BookOpen, Clock, Users, CheckCircle, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { getLearningPaths } from '@/lib/actions/learning-paths'
@@ -87,6 +88,8 @@ export default async function LearningPathsPage() {
           )}
         </div>
       </div>
+
+      <Footer />
     </main>
   )
 }

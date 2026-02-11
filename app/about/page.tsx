@@ -1,4 +1,6 @@
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import Link from 'next/link'
 import { Users, Target, Zap, BookOpen, Heart } from 'lucide-react'
 
 export default function AboutPage() {
@@ -69,11 +71,13 @@ export default function AboutPage() {
           <p className="text-xl text-gray-400 mb-8">
             Be part of a growing community of DevOps professionals sharing knowledge and best practices
           </p>
-          <button className="px-8 py-4 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-lg hover:shadow-glow-xl transition-all hover:scale-105">
+          <Link href="/auth/signup" className="inline-block px-8 py-4 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-lg hover:shadow-glow-xl transition-all hover:scale-105">
             Get Started Free
-          </button>
+          </Link>
         </div>
       </div>
+
+      <Footer />
     </main>
   )
 }

@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { Newspaper, TrendingUp, ExternalLink, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { getNewsFeed } from '@/lib/actions/news'
@@ -112,6 +113,8 @@ export default async function NewsPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </main>
   )
 }

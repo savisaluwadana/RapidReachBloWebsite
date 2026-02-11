@@ -365,3 +365,30 @@ export async function incrementPostView(postId: string) {
     console.error('Error incrementing view count:', error)
   }
 }
+
+export async function searchPosts(query: string, limit = 5) {
+  const supabase = await createClient()
+
+  if (!supabase) {
+    const q = query.toLowerCase()
+    return getDemoPosts()
+      .filter(p => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q))
+      .slice(0, limit)
+      .map(p => ({ id: p.id, title: p.title, slug: p.slug, category: p.category }))
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, title, slug, category')
+      .eq('status', 'published')
+      .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%`)
+      .limit(limit)
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error searching posts:', error)
+    return []
+  }
+}

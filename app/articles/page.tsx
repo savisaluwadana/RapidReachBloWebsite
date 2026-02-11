@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
+import Footer from '@/components/Footer'
 import { BookOpen, Filter, Search, ArrowLeft } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
@@ -119,6 +120,8 @@ export default async function ArticlesPage({
           </div>
         )}
       </div>
+
+      <Footer />
     </main>
   )
 }

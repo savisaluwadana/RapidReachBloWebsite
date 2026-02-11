@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
+import Footer from '@/components/Footer'
 import { Search, TrendingUp, Clock, Zap } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 
@@ -92,6 +93,8 @@ export default async function BlogPage() {
           )}
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }
