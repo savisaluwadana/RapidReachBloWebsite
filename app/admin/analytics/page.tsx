@@ -1,27 +1,84 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { TrendingUp, Eye, Heart, MessageSquare, Share2, Calendar } from 'lucide-react'
+import { getDashboardStats, getTopPosts, getTrafficSources, getUserGrowthData } from '@/lib/actions/analytics'
 
-const mockTopPosts = [
-  { title: 'Kubernetes 1.30: What\'s New', views: 45200, engagement: 2340, comments: 128 },
-  { title: 'Terraform Best Practices 2026', views: 38900, engagement: 1876, comments: 94 },
-  { title: 'GitOps with ArgoCD', views: 32100, engagement: 1654, comments: 87 },
-  { title: 'Platform Engineering Guide', views: 29800, engagement: 1432, comments: 76 },
-  { title: 'CI/CD Pipeline Optimization', views: 25600, engagement: 1298, comments: 62 },
-]
+interface TopPost {
+  id: string
+  title: string
+  slug: string
+  view_count: number
+  like_count: number
+  comment_count: number
+  author?: { full_name: string }
+}
 
-const mockTrafficSources = [
-  { source: 'Direct', visits: 45200, percentage: 38 },
-  { source: 'Google', visits: 32100, percentage: 27 },
-  { source: 'Social Media', visits: 24300, percentage: 20 },
-  { source: 'Referrals', visits: 12800, percentage: 11 },
-  { source: 'Other', visits: 4800, percentage: 4 },
-]
+interface TrafficSource {
+  source: string
+  visits: number
+  percentage: number
+}
+
+interface GrowthMonth {
+  month: string
+  users: number
+}
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('7d')
+  const [stats, setStats] = useState({
+    totalViews: 0,
+    totalComments: 0,
+    totalPosts: 0,
+    totalUsers: 0,
+    pendingPosts: 0,
+    flaggedComments: 0,
+  })
+  const [topPosts, setTopPosts] = useState<TopPost[]>([])
+  const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([])
+  const [userGrowth, setUserGrowth] = useState<GrowthMonth[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      const [statsData, postsData, trafficData, growthData] = await Promise.all([
+        getDashboardStats(),
+        getTopPosts(5),
+        getTrafficSources(),
+        getUserGrowthData(6),
+      ])
+
+      setStats(statsData)
+      setTopPosts(postsData as TopPost[])
+
+      // Transform traffic sources from Record<string, number> to array
+      const totalTraffic = Object.values(trafficData).reduce((sum, v) => sum + v, 0) || 1
+      const trafficArr: TrafficSource[] = Object.entries(trafficData).map(([source, visits]) => ({
+        source,
+        visits: visits as number,
+        percentage: Math.round(((visits as number) / totalTraffic) * 100),
+      }))
+      setTrafficSources(trafficArr.sort((a, b) => b.visits - a.visits))
+
+      setUserGrowth(growthData as GrowthMonth[])
+    } catch (error) {
+      console.error('Failed to load analytics:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatNumber = (n: number) => {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+    return n.toString()
+  }
 
   return (
     <AdminLayout>
@@ -54,32 +111,28 @@ export default function Analytics() {
           {[
             { 
               label: 'Total Views', 
-              value: '1.2M', 
-              change: '+15.3%', 
+              value: formatNumber(stats.totalViews), 
               icon: Eye, 
               color: 'electric-cyan',
               trend: [20, 35, 28, 42, 38, 52, 48, 65, 58, 72, 68, 85]
             },
             { 
-              label: 'Engagement', 
-              value: '8.4K', 
-              change: '+23.1%', 
+              label: 'Total Posts', 
+              value: formatNumber(stats.totalPosts), 
               icon: Heart, 
               color: 'cyber-lime',
               trend: [15, 22, 28, 25, 35, 42, 38, 48, 52, 58, 62, 68]
             },
             { 
               label: 'Comments', 
-              value: '3.8K', 
-              change: '+18.7%', 
+              value: formatNumber(stats.totalComments), 
               icon: MessageSquare, 
               color: 'yellow-400',
               trend: [10, 15, 18, 22, 25, 28, 32, 35, 40, 42, 48, 52]
             },
             { 
-              label: 'Shares', 
-              value: '2.1K', 
-              change: '+12.4%', 
+              label: 'Active Users', 
+              value: formatNumber(stats.totalUsers), 
               icon: Share2, 
               color: 'purple-400',
               trend: [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 45]
@@ -88,7 +141,6 @@ export default function Analytics() {
             <div key={metric.label} className="rounded-2xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.07] transition-all group">
               <div className="flex items-center justify-between mb-4">
                 <metric.icon className={`w-6 h-6 text-${metric.color}`} />
-                <span className={`text-sm font-semibold text-${metric.color}`}>{metric.change}</span>
               </div>
               <p className="text-3xl font-bold text-white mb-1">{metric.value}</p>
               <p className="text-sm text-gray-400 mb-4">{metric.label}</p>
@@ -155,30 +207,38 @@ export default function Analytics() {
               <h2 className="text-xl font-bold text-white">Top Performing Posts</h2>
             </div>
             <div className="space-y-4">
-              {mockTopPosts.map((post, i) => (
-                <div key={i} className="flex items-start justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all group">
-                  <div className="flex-1">
-                    <p className="font-semibold text-white mb-2 group-hover:text-electric-cyan transition-colors">
-                      {post.title}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {post.views.toLocaleString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        {post.engagement.toLocaleString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="w-4 h-4" />
-                        {post.comments}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-2xl font-bold text-gray-600">#{i + 1}</span>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-10 h-10 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
                 </div>
-              ))}
+              ) : topPosts.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No posts data available</p>
+              ) : (
+                topPosts.map((post, i) => (
+                  <div key={post.id} className="flex items-start justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all group">
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-2 group-hover:text-electric-cyan transition-colors">
+                        {post.title}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-4 h-4" />
+                          {(post.view_count || 0).toLocaleString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-4 h-4" />
+                          {(post.like_count || 0).toLocaleString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-4 h-4" />
+                          {post.comment_count || 0}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-gray-600">#{i + 1}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -189,23 +249,31 @@ export default function Analytics() {
               <h2 className="text-xl font-bold text-white">Traffic Sources</h2>
             </div>
             <div className="space-y-4">
-              {mockTrafficSources.map((source) => (
-                <div key={source.source} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white font-semibold">{source.source}</span>
-                    <span className="text-gray-400">{source.visits.toLocaleString()} visits</span>
-                  </div>
-                  <div className="relative h-3 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-electric-cyan to-cyber-lime rounded-full"
-                      style={{ width: `${source.percentage}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <span className="text-xs text-electric-cyan font-semibold">{source.percentage}%</span>
-                  </div>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-10 h-10 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
                 </div>
-              ))}
+              ) : trafficSources.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No traffic data available</p>
+              ) : (
+                trafficSources.map((source) => (
+                  <div key={source.source} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white font-semibold">{source.source}</span>
+                      <span className="text-gray-400">{source.visits.toLocaleString()} visits</span>
+                    </div>
+                    <div className="relative h-3 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-electric-cyan to-cyber-lime rounded-full"
+                        style={{ width: `${source.percentage}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <span className="text-xs text-electric-cyan font-semibold">{source.percentage}%</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -213,31 +281,35 @@ export default function Analytics() {
         {/* User Growth */}
         <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
           <h2 className="text-xl font-bold text-white mb-6">User Growth</h2>
-          <div className="flex items-end justify-between h-64 gap-2">
-            {[
-              { month: 'Jan', users: 4200, new: 820 },
-              { month: 'Feb', users: 5100, new: 900 },
-              { month: 'Mar', users: 6400, new: 1300 },
-              { month: 'Apr', users: 7200, new: 800 },
-              { month: 'May', users: 8900, new: 1700 },
-              { month: 'Jun', users: 10459, new: 1559 },
-            ].map((data) => (
-              <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
-                <div 
-                  className="w-full bg-gradient-to-t from-electric-cyan to-cyber-lime rounded-t-lg hover:shadow-glow-md transition-all cursor-pointer group relative"
-                  style={{ height: `${(data.users / 10459) * 100}%` }}
-                >
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
-                    {data.users.toLocaleString()} users
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
+            </div>
+          ) : userGrowth.length === 0 ? (
+            <p className="text-gray-400 text-center py-12">No growth data available yet</p>
+          ) : (
+            <div className="flex items-end justify-between h-64 gap-2">
+              {userGrowth.map((data) => {
+                const maxUsers = Math.max(...userGrowth.map(d => d.users), 1)
+                return (
+                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
+                    <div 
+                      className="w-full bg-gradient-to-t from-electric-cyan to-cyber-lime rounded-t-lg hover:shadow-glow-md transition-all cursor-pointer group relative"
+                      style={{ height: `${(data.users / maxUsers) * 100}%`, minHeight: '8px' }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
+                        {data.users.toLocaleString()} users
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-white">{data.month}</p>
+                      <p className="text-xs text-cyber-lime">+{data.users}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-white">{data.month}</p>
-                  <p className="text-xs text-cyber-lime">+{data.new}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { Search, ThumbsUp, Flag, Trash2, CheckCircle, XCircle, MessageSquare } from 'lucide-react'
-import { getComments, updateCommentStatus, deleteComment } from '@/lib/actions/comments'
+import { getAllComments, updateCommentStatus, deleteComment } from '@/lib/actions/comments'
 import type { Comment } from '@/lib/types/database'
 
 interface AdminComment {
@@ -31,7 +31,7 @@ export default function CommentsModeration() {
 
   const loadComments = async () => {
     try {
-      const data = await getComments({ limit: 50 })
+      const data = await getAllComments({ limit: 50 })
       const mapped: AdminComment[] = data.map((c: any) => ({
         id: c.id,
         author_name: c.author?.full_name || 'Unknown',
