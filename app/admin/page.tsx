@@ -1,5 +1,5 @@
 import AdminLayout from '@/components/AdminLayout'
-import { BarChart3, Users, FileText, MessageSquare, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Users, FileText, MessageSquare, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { getDashboardStats } from '@/lib/actions/analytics'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
@@ -12,17 +12,10 @@ export default async function AdminDashboard() {
   const pendingPostsData = await getPosts({ status: 'draft', limit: 3 })
   
   const dashboardStats = [
-    { name: 'Total Posts', value: stats.totalPosts.toLocaleString(), change: `+${Math.round((stats.totalPosts / 100) * 12)}%`, icon: FileText, color: 'electric-cyan' },
-    { name: 'Active Users', value: stats.totalUsers.toLocaleString(), change: '+8%', icon: Users, color: 'cyber-lime' },
-    { name: 'Comments', value: stats.totalComments.toLocaleString(), change: '+23%', icon: MessageSquare, color: 'electric-cyan' },
-    { name: 'Monthly Views', value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(), change: '+15%', icon: TrendingUp, color: 'cyber-lime' },
-  ]
-
-  const recentActivity = [
-    { type: 'post', action: 'published', item: 'Platform Engineering Guide', user: 'Admin', time: '10 min ago' },
-    { type: 'comment', action: 'approved', item: 'Comment on "K8s Patterns"', user: 'Moderator', time: '25 min ago' },
-    { type: 'user', action: 'registered', item: 'New user: alex@example.com', user: 'System', time: '1 hour ago' },
-    { type: 'post', action: 'rejected', item: 'Spam content detected', user: 'Admin', time: '2 hours ago' },
+    { name: 'Total Posts', value: stats.totalPosts.toLocaleString(), icon: FileText, color: 'electric-cyan' },
+    { name: 'Active Users', value: stats.totalUsers.toLocaleString(), icon: Users, color: 'cyber-lime' },
+    { name: 'Comments', value: stats.totalComments.toLocaleString(), icon: MessageSquare, color: 'electric-cyan' },
+    { name: 'Monthly Views', value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(), icon: TrendingUp, color: 'cyber-lime' },
   ]
 
   return (
@@ -45,7 +38,6 @@ export default async function AdminDashboard() {
                 <div className={`p-3 rounded-xl bg-${stat.color}/10`}>
                   <stat.icon className={`w-6 h-6 text-${stat.color}`} />
                 </div>
-                <span className="text-cyber-lime text-sm font-semibold">{stat.change}</span>
               </div>
               <div>
                 <p className="text-gray-400 text-sm mb-1">{stat.name}</p>
@@ -120,40 +112,7 @@ export default async function AdminDashboard() {
             </Link>
           </div>
 
-          {/* Recent Activity */}
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <BarChart3 className="w-5 h-5 text-electric-cyan" />
-              <h2 className="text-xl font-bold text-white">Recent Activity</h2>
-            </div>
 
-            <div className="space-y-4">
-              {recentActivity.map((activity, i) => {
-                const actionColors = {
-                  published: 'text-cyber-lime',
-                  approved: 'text-electric-cyan',
-                  registered: 'text-blue-400',
-                  rejected: 'text-red-400',
-                }
-                
-                return (
-                  <div key={i} className="flex gap-3">
-                    <div className={`w-2 h-2 rounded-full ${actionColors[activity.action as keyof typeof actionColors]} mt-2`} />
-                    <div className="flex-1">
-                      <p className="text-sm text-white mb-1">
-                        <span className="font-semibold">{activity.user}</span>{' '}
-                        <span className={actionColors[activity.action as keyof typeof actionColors]}>
-                          {activity.action}
-                        </span>{' '}
-                        {activity.item}
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Quick Actions */}

@@ -3,7 +3,7 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import HeroBentoGrid from '@/components/HeroBentoGrid'
-import { TrendingUp, Zap, BookOpen, Users, Rocket, Terminal, Cloud, Shield, GitBranch, Layers } from 'lucide-react'
+import { TrendingUp, Zap, BookOpen, Rocket, Terminal, Cloud, Shield, GitBranch, Layers } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
 
@@ -66,21 +66,7 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {[
-              { icon: BookOpen, value: '500+', label: 'Articles' },
-              { icon: Users, value: '50K+', label: 'Readers' },
-              { icon: TrendingUp, value: '1M+', label: 'Monthly Views' },
-              { icon: Zap, value: '24/7', label: 'Live Updates' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-6 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10">
-                <stat.icon className="w-8 h-8 text-electric-cyan mx-auto mb-3" />
-                <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+
         </div>
       </section>
 
@@ -94,12 +80,12 @@ export default async function Home() {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { name: 'Kubernetes', icon: Layers, color: 'electric-cyan', count: '120+' },
-              { name: 'Terraform', icon: Terminal, color: 'purple-400', count: '85+' },
-              { name: 'CI/CD', icon: GitBranch, color: 'cyber-lime', count: '95+' },
-              { name: 'Security', icon: Shield, color: 'red-400', count: '70+' },
-              { name: 'Cloud', icon: Cloud, color: 'blue-400', count: '110+' },
-              { name: 'Platform Engineering', icon: Rocket, color: 'orange-400', count: '65+' },
+              { name: 'Kubernetes', icon: Layers, color: 'electric-cyan' },
+              { name: 'Terraform', icon: Terminal, color: 'purple-400' },
+              { name: 'CI/CD', icon: GitBranch, color: 'cyber-lime' },
+              { name: 'Security', icon: Shield, color: 'red-400' },
+              { name: 'Cloud', icon: Cloud, color: 'blue-400' },
+              { name: 'Platform Engineering', icon: Rocket, color: 'orange-400' },
             ].map((category) => (
               <Link
                 key={category.name}
@@ -107,8 +93,7 @@ export default async function Home() {
                 className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
               >
                 <category.icon className={`w-10 h-10 text-${category.color} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
-                <h3 className="text-white font-bold text-center mb-1">{category.name}</h3>
-                <p className="text-gray-400 text-xs text-center">{category.count} articles</p>
+                <h3 className="text-white font-bold text-center">{category.name}</h3>
               </Link>
             ))}
           </div>
@@ -238,7 +223,7 @@ export default async function Home() {
               <div className="sticky top-24 space-y-6">
                 <div className="rounded-2xl backdrop-blur-xl bg-gradient-cyber p-8 text-center">
                   <h3 className="text-2xl font-bold text-white mb-3">
-                    Join 50,000+ DevOps Professionals
+                    Stay Updated
                   </h3>
                   <p className="text-white/90 mb-6">
                     Get weekly insights on Kubernetes, Platform Engineering, and Cloud Native tech.
@@ -290,7 +275,7 @@ export default async function Home() {
               Ready to Level Up Your DevOps Skills?
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Join thousands of engineers learning Kubernetes, Platform Engineering, and Cloud Native best practices.
+              Start learning Kubernetes, Platform Engineering, and Cloud Native best practices today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -306,22 +291,7 @@ export default async function Home() {
                 Browse Articles
               </Link>
             </div>
-            
-            {/* Trust Indicators */}
-            <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-              <div className="text-center">
-                <div className="text-3xl font-bold gradient-text mb-1">500+</div>
-                <div className="text-sm text-gray-400">Technical Articles</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold gradient-text mb-1">50K+</div>
-                <div className="text-sm text-gray-400">Active Readers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold gradient-text mb-1">24/7</div>
-                <div className="text-sm text-gray-400">Live Updates</div>
-              </div>
-            </div>
+
           </div>
         </div>
       </section>

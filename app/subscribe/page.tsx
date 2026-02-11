@@ -68,9 +68,7 @@ export default function SubscribePage() {
                 Subscribe Now
               </button>
             </form>
-            <p className="text-white/80 text-sm mt-4 text-center">
-              Join 50,000+ DevOps professionals already subscribed
-            </p>
+
           </div>
         </div>
       </div>

@@ -128,38 +128,15 @@ export default function HeroBentoGrid() {
                   Never miss a critical update.
                 </p>
 
-                {/* Mock Live Feed Items */}
-                <div className="space-y-3">
-                  {[
-                    { title: 'Kubernetes 1.30 Released', time: '2m ago', color: 'electric-cyan' },
-                    { title: 'Terraform AWS Provider 5.x', time: '15m ago', color: 'cyber-lime' },
-                    { title: 'Istio 1.21 Security Update', time: '1h ago', color: 'electric-cyan' },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.6 + i * 0.1 }}
-                      className={`p-4 rounded-xl ${glassStyle} hover:bg-white/10 transition-all cursor-pointer`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full bg-${item.color} animate-pulse`} />
-                          <span className="text-white font-medium">{item.title}</span>
-                        </div>
-                        <span className="text-gray-500 text-sm">{item.time}</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <motion.button
-                  whileHover={{ x: 5 }}
-                  className="mt-6 text-electric-cyan flex items-center gap-2 font-semibold hover:gap-3 transition-all"
-                >
-                  View All Updates
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
+                <Link href="/news">
+                  <motion.button
+                    whileHover={{ x: 5 }}
+                    className="mt-6 text-electric-cyan flex items-center gap-2 font-semibold hover:gap-3 transition-all"
+                  >
+                    View All Updates
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </Link>
               </div>
             </div>
           </motion.div>
@@ -289,36 +266,7 @@ export default function HeroBentoGrid() {
             </div>
           </motion.div>
 
-          {/* Stats Card */}
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="md:col-span-1 lg:col-span-2 relative group"
-          >
-            <div className={`${glassStyle} rounded-3xl p-6 h-full shadow-bento hover:shadow-glow-md transition-all duration-500`}>
-              <h3 className="text-lg font-bold text-white mb-6">Platform Stats</h3>
-              
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { value: '1,200+', label: 'Articles' },
-                  { value: '50K+', label: 'Developers' },
-                  { value: '24/7', label: 'Live Updates' },
-                ].map((stat, i) => (
-                  <div key={i} className="text-center">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.8 + i * 0.1 }}
-                      className="text-3xl font-bold bg-gradient-cyber bg-clip-text text-transparent mb-1"
-                    >
-                      {stat.value}
-                    </motion.div>
-                    <div className="text-gray-400 text-sm">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+
         </motion.div>
 
         {/* Command Palette Hint */}

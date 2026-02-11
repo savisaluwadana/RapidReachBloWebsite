@@ -55,15 +55,6 @@ export default function SignIn() {
           <p className="text-gray-400">Sign in to your RapidReach account</p>
         </div>
 
-        {/* Demo Credentials Banner */}
-        <div className="rounded-xl bg-electric-cyan/10 border border-electric-cyan/30 p-4 mb-6">
-          <p className="text-sm text-electric-cyan font-semibold mb-2">Demo Mode Active</p>
-          <p className="text-xs text-gray-300">
-            <strong>Admin:</strong> admin@rapidreach.blog / admin123<br />
-            <strong>User:</strong> Any email / Any password
-          </p>
-        </div>
-
         {/* Sign In Form */}
         <form onSubmit={handleSignIn} className="rounded-2xl bg-white/5 border border-white/10 p-8 space-y-6">
           {/* Error Message */}

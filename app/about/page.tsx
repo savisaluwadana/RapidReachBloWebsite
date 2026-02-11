@@ -60,29 +60,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="max-w-7xl mx-auto">
-          <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">500+</div>
-                <div className="text-gray-400">Articles Published</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">50K+</div>
-                <div className="text-gray-400">Active Readers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">1M+</div>
-                <div className="text-gray-400">Monthly Views</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">100+</div>
-                <div className="text-gray-400">Contributors</div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* CTA */}
         <div className="max-w-4xl mx-auto mt-20 text-center">
