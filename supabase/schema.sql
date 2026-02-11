@@ -12,19 +12,48 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- For password hashing
 -- ENUMS
 -- =====================================================
 
-CREATE TYPE user_role AS ENUM ('reader', 'contributor', 'editor', 'admin');
-CREATE TYPE post_status AS ENUM ('draft', 'pending', 'published', 'archived', 'rejected');
-CREATE TYPE content_difficulty AS ENUM ('beginner', 'intermediate', 'advanced', 'expert');
-CREATE TYPE news_category AS ENUM ('kubernetes', 'terraform', 'aws', 'azure', 'gcp', 'cicd', 'security', 'observability', 'platform-engineering', 'docker', 'monitoring');
-CREATE TYPE comment_status AS ENUM ('pending', 'approved', 'rejected', 'flagged');
-CREATE TYPE notification_type AS ENUM ('new_comment', 'new_post', 'post_approved', 'post_rejected', 'comment_approved', 'user_approved', 'new_follower');
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('reader', 'contributor', 'editor', 'admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE post_status AS ENUM ('draft', 'pending', 'published', 'archived', 'rejected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE content_difficulty AS ENUM ('beginner', 'intermediate', 'advanced', 'expert');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE news_category AS ENUM ('kubernetes', 'terraform', 'aws', 'azure', 'gcp', 'cicd', 'security', 'observability', 'platform-engineering', 'docker', 'monitoring');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE comment_status AS ENUM ('pending', 'approved', 'rejected', 'flagged');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE notification_type AS ENUM ('new_comment', 'new_post', 'post_approved', 'post_rejected', 'comment_approved', 'user_approved', 'new_follower');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- =====================================================
 -- CORE TABLES
 -- =====================================================
 
 -- User Profiles (Enhanced with authentication and admin features)
-CREATE TABLE user_profiles (
+CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT, -- For custom auth (optional if using Supabase Auth)
@@ -76,7 +105,7 @@ CREATE TABLE user_profiles (
 );
 
 -- Blog Posts (Enhanced with approval workflow and engagement)
-CREATE TABLE posts (
+CREATE TABLE IF NOT EXISTS posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug TEXT UNIQUE NOT NULL,
     title TEXT NOT NULL,
@@ -134,17 +163,17 @@ CREATE TABLE posts (
 );
 
 -- Create indexes for posts
-CREATE INDEX idx_posts_author ON posts(author_id);
-CREATE INDEX idx_posts_status ON posts(status);
-CREATE INDEX idx_posts_category ON posts(category);
-CREATE INDEX idx_posts_published_at ON posts(published_at DESC);
-CREATE INDEX idx_posts_trending ON posts(trending) WHERE trending = true;
-CREATE INDEX idx_posts_featured ON posts(featured) WHERE featured = true;
-CREATE INDEX idx_posts_tags ON posts USING gin(tags);
-CREATE INDEX idx_posts_slug ON posts(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_author ON posts(author_id);
+CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
+CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
+CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_trending ON posts(trending) WHERE trending = true;
+CREATE INDEX IF NOT EXISTS idx_posts_featured ON posts(featured) WHERE featured = true;
+CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts USING gin(tags);
+CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
 
 -- Live Infrastructure News Feed
-CREATE TABLE news_feed (
+CREATE TABLE IF NOT EXISTS news_feed (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     description TEXT,
@@ -171,7 +200,7 @@ CREATE TABLE news_feed (
 );
 
 -- Learning Paths
-CREATE TABLE learning_paths (
+CREATE TABLE IF NOT EXISTS learning_paths (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
@@ -205,7 +234,7 @@ CREATE TABLE learning_paths (
 );
 
 -- User Learning Path Progress
-CREATE TABLE learning_path_progress (
+CREATE TABLE IF NOT EXISTS learning_path_progress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
     learning_path_id UUID REFERENCES learning_paths(id) ON DELETE CASCADE,
@@ -222,7 +251,7 @@ CREATE TABLE learning_path_progress (
 );
 
 -- Comments (Enhanced with moderation and nested replies)
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
     author_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -254,15 +283,15 @@ CREATE TABLE comments (
 );
 
 -- Create indexes for comments
-CREATE INDEX idx_comments_post ON comments(post_id);
-CREATE INDEX idx_comments_author ON comments(author_id);
-CREATE INDEX idx_comments_parent ON comments(parent_comment_id);
-CREATE INDEX idx_comments_status ON comments(status);
-CREATE INDEX idx_comments_flagged ON comments(is_flagged) WHERE is_flagged = true;
-CREATE INDEX idx_comments_created_at ON comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_author ON comments(author_id);
+CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_comment_id);
+CREATE INDEX IF NOT EXISTS idx_comments_status ON comments(status);
+CREATE INDEX IF NOT EXISTS idx_comments_flagged ON comments(is_flagged) WHERE is_flagged = true;
+CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at DESC);
 
 -- Post Reactions (Likes, Bookmarks)
-CREATE TABLE post_reactions (
+CREATE TABLE IF NOT EXISTS post_reactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
@@ -274,7 +303,7 @@ CREATE TABLE post_reactions (
 );
 
 -- Infrastructure Topology Data (Category-Defining Feature #1)
-CREATE TABLE infrastructure_topologies (
+CREATE TABLE IF NOT EXISTS infrastructure_topologies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -291,7 +320,7 @@ CREATE TABLE infrastructure_topologies (
 );
 
 -- Incident Timelines (Category-Defining Feature #3)
-CREATE TABLE incident_timelines (
+CREATE TABLE IF NOT EXISTS incident_timelines (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
@@ -321,7 +350,7 @@ CREATE TABLE incident_timelines (
 );
 
 -- Newsletter Subscriptions
-CREATE TABLE newsletter_subscriptions (
+CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -335,7 +364,7 @@ CREATE TABLE newsletter_subscriptions (
 );
 
 -- User Activity Log (for analytics)
-CREATE TABLE user_activity (
+CREATE TABLE IF NOT EXISTS user_activity (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
     activity_type TEXT NOT NULL, -- 'view', 'like', 'comment', 'share', 'bookmark'
@@ -352,13 +381,13 @@ CREATE TABLE user_activity (
 );
 
 -- Create index for user activity
-CREATE INDEX idx_user_activity_user ON user_activity(user_id);
-CREATE INDEX idx_user_activity_type ON user_activity(activity_type);
-CREATE INDEX idx_user_activity_resource ON user_activity(resource_type, resource_id);
-CREATE INDEX idx_user_activity_created_at ON user_activity(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_activity_user ON user_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_type ON user_activity(activity_type);
+CREATE INDEX IF NOT EXISTS idx_user_activity_resource ON user_activity(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_created_at ON user_activity(created_at DESC);
 
 -- Notifications
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
     type notification_type NOT NULL,
@@ -379,12 +408,12 @@ CREATE TABLE notifications (
 );
 
 -- Create indexes for notifications
-CREATE INDEX idx_notifications_user ON notifications(user_id);
-CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
-CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 
 -- Admin Activity Log
-CREATE TABLE admin_activity_log (
+CREATE TABLE IF NOT EXISTS admin_activity_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     admin_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
     action TEXT NOT NULL, -- 'approve_post', 'reject_post', 'ban_user', 'delete_comment', etc.
@@ -399,12 +428,12 @@ CREATE TABLE admin_activity_log (
 );
 
 -- Create index for admin activity
-CREATE INDEX idx_admin_activity_admin ON admin_activity_log(admin_id);
-CREATE INDEX idx_admin_activity_resource ON admin_activity_log(resource_type, resource_id);
-CREATE INDEX idx_admin_activity_created_at ON admin_activity_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_activity_admin ON admin_activity_log(admin_id);
+CREATE INDEX IF NOT EXISTS idx_admin_activity_resource ON admin_activity_log(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_admin_activity_created_at ON admin_activity_log(created_at DESC);
 
 -- Analytics Summary (for dashboard)
-CREATE TABLE analytics_summary (
+CREATE TABLE IF NOT EXISTS analytics_summary (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     date DATE NOT NULL UNIQUE,
     
@@ -432,17 +461,17 @@ CREATE TABLE analytics_summary (
 );
 
 -- Create index for analytics
-CREATE INDEX idx_analytics_summary_date ON analytics_summary(date DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_summary_date ON analytics_summary(date DESC);
 
 -- =====================================================
 -- INDEXES FOR PERFORMANCE (Updated)
 -- =====================================================
 
 -- User Profiles
-CREATE INDEX idx_user_profiles_email ON user_profiles(email);
-CREATE INDEX idx_user_profiles_username ON user_profiles(username);
-CREATE INDEX idx_user_profiles_role ON user_profiles(role);
-CREATE INDEX idx_user_profiles_active ON user_profiles(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_username ON user_profiles(username);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_active ON user_profiles(is_active) WHERE is_active = true;
 
 -- Posts (already created above, keeping for reference)
 -- CREATE INDEX idx_posts_slug ON posts(slug);
@@ -455,27 +484,21 @@ CREATE INDEX idx_user_profiles_active ON user_profiles(is_active) WHERE is_activ
 -- CREATE INDEX idx_posts_tags ON posts USING gin(tags);
 
 -- Full-text search
-CREATE INDEX idx_posts_search ON posts USING GIN(to_tsvector('english', title || ' ' || excerpt || ' ' || content));
+CREATE INDEX IF NOT EXISTS idx_posts_search ON posts USING GIN(to_tsvector('english', title || ' ' || excerpt || ' ' || content));
 
 -- News Feed
-CREATE INDEX idx_news_feed_category ON news_feed(category);
-CREATE INDEX idx_news_feed_date ON news_feed(announcement_date DESC);
-CREATE INDEX idx_news_feed_breaking ON news_feed(is_breaking) WHERE is_breaking = TRUE;
-CREATE INDEX idx_news_feed_tags ON news_feed USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_news_feed_category ON news_feed(category);
+CREATE INDEX IF NOT EXISTS idx_news_feed_date ON news_feed(announcement_date DESC);
+CREATE INDEX IF NOT EXISTS idx_news_feed_breaking ON news_feed(is_breaking) WHERE is_breaking = TRUE;
+CREATE INDEX IF NOT EXISTS idx_news_feed_tags ON news_feed USING GIN(tags);
 
 -- Learning Paths
-CREATE INDEX idx_learning_paths_slug ON learning_paths(slug);
-CREATE INDEX idx_learning_paths_category ON learning_paths(category);
-CREATE INDEX idx_learning_paths_published ON learning_paths(is_published) WHERE is_published = TRUE;
+CREATE INDEX IF NOT EXISTS idx_learning_paths_slug ON learning_paths(slug);
+CREATE INDEX IF NOT EXISTS idx_learning_paths_category ON learning_paths(category);
+CREATE INDEX IF NOT EXISTS idx_learning_paths_published ON learning_paths(is_published) WHERE is_published = TRUE;
 
--- Comments
-CREATE INDEX idx_comments_post ON comments(post_id);
-CREATE INDEX idx_comments_author ON comments(author_id);
-CREATE INDEX idx_comments_parent ON comments(parent_comment_id);
-
--- User Profiles
-CREATE INDEX idx_user_profiles_username ON user_profiles(username);
-CREATE INDEX idx_user_profiles_topics ON user_profiles USING GIN(preferred_topics);
+-- User Profiles (additional indexes)
+CREATE INDEX IF NOT EXISTS idx_user_profiles_topics ON user_profiles USING GIN(preferred_topics);
 
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -498,189 +521,313 @@ ALTER TABLE admin_activity_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_summary ENABLE ROW LEVEL SECURITY;
 
 -- User Profiles Policies
-CREATE POLICY "Public profiles are viewable by everyone"
-    ON user_profiles FOR SELECT
-    USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Public profiles are viewable by everyone"
+        ON user_profiles FOR SELECT
+        USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can insert their own profile"
-    ON user_profiles FOR INSERT
-    WITH CHECK (auth.uid() = id);
+DO $$ BEGIN
+    CREATE POLICY "Users can insert their own profile"
+        ON user_profiles FOR INSERT
+        WITH CHECK (auth.uid() = id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can update their own profile"
-    ON user_profiles FOR UPDATE
-    USING (auth.uid() = id);
+DO $$ BEGIN
+    CREATE POLICY "Users can update their own profile"
+        ON user_profiles FOR UPDATE
+        USING (auth.uid() = id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Posts Policies
-CREATE POLICY "Published posts are viewable by everyone"
-    ON posts FOR SELECT
-    USING (status = 'published' OR author_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Published posts are viewable by everyone"
+        ON posts FOR SELECT
+        USING (status = 'published' OR author_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Contributors can create posts"
-    ON posts FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role IN ('contributor', 'editor', 'admin')
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Contributors can create posts"
+        ON posts FOR INSERT
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('contributor', 'editor', 'admin')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Authors can update their own posts"
-    ON posts FOR UPDATE
-    USING (author_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Authors can update their own posts"
+        ON posts FOR UPDATE
+        USING (author_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Admins can approve/reject posts"
-    ON posts FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Admins can approve/reject posts"
+        ON posts FOR UPDATE
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Notifications Policies
-CREATE POLICY "Users can view their own notifications"
-    ON notifications FOR SELECT
-    USING (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can view their own notifications"
+        ON notifications FOR SELECT
+        USING (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can update their own notifications"
-    ON notifications FOR UPDATE
-    USING (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can update their own notifications"
+        ON notifications FOR UPDATE
+        USING (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- User Activity Policies (Analytics)
-CREATE POLICY "Users can insert their own activity"
-    ON user_activity FOR INSERT
-    WITH CHECK (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can insert their own activity"
+        ON user_activity FOR INSERT
+        WITH CHECK (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Admins can view all activity"
-    ON user_activity FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Admins can view all activity"
+        ON user_activity FOR SELECT
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Admin Activity Log Policies
-CREATE POLICY "Admins can view admin logs"
-    ON admin_activity_log FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Admins can view admin logs"
+        ON admin_activity_log FOR SELECT
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Admins can insert admin logs"
-    ON admin_activity_log FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Admins can insert admin logs"
+        ON admin_activity_log FOR INSERT
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Analytics Summary Policies
-CREATE POLICY "Admins can view analytics"
-    ON analytics_summary FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Admins can view analytics"
+        ON analytics_summary FOR SELECT
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role = 'admin'
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- News Feed Policies
-CREATE POLICY "News feed is viewable by everyone"
-    ON news_feed FOR SELECT
-    USING (true);
+DO $$ BEGIN
+    CREATE POLICY "News feed is viewable by everyone"
+        ON news_feed FOR SELECT
+        USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Editors can manage news feed"
-    ON news_feed FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role IN ('editor', 'admin')
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Editors can manage news feed"
+        ON news_feed FOR ALL
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('editor', 'admin')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Learning Paths Policies
-CREATE POLICY "Published learning paths are viewable by everyone"
-    ON learning_paths FOR SELECT
-    USING (is_published = TRUE OR created_by = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Published learning paths are viewable by everyone"
+        ON learning_paths FOR SELECT
+        USING (is_published = TRUE OR created_by = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Contributors can create learning paths"
-    ON learning_paths FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role IN ('contributor', 'editor', 'admin')
-        )
-    );
+DO $$ BEGIN
+    CREATE POLICY "Contributors can create learning paths"
+        ON learning_paths FOR INSERT
+        WITH CHECK (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('contributor', 'editor', 'admin')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Creators can update their own learning paths"
-    ON learning_paths FOR UPDATE
-    USING (created_by = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Creators can update their own learning paths"
+        ON learning_paths FOR UPDATE
+        USING (created_by = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Learning Path Progress Policies
-CREATE POLICY "Users can view their own progress"
-    ON learning_path_progress FOR SELECT
-    USING (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can view their own progress"
+        ON learning_path_progress FOR SELECT
+        USING (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can insert their own progress"
-    ON learning_path_progress FOR INSERT
-    WITH CHECK (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can insert their own progress"
+        ON learning_path_progress FOR INSERT
+        WITH CHECK (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can update their own progress"
-    ON learning_path_progress FOR UPDATE
-    USING (user_id = auth.uid());
+DO $$ BEGIN
+    CREATE POLICY "Users can update their own progress"
+        ON learning_path_progress FOR UPDATE
+        USING (user_id = auth.uid());
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Comments Policies
-CREATE POLICY "Comments are viewable by everyone"
-    ON comments FOR SELECT
-    USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Comments are viewable by everyone"
+        ON comments FOR SELECT
+        USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Authenticated users can create comments"
-    ON comments FOR INSERT
-    WITH CHECK (auth.uid() = author_id);
+DO $$ BEGIN
+    CREATE POLICY "Authenticated users can create comments"
+        ON comments FOR INSERT
+        WITH CHECK (auth.uid() = author_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can update their own comments"
-    ON comments FOR UPDATE
-    USING (auth.uid() = author_id);
+DO $$ BEGIN
+    CREATE POLICY "Users can update their own comments"
+        ON comments FOR UPDATE
+        USING (auth.uid() = author_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can delete their own comments"
-    ON comments FOR DELETE
-    USING (auth.uid() = author_id);
+DO $$ BEGIN
+    CREATE POLICY "Users can delete their own comments"
+        ON comments FOR DELETE
+        USING (auth.uid() = author_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Post Reactions Policies
-CREATE POLICY "Reactions are viewable by everyone"
-    ON post_reactions FOR SELECT
-    USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Reactions are viewable by everyone"
+        ON post_reactions FOR SELECT
+        USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can manage their own reactions"
-    ON post_reactions FOR ALL
-    USING (auth.uid() = user_id);
+DO $$ BEGIN
+    CREATE POLICY "Users can manage their own reactions"
+        ON post_reactions FOR ALL
+        USING (auth.uid() = user_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Infrastructure Topologies Policies
-CREATE POLICY "Topologies are viewable by everyone"
-    ON infrastructure_topologies FOR SELECT
-    USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Topologies are viewable by everyone"
+        ON infrastructure_topologies FOR SELECT
+        USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Incident Timelines Policies
-CREATE POLICY "Public incident timelines are viewable by everyone"
-    ON incident_timelines FOR SELECT
-    USING (is_public = TRUE OR auth.uid() = ANY(contributors));
+DO $$ BEGIN
+    CREATE POLICY "Public incident timelines are viewable by everyone"
+        ON incident_timelines FOR SELECT
+        USING (is_public = TRUE OR auth.uid() = ANY(contributors));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Contributors can update incident timelines"
-    ON incident_timelines FOR UPDATE
-    USING (auth.uid() = ANY(contributors));
+DO $$ BEGIN
+    CREATE POLICY "Contributors can update incident timelines"
+        ON incident_timelines FOR UPDATE
+        USING (auth.uid() = ANY(contributors));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- =====================================================
 -- FUNCTIONS & TRIGGERS
@@ -898,8 +1045,22 @@ FOR EACH ROW EXECUTE FUNCTION log_admin_action();
 -- Note: Uncomment the following to populate with sample data
 -- This is useful for development and testing
 
+-- Admin user
+INSERT INTO user_profiles (id, email, password_hash, full_name, username, role, bio, is_active, is_verified)
+VALUES (
+    uuid_generate_v4(),
+    'savisaluwadana@gmail.com',
+    crypt('Savisalu@123', gen_salt('bf')),
+    'Savi Saluwadana',
+    'savisaluwadana',
+    'admin',
+    'Platform Administrator',
+    true,
+    true
+);
+
 /*
--- Sample admin user
+-- Sample admin user (commented out)
 INSERT INTO user_profiles (id, email, password_hash, full_name, username, role, bio, is_active, is_verified)
 VALUES (
     uuid_generate_v4(),
@@ -956,6 +1117,12 @@ VALUES
 -- Note: To add sample posts, comments, etc., you would insert them here
 -- Make sure to use appropriate foreign key references
 */
+
+-- Auto-update post reaction metrics
+CREATE OR REPLACE FUNCTION update_post_reaction_metrics()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
         IF NEW.reaction_type = 'like' THEN
             UPDATE posts SET like_count = like_count + 1 WHERE id = NEW.post_id;
         ELSIF NEW.reaction_type = 'bookmark' THEN
@@ -978,7 +1145,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_post_reactions_metrics
     AFTER INSERT OR DELETE ON post_reactions
-    FOR EACH ROW EXECUTE FUNCTION update_post_metrics();
+    FOR EACH ROW EXECUTE FUNCTION update_post_reaction_metrics();
 
 -- Auto-update comment count
 CREATE OR REPLACE FUNCTION update_comment_count()
