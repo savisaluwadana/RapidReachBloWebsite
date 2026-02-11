@@ -4,8 +4,8 @@ import { ArrowLeft, Filter } from 'lucide-react'
 import Link from 'next/link'
 import { getPosts } from '@/lib/actions/posts'
 
-export default async function CategoryPage({ params }: { params: { category: string } }) {
-  const category = params.category
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
+  const { category } = await params
   const categoryName = category.charAt(0).toUpperCase() + category.slice(1)
   
   // Fetch posts for this category

@@ -4,8 +4,9 @@ import { BookOpen, Clock, Users, CheckCircle, Star, ArrowRight } from 'lucide-re
 import Link from 'next/link'
 import { getLearningPathBySlug } from '@/lib/actions/learning-paths'
 
-export default async function LearningPathDetailPage({ params }: { params: { slug: string } }) {
-  const learningPath = await getLearningPathBySlug(params.slug)
+export default async function LearningPathDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const learningPath = await getLearningPathBySlug(slug)
 
   if (!learningPath) {
     notFound()
