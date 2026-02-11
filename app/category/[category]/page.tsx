@@ -6,10 +6,26 @@ import { getPosts } from '@/lib/actions/posts'
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
-  const categoryName = category.charAt(0).toUpperCase() + category.slice(1)
   
-  // Fetch posts for this category
-  const posts = await getPosts({ category: categoryName, status: 'published' })
+  // Map slug to display name
+  const slugToName: Record<string, string> = {
+    'kubernetes': 'Kubernetes',
+    'platform-engineering': 'Platform Engineering',
+    'terraform': 'Terraform',
+    'cicd': 'CI/CD',
+    'security': 'Security',
+    'cloud_native': 'Cloud Native',
+    'observability': 'Observability',
+    'aws': 'AWS',
+    'azure': 'Azure',
+    'gcp': 'GCP',
+    'docker': 'Docker',
+    'monitoring': 'Monitoring',
+  }
+  const categoryName = slugToName[category] || category.charAt(0).toUpperCase() + category.slice(1)
+  
+  // Pass the raw category slug (matching DB enum) to the query
+  const posts = await getPosts({ category, status: 'published' })
   
   return (
     <main className="min-h-screen bg-deep-charcoal">

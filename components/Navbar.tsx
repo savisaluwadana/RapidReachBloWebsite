@@ -9,6 +9,15 @@ import type { UserProfile } from '@/lib/types/database'
 
 const categories = ['All', 'Kubernetes', 'Platform Engineering', 'Terraform', 'CI/CD', 'Security', 'Cloud Native']
 
+const categoryToSlug: Record<string, string> = {
+  'Kubernetes': 'kubernetes',
+  'Platform Engineering': 'platform-engineering',
+  'Terraform': 'terraform',
+  'CI/CD': 'cicd',
+  'Security': 'security',
+  'Cloud Native': 'cloud_native',
+}
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -155,7 +164,7 @@ export default function Navbar() {
           {categories.map((category) => (
             <Link
               key={category}
-              href={category === 'All' ? '/blog' : `/blog?category=${encodeURIComponent(category)}`}
+              href={category === 'All' ? '/blog' : `/category/${categoryToSlug[category] || category.toLowerCase()}`}
               className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
                 category === 'All'
                   ? 'bg-electric-cyan/20 text-electric-cyan'

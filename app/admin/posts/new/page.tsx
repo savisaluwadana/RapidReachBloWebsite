@@ -20,7 +20,20 @@ export default function NewPost() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const categories = ['Kubernetes', 'Terraform', 'CI/CD', 'Security', 'Platform Engineering', 'Cloud Native', 'Observability']
+  const categories = [
+    { label: 'Kubernetes', value: 'kubernetes' },
+    { label: 'Terraform', value: 'terraform' },
+    { label: 'CI/CD', value: 'cicd' },
+    { label: 'Security', value: 'security' },
+    { label: 'Platform Engineering', value: 'platform-engineering' },
+    { label: 'Cloud Native', value: 'cloud_native' },
+    { label: 'Observability', value: 'observability' },
+    { label: 'AWS', value: 'aws' },
+    { label: 'Azure', value: 'azure' },
+    { label: 'GCP', value: 'gcp' },
+    { label: 'Docker', value: 'docker' },
+    { label: 'Monitoring', value: 'monitoring' },
+  ]
   const difficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert']
 
   const calculateReadTime = () => {
@@ -60,7 +73,7 @@ export default function NewPost() {
         excerpt,
         content,
         author_id: user.id,
-        category: category.toLowerCase(),
+        category,
         tags,
         difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
         status: 'published',
@@ -106,7 +119,7 @@ export default function NewPost() {
         excerpt,
         content,
         author_id: user.id,
-        category: category.toLowerCase(),
+        category,
         tags,
         difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
         status: 'draft',
@@ -262,8 +275,8 @@ export default function NewPost() {
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat.toLowerCase()}>
-                    {cat}
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
                   </option>
                 ))}
               </select>
