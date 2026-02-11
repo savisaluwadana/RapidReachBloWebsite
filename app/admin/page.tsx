@@ -12,10 +12,10 @@ export default async function AdminDashboard() {
   const pendingPostsData = await getPosts({ status: 'draft', limit: 3 })
   
   const dashboardStats = [
-    { name: 'Total Posts', value: stats.totalPosts.toLocaleString(), icon: FileText, color: 'electric-cyan' },
-    { name: 'Active Users', value: stats.totalUsers.toLocaleString(), icon: Users, color: 'cyber-lime' },
-    { name: 'Comments', value: stats.totalComments.toLocaleString(), icon: MessageSquare, color: 'electric-cyan' },
-    { name: 'Monthly Views', value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(), icon: TrendingUp, color: 'cyber-lime' },
+    { name: 'Total Posts', value: stats.totalPosts.toLocaleString(), icon: FileText, iconClass: 'text-electric-cyan', bgClass: 'bg-electric-cyan/10', hoverClass: 'from-electric-cyan/5' },
+    { name: 'Active Users', value: stats.totalUsers.toLocaleString(), icon: Users, iconClass: 'text-cyber-lime', bgClass: 'bg-cyber-lime/10', hoverClass: 'from-cyber-lime/5' },
+    { name: 'Comments', value: stats.totalComments.toLocaleString(), icon: MessageSquare, iconClass: 'text-electric-cyan', bgClass: 'bg-electric-cyan/10', hoverClass: 'from-electric-cyan/5' },
+    { name: 'Monthly Views', value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(), icon: TrendingUp, iconClass: 'text-cyber-lime', bgClass: 'bg-cyber-lime/10', hoverClass: 'from-cyber-lime/5' },
   ]
 
   return (
@@ -35,15 +35,15 @@ export default async function AdminDashboard() {
               className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.07] transition-all group"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl bg-${stat.color}/10`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}`} />
+                <div className={`p-3 rounded-xl ${stat.bgClass}`}>
+                  <stat.icon className={`w-6 h-6 ${stat.iconClass}`} />
                 </div>
               </div>
               <div>
                 <p className="text-gray-400 text-sm mb-1">{stat.name}</p>
                 <p className="text-3xl font-bold text-white">{stat.value}</p>
               </div>
-              <div className={`absolute inset-0 bg-gradient-to-br from-${stat.color}/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.hoverClass} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
             </div>
           ))}
         </div>

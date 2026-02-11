@@ -3,7 +3,7 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import HeroBentoGrid from '@/components/HeroBentoGrid'
-import { TrendingUp, Zap, BookOpen, Rocket, Terminal, Cloud, Shield, GitBranch, Layers } from 'lucide-react'
+import { TrendingUp, Zap, BookOpen, Rocket, Terminal, Cloud, ShieldCheck, GitBranch, Box, Blocks, CloudCog, Wrench } from 'lucide-react'
 import { getPosts } from '@/lib/actions/posts'
 import Link from 'next/link'
 
@@ -80,19 +80,19 @@ export default async function Home() {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { name: 'Kubernetes', icon: Layers, color: 'electric-cyan' },
-              { name: 'Terraform', icon: Terminal, color: 'purple-400' },
-              { name: 'CI/CD', icon: GitBranch, color: 'cyber-lime' },
-              { name: 'Security', icon: Shield, color: 'red-400' },
-              { name: 'Cloud', icon: Cloud, color: 'blue-400' },
-              { name: 'Platform Engineering', icon: Rocket, color: 'orange-400' },
+              { name: 'Kubernetes', icon: Box, colorClass: 'text-electric-cyan' },
+              { name: 'Terraform', icon: Blocks, colorClass: 'text-purple-400' },
+              { name: 'CI/CD', icon: GitBranch, colorClass: 'text-cyber-lime' },
+              { name: 'Security', icon: ShieldCheck, colorClass: 'text-red-400' },
+              { name: 'Cloud', icon: CloudCog, colorClass: 'text-blue-400' },
+              { name: 'Platform Engineering', icon: Wrench, colorClass: 'text-orange-400' },
             ].map((category) => (
               <Link
                 key={category.name}
                 href={`/articles?category=${encodeURIComponent(category.name)}`}
                 className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
               >
-                <category.icon className={`w-10 h-10 text-${category.color} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
+                <category.icon className={`w-10 h-10 ${category.colorClass} mx-auto mb-3 group-hover:scale-110 transition-transform`} />
                 <h3 className="text-white font-bold text-center">{category.name}</h3>
               </Link>
             ))}
