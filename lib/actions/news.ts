@@ -146,10 +146,29 @@ export async function getNewsFeed(options?: {
     const { data, error } = await query
 
     if (error) throw error
+    
+    // Return demo data if the table is empty
+    if (!data || data.length === 0) {
+      console.warn('⚠️  No news feed data in database. Returning demo news feed.')
+      let filtered = getDemoNewsFeed()
+      
+      if (options?.category) filtered = filtered.filter(item => item.category === options.category)
+      if (options?.featured) filtered = filtered.filter(item => item.is_breaking)
+      if (options?.limit) filtered = filtered.slice(0, options.limit)
+      
+      return filtered
+    }
+    
     return data as NewsFeedItem[]
   } catch (error) {
     console.error('Error fetching news feed:', error)
-    return getDemoNewsFeed()
+    let filtered = getDemoNewsFeed()
+    
+    if (options?.category) filtered = filtered.filter(item => item.category === options.category)
+    if (options?.featured) filtered = filtered.filter(item => item.is_breaking)
+    if (options?.limit) filtered = filtered.slice(0, options.limit)
+    
+    return filtered
   }
 }
 

@@ -74,7 +74,7 @@ export default function CommandPalette() {
     searchTimerRef.current = setTimeout(async () => {
       try {
         const results = await searchPosts(search, 5)
-        const postItems: CommandItem[] = results.map((post) => ({
+        const postItems: CommandItem[] = results.map((post: { id: string; title: string; slug: string; category: string }) => ({
           id: `post-${post.id}`,
           title: post.title,
           category: 'Articles',
