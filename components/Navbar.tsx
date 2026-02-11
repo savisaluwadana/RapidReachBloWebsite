@@ -48,7 +48,7 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/articles" className="text-gray-300 hover:text-white transition-colors">
+            <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">
               Articles
             </Link>
             <Link href="/learning-paths" className="text-gray-300 hover:text-white transition-colors">
@@ -155,7 +155,7 @@ export default function Navbar() {
           {categories.map((category) => (
             <Link
               key={category}
-              href={category === 'All' ? '/articles' : `/articles?category=${encodeURIComponent(category)}`}
+              href={category === 'All' ? '/blog' : `/blog?category=${encodeURIComponent(category)}`}
               className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
                 category === 'All'
                   ? 'bg-electric-cyan/20 text-electric-cyan'
@@ -190,7 +190,7 @@ export default function Navbar() {
               </div>
             )}
             
-            <Link href="/articles" className="block text-lg text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(false)}>
+            <Link href="/blog" className="block text-lg text-gray-300 hover:text-white" onClick={() => setIsMenuOpen(false)}>
               Articles
             </Link>
             <Link href="/learning-paths" className="block text-lg text-gray-300 hover:text-white">

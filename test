@@ -1,0 +1,26 @@
+
+
+-- First, delete the old profile if it exists
+DELETE FROM user_profiles WHERE email = 'savisaluwadana@gmail.com';
+
+-- Then insert new profile linked to Supabase Auth user
+INSERT INTO user_profiles (
+    id, 
+    email, 
+    username, 
+    full_name, 
+    role, 
+    bio, 
+    is_active, 
+    is_verified
+)
+VALUES (
+    'YOUR_AUTH_USER_ID'::33f5eb9b-c7eb-4c47-833d-006f3158f9b5,  -- Replace with the UUID from Supabase Auth
+    'savisaluwadana@gmail.com',
+    'savisaluwadana',
+    'Savi Saluwadana',
+    'admin',
+    'Platform Administrator',
+    true,
+    true
+);

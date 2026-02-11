@@ -935,7 +935,7 @@ CREATE OR REPLACE FUNCTION calculate_reading_time()
 RETURNS TRIGGER AS $$
 BEGIN
     -- Average reading speed: 200 words per minute
-    NEW.read_time = CEIL(NEW.word_count::FLOAT / 200);
+    NEW.estimated_read_time = CEIL(NEW.word_count::FLOAT / 200);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

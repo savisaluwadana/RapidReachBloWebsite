@@ -81,7 +81,7 @@ export default async function Home() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {/* Kubernetes */}
             <Link
-              href="/articles?category=Kubernetes"
+              href="/blog?category=kubernetes"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -96,7 +96,7 @@ export default async function Home() {
 
             {/* Terraform */}
             <Link
-              href="/articles?category=Terraform"
+              href="/blog?category=terraform"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -112,7 +112,7 @@ export default async function Home() {
 
             {/* CI/CD */}
             <Link
-              href="/articles?category=CI%2FCD"
+              href="/blog?category=cicd"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -131,7 +131,7 @@ export default async function Home() {
 
             {/* Security */}
             <Link
-              href="/articles?category=Security"
+              href="/blog?category=security"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -145,7 +145,7 @@ export default async function Home() {
 
             {/* Cloud (AWS/GCP/Azure) */}
             <Link
-              href="/articles?category=Cloud"
+              href="/blog?category=aws"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -158,7 +158,7 @@ export default async function Home() {
 
             {/* Platform Engineering */}
             <Link
-              href="/articles?category=Platform%20Engineering"
+              href="/blog?category=platform-engineering"
               className="group relative rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all hover:scale-105 hover:shadow-glow-md"
             >
               <div className="w-10 h-10 mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -323,7 +323,7 @@ export default async function Home() {
                     {['Kubernetes', 'Terraform', 'GitOps', 'Docker', 'Istio', 'ArgoCD', 'AWS', 'Platform Engineering'].map((topic) => (
                       <Link
                         key={topic}
-                        href={`/articles?category=${encodeURIComponent(topic)}`}
+                        href={`/blog?category=${encodeURIComponent(topic.toLowerCase())}`}
                         className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-sm hover:bg-electric-cyan/20 hover:text-electric-cyan transition-colors"
                       >
                         #{topic}
@@ -382,10 +382,10 @@ export default async function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Content</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/articles" className="hover:text-electric-cyan transition-colors">All Articles</Link></li>
+                <li><Link href="/blog" className="hover:text-electric-cyan transition-colors">All Articles</Link></li>
                 <li><Link href="/learning-paths" className="hover:text-electric-cyan transition-colors">Learning Paths</Link></li>
                 <li><Link href="/news" className="hover:text-electric-cyan transition-colors">News & Updates</Link></li>
-                <li><Link href="/articles?category=Tutorials" className="hover:text-electric-cyan transition-colors">Tutorials</Link></li>
+                <li><Link href="/blog?category=tutorials" className="hover:text-electric-cyan transition-colors">Tutorials</Link></li>
               </ul>
             </div>
             <div>
