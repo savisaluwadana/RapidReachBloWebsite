@@ -155,7 +155,7 @@ export async function getPosts(options?: {
     .from('posts')
     .select(`
       *,
-      author:user_profiles(*)
+      author:user_profiles!posts_author_id_fkey(*)
     `)
     .order('created_at', { ascending: false })
 
@@ -210,7 +210,7 @@ export async function getPostBySlug(slug: string) {
     .from('posts')
     .select(`
       *,
-      author:user_profiles(*)
+      author:user_profiles!posts_author_id_fkey(*)
     `)
     .eq('slug', slug)
     .single()
@@ -230,7 +230,7 @@ export async function getPostById(id: string) {
     .from('posts')
     .select(`
       *,
-      author:user_profiles(*)
+      author:user_profiles!posts_author_id_fkey(*)
     `)
     .eq('id', id)
     .single()
