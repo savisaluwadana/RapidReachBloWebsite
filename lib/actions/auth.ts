@@ -62,15 +62,28 @@ export async function signIn(email: string, password: string) {
     throw error
   }
 
-  // Update last login
+  // Fetch role and update last login in parallel
+  let role = 'reader'
   if (data.user) {
-    await supabase
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+    
+    if (profile) {
+      role = profile.role
+    }
+
+    // Fire-and-forget: update last login
+    supabase
       .from('user_profiles')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', data.user.id)
+      .then(() => {})
   }
 
-  return data
+  return { ...data, role }
 }
 
 export async function signOut() {
