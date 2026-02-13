@@ -77,9 +77,66 @@ export async function getUserByEmail(email: string) {
 export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in')
+  }
+
+  // Only allow users to update their own profile (unless admin)
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isOwnProfile = user.id === userId
+  const isAdmin = profile?.role === 'admin'
+
+  if (!isOwnProfile && !isAdmin) {
+    throw new Error('Unauthorized: You can only update your own profile')
+  }
+
+  // Sanitize and validate updates
+  const sanitizedUpdates: any = {}
+  
+  if (updates.full_name !== undefined) {
+    const name = updates.full_name.trim().replace(/[<>"']/g, '')
+    if (name.length < 2 || name.length > 100) {
+      throw new Error('Name must be between 2 and 100 characters')
+    }
+    sanitizedUpdates.full_name = name
+  }
+
+  if (updates.bio !== undefined) {
+    const bio = updates.bio.trim()
+    if (bio.length > 500) {
+      throw new Error('Bio must be less than 500 characters')
+    }
+    sanitizedUpdates.bio = bio
+  }
+
+  if (updates.website_url !== undefined) {
+    const url = updates.website_url.trim()
+    if (url && !url.match(/^https?:\/\/.+/)) {
+      throw new Error('Invalid website URL')
+    }
+    sanitizedUpdates.website_url = url
+  }
+
+  // Don't allow role changes through this function
+  delete sanitizedUpdates.role
+  delete sanitizedUpdates.is_active
+
+  sanitizedUpdates.updated_at = new Date().toISOString()
+
   const { data, error } = await supabase
     .from('user_profiles')
-    .update(updates)
+    .update(sanitizedUpdates)
     .eq('id', userId)
     .select()
     .single()
@@ -98,6 +155,33 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
 export async function updateUserRole(userId: string, role: string, adminId: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify admin is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== adminId) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  // Verify admin has admin role
+  const { data: adminProfile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', adminId)
+    .single()
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    throw new Error('Unauthorized: Admin privileges required')
+  }
+
+  // Validate role
+  const validRoles = ['reader', 'contributor', 'editor', 'admin']
+  if (!validRoles.includes(role)) {
+    throw new Error('Invalid role')
+  }
+
   const { data, error } = await supabase
     .from('user_profiles')
     .update({ role })
@@ -129,7 +213,33 @@ export async function updateUserRole(userId: string, role: string, adminId: stri
 export async function toggleUserStatus(userId: string, adminId: string) {
   const supabase = await createClient()
   
-  const { data: user } = await supabase
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify admin is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== adminId) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  // Verify admin has admin role
+  const { data: adminProfile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', adminId)
+    .single()
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    throw new Error('Unauthorized: Admin privileges required')
+  }
+
+  // Prevent admin from deactivating themselves
+  if (userId === adminId) {
+    throw new Error('You cannot deactivate your own account')
+  }
+
+  const { data: currentUser } = await supabase
     .from('user_profiles')
     .select('is_active')
     .eq('id', userId)

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Post, UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/utils/rate-limit'
 
 // Demo data - inline to avoid "use server" restrictions
 function getDemoPosts(): Post[] {
@@ -246,6 +247,35 @@ export async function getPostById(id: string) {
 export async function createPost(post: Partial<Post>) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in to create posts')
+  }
+
+  // Sanitize inputs
+  const sanitizedPost = {
+    ...post,
+    title: post.title?.trim() || '',
+    excerpt: post.excerpt?.trim() || '',
+    content: post.content?.trim() || '',
+  }
+
+  if (!sanitizedPost.title || sanitizedPost.title.length < 3) {
+    throw new Error('Title must be at least 3 characters')
+  }
+
+  // Rate limit check
+  const rateLimitKey = `create-post:${user.id}`
+  const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.CREATE_POST)
+  if (!rateLimit.allowed) {
+    throw new Error(`Too many posts created. Please try again in ${rateLimit.retryAfter} seconds.`)
+  }
+
   const { data, error } = await supabase
     .from('posts')
     .insert([post])
@@ -266,6 +296,48 @@ export async function createPost(post: Partial<Post>) {
 export async function updatePost(id: string, updates: Partial<Post>) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in')
+  }
+
+  // Check if user is the author or an admin
+  const { data: existingPost } = await supabase
+    .from('posts')
+    .select('author_id')
+    .eq('id', id)
+    .single()
+
+  if (!existingPost) {
+    throw new Error('Post not found')
+  }
+
+  // Get user role
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAuthor = existingPost.author_id === user.id
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'editor'
+
+  if (!isAuthor && !isAdmin) {
+    throw new Error('Unauthorized: You can only edit your own posts')
+  }
+
+  // Rate limit check
+  const rateLimitKey = `update-post:${user.id}`
+  const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.UPDATE_POST)
+  if (!rateLimit.allowed) {
+    throw new Error(`Too many updates. Please try again in ${rateLimit.retryAfter} seconds.`)
+  }
+
   const { data, error } = await supabase
     .from('posts')
     .update(updates)
@@ -287,6 +359,40 @@ export async function updatePost(id: string, updates: Partial<Post>) {
 export async function deletePost(id: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated and authorized
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in')
+  }
+
+  // Check if user is the author or an admin
+  const { data: existingPost } = await supabase
+    .from('posts')
+    .select('author_id')
+    .eq('id', id)
+    .single()
+
+  if (!existingPost) {
+    throw new Error('Post not found')
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAuthor = existingPost.author_id === user.id
+  const isAdmin = profile?.role === 'admin'
+
+  if (!isAuthor && !isAdmin) {
+    throw new Error('Unauthorized: You can only delete your own posts')
+  }
+
   const { error } = await supabase
     .from('posts')
     .delete()
@@ -304,6 +410,26 @@ export async function deletePost(id: string) {
 export async function approvePost(postId: string, adminId: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify admin is authenticated and has admin role
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== adminId) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', adminId)
+    .single()
+
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
+    throw new Error('Unauthorized: Admin privileges required')
+  }
+
   const { data, error } = await supabase
     .from('posts')
     .update({
@@ -330,6 +456,30 @@ export async function approvePost(postId: string, adminId: string) {
 export async function rejectPost(postId: string, adminId: string, reason: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify admin is authenticated and has admin role
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== adminId) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', adminId)
+    .single()
+
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
+    throw new Error('Unauthorized: Admin privileges required')
+  }
+
+  if (!reason || reason.trim().length < 10) {
+    throw new Error('Rejection reason must be at least 10 characters')
+  }
+
   const { data, error } = await supabase
     .from('posts')
     .update({
@@ -369,8 +519,23 @@ export async function incrementPostView(postId: string) {
 export async function searchPosts(query: string, limit = 5) {
   const supabase = await createClient()
 
+  // Sanitize and validate query
+  const sanitizedQuery = query.trim().replace(/[<>"';\\]/g, '')
+  
+  if (!sanitizedQuery) {
+    return []
+  }
+
+  if (sanitizedQuery.length > 100) {
+    throw new Error('Search query is too long')
+  }
+
+  if (limit > 50) {
+    limit = 50 // Cap the limit
+  }
+
   if (!supabase) {
-    const q = query.toLowerCase()
+    const q = sanitizedQuery.toLowerCase()
     return getDemoPosts()
       .filter(p => 
         p.title.toLowerCase().includes(q) || 
@@ -388,7 +553,7 @@ export async function searchPosts(query: string, limit = 5) {
         author:user_profiles!posts_author_id_fkey(*)
       `)
       .eq('status', 'published')
-      .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%,tags.cs.{${query}}`)
+      .or(`title.ilike.%${sanitizedQuery}%,excerpt.ilike.%${sanitizedQuery}%,tags.cs.{${sanitizedQuery}}`)
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -397,7 +562,7 @@ export async function searchPosts(query: string, limit = 5) {
   } catch (error) {
     console.error('Error searching posts:', error)
     // Fallback to demo data on error
-    const q = query.toLowerCase()
+    const q = sanitizedQuery.toLowerCase()
     return getDemoPosts()
       .filter(p => 
         p.title.toLowerCase().includes(q) || 

@@ -30,8 +30,26 @@ export default function SignUp() {
       return
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[a-z]/.test(formData.password)) {
+      setError('Password must contain lowercase letters')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      setError('Password must contain uppercase letters')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      setError('Password must contain numbers')
       setIsLoading(false)
       return
     }

@@ -45,11 +45,22 @@ export async function middleware(request: NextRequest) {
   // Refresh session - this is all the middleware needs to do
   await supabase.auth.getUser()
 
-  // Protect admin routes - just check if user is authenticated
+  // Protect admin routes - check authentication and admin role
   if (pathname.startsWith('/admin')) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.redirect(new URL('/auth/signin', request.url))
+    }
+
+    // Check if user has admin or editor role
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Comment } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/utils/rate-limit'
 
 export async function getCommentsByPostId(postId: string) {
   const supabase = await createClient()
@@ -91,10 +92,43 @@ export async function createComment(comment: {
 }) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== comment.author_id) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  // Validate and sanitize content
+  const sanitizedContent = comment.content.trim()
+  if (!sanitizedContent || sanitizedContent.length < 1) {
+    throw new Error('Comment cannot be empty')
+  }
+  if (sanitizedContent.length > 5000) {
+    throw new Error('Comment is too long (max 5000 characters)')
+  }
+
+  // Check for spam patterns (simple check)
+  const urlCount = (sanitizedContent.match(/https?:\/\//g) || []).length
+  if (urlCount > 3) {
+    throw new Error('Too many links in comment')
+  }
+
+  // Rate limit check
+  const rateLimitKey = `create-comment:${user.id}`
+  const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.CREATE_COMMENT)
+  if (!rateLimit.allowed) {
+    throw new Error(`Too many comments. Please try again in ${rateLimit.retryAfter} seconds.`)
+  }
+
   const { data, error } = await supabase
     .from('comments')
     .insert([{
       ...comment,
+      content: sanitizedContent,
       status: 'approved', // Auto-approve for now, can change to 'pending' for moderation
     }])
     .select(`
@@ -117,6 +151,30 @@ export async function createComment(comment: {
 export async function updateCommentStatus(commentId: string, status: string, moderatorId?: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify moderator is authenticated and has appropriate role
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in')
+  }
+
+  if (moderatorId && user.id !== moderatorId) {
+    throw new Error('Unauthorized: Authentication mismatch')
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
+    throw new Error('Unauthorized: Moderator privileges required')
+  }
+
   const updates: any = { status }
   
   if (moderatorId) {
@@ -145,6 +203,40 @@ export async function updateCommentStatus(commentId: string, status: string, mod
 export async function deleteComment(commentId: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in')
+  }
+
+  // Check if user is the author or an admin
+  const { data: existingComment } = await supabase
+    .from('comments')
+    .select('author_id')
+    .eq('id', commentId)
+    .single()
+
+  if (!existingComment) {
+    throw new Error('Comment not found')
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAuthor = existingComment.author_id === user.id
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'editor'
+
+  if (!isAuthor && !isAdmin) {
+    throw new Error('Unauthorized: You can only delete your own comments')
+  }
+
   const { error } = await supabase
     .from('comments')
     .delete()
@@ -162,6 +254,22 @@ export async function deleteComment(commentId: string) {
 export async function flagComment(commentId: string, reason: string) {
   const supabase = await createClient()
   
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized: You must be logged in to flag comments')
+  }
+
+  // Validate reason
+  const sanitizedReason = reason.trim()
+  if (!sanitizedReason || sanitizedReason.length < 5) {
+    throw new Error('Flag reason must be at least 5 characters')
+  }
+
   const { data: comment } = await supabase
     .from('comments')
     .select('flag_count, flag_reasons')
