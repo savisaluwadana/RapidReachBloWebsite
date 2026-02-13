@@ -39,54 +39,7 @@ export default function LiveInfrastructureFeed() {
         setNewsItems(data)
       } catch (error) {
         console.error('Error fetching news:', error)
-        // Use demo data
-        const now = new Date()
-        setNewsItems([
-          {
-            id: 'fallback-news-1',
-            title: 'Kubernetes 1.30 Released with Enhanced Security',
-            description: 'Latest release brings improved security controls and performance optimizations',
-            source: 'CNCF',
-            category: 'Kubernetes',
-            url: 'https://kubernetes.io/blog',
-            published_at: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-            is_featured: true,
-            tags: ['kubernetes', 'release']
-          },
-          {
-            id: 'fallback-news-2',
-            title: 'GitHub Actions Introduces Larger Runners',
-            description: 'New runner sizes with up to 64 cores now available for enterprise customers',
-            source: 'GitHub',
-            category: 'CI/CD',
-            url: 'https://github.blog',
-            published_at: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
-            is_featured: false,
-            tags: ['github', 'ci-cd']
-          },
-          {
-            id: 'fallback-news-3',
-            title: 'Terraform 1.8 Adds Native Validation Rules',
-            description: 'Enhanced variable validation capabilities announced by HashiCorp',
-            source: 'HashiCorp',
-            category: 'Terraform',
-            url: 'https://hashicorp.com/blog',
-            published_at: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
-            is_featured: false,
-            tags: ['terraform', 'iac']
-          },
-          {
-            id: 'fallback-news-4',
-            title: 'Docker Desktop 4.28 Performance Update',
-            description: 'Faster container startup times and reduced memory usage',
-            source: 'Docker',
-            category: 'Docker',
-            url: 'https://docker.com/blog',
-            published_at: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
-            is_featured: false,
-            tags: ['docker', 'containers']
-          }
-        ])
+        setNewsItems([])
       } finally {
         setIsLoading(false)
       }

@@ -5,118 +5,64 @@ import { Post, UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/utils/rate-limit'
 
-// Demo data - inline to avoid "use server" restrictions
-function getDemoPosts(): Post[] {
-  const demoAuthor = {
-    id: 'demo-author',
-    email: 'demo@rapidreach.blog',
-    full_name: 'Demo Author',
-    username: 'demo',
-    role: 'admin' as const,
-    is_active: true,
-    is_verified: true,
-    email_notifications: true,
-    comment_notifications: true,
-    newsletter_subscribed: false,
-    posts_written: 1,
-    comments_posted: 0,
-    total_views_received: 0,
-    total_likes_received: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-
-  const basePost: Post = {
-    id: 'demo-1',
-    title: 'Getting Started with RapidReach',
-    slug: 'getting-started',
-    excerpt: 'Welcome to RapidReach! This is a demo post. Connect your Supabase database to see real content.',
-    content: '# Welcome\n\nThis is demo content. Please configure your Supabase connection by following SETUP_GUIDE.md',
-    author_id: 'demo-author',
-    author: demoAuthor,
-    category: 'platform-engineering',
-    tags: ['demo', 'setup', 'getting-started'],
-    difficulty: 'beginner' as const,
-    status: 'published' as const,
-    featured: true,
-    trending: false,
-    view_count: 0,
-    unique_view_count: 0,
-    like_count: 0,
-    comment_count: 0,
-    share_count: 0,
-    bookmark_count: 0,
-    estimated_read_time: 5,
-    word_count: 100,
-    character_count: 500,
-    published_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-
-  return [
-    basePost,
-    {
-      ...basePost,
-      id: 'demo-2',
-      title: 'Kubernetes Resource Management Best Practices',
-      slug: 'kubernetes-resource-management',
-      excerpt: 'Learn how to properly configure resource limits, requests, and quotas for production Kubernetes clusters.',
-      category: 'kubernetes',
-      tags: ['kubernetes', 'resources', 'production'],
-      featured: false,
-      trending: true,
-    },
-    {
-      ...basePost,
-      id: 'demo-3',
-      title: 'Terraform State Management in Production',
-      slug: 'terraform-state-management',
-      excerpt: 'Best practices for managing Terraform state files securely in team environments with remote backends.',
-      category: 'terraform',
-      tags: ['terraform', 'infrastructure', 'state'],
-      featured: false,
-      trending: false,
-    },
-    {
-      ...basePost,
-      id: 'demo-4',
-      title: 'Building CI/CD Pipelines with GitHub Actions',
-      slug: 'cicd-github-actions',
-      excerpt: 'A comprehensive guide to setting up continuous integration and deployment pipelines using GitHub Actions.',
-      category: 'cicd',
-      tags: ['ci-cd', 'github-actions', 'automation'],
-      featured: false,
-      trending: true,
-    },
-    {
-      ...basePost,
-      id: 'demo-5',
-      title: 'Cloud Security Best Practices for DevOps Teams',
-      slug: 'cloud-security-devops',
-      excerpt: 'Essential security practices every DevOps team should implement to protect cloud-native applications.',
-      category: 'security',
-      tags: ['security', 'cloud', 'devops'],
-      featured: false,
-      trending: false,
-    },
-    {
-      ...basePost,
-      id: 'demo-6',
-      title: 'GitOps with ArgoCD: A Complete Guide',
-      slug: 'gitops-argocd-guide',
-      excerpt: 'Implement GitOps workflows using ArgoCD for automated, declarative Kubernetes deployments.',
-      category: 'kubernetes',
-      tags: ['gitops', 'argocd', 'kubernetes'],
-      featured: false,
-      trending: true,
-    },
-  ]
-}
-
 // =====================================================
 // POST ACTIONS
 // =====================================================
+
+// Category-to-domain mapping for counting articles per learning domain
+const DOMAIN_CATEGORIES: Record<string, string[]> = {
+  'Container Orchestration': ['kubernetes', 'docker', 'containers', 'containerd', 'podman'],
+  'Infrastructure as Code': ['terraform', 'pulumi', 'cloudformation', 'crossplane', 'iac'],
+  'CI/CD & GitOps': ['cicd', 'ci-cd', 'github-actions', 'argocd', 'gitops', 'flux', 'jenkins'],
+  'Service Mesh & Networking': ['service-mesh', 'istio', 'envoy', 'cilium', 'linkerd', 'networking'],
+  'Cloud Platforms': ['cloud', 'aws', 'gcp', 'azure', 'digitalocean'],
+  'Observability & SRE': ['observability', 'prometheus', 'grafana', 'sre', 'monitoring', 'tracing'],
+  'Security & Compliance': ['security', 'vault', 'falco', 'opa', 'trivy', 'devsecops'],
+  'Platform Engineering': ['platform-engineering', 'backstage', 'idp', 'developer-experience'],
+}
+
+export async function getSiteStats() {
+  const supabase = await createClient()
+
+  if (!supabase) {
+    return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
+  }
+
+  try {
+    // Get total published posts
+    const { count: totalPosts } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'published')
+
+    // Get total users
+    const { count: totalUsers } = await supabase
+      .from('user_profiles')
+      .select('*', { count: 'exact', head: true })
+
+    // Get all published posts' categories for domain counting
+    const { data: posts } = await supabase
+      .from('posts')
+      .select('category')
+      .eq('status', 'published')
+
+    const domainCounts: Record<string, number> = {}
+    for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
+      domainCounts[domain] = (posts || []).filter(p =>
+        cats.some(c => p.category?.toLowerCase().includes(c))
+      ).length
+    }
+
+    return {
+      totalPosts: totalPosts || 0,
+      totalUsers: totalUsers || 0,
+      domainCounts,
+    }
+  } catch (error) {
+    console.error('Error fetching site stats:', error)
+    return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
+  }
+}
 
 export async function getPosts(options?: {
   status?: string
@@ -129,27 +75,9 @@ export async function getPosts(options?: {
 }) {
   const supabase = await createClient()
   
-  // Return demo data if Supabase is not configured
   if (!supabase) {
-    console.warn('⚠️  Supabase not configured. Returning demo posts.')
-    console.warn('📖 Check SETUP_GUIDE.md for configuration instructions.')
-    
-    let filteredPosts = getDemoPosts()
-    
-    if (options?.category) {
-      filteredPosts = filteredPosts.filter(p => p.category.toLowerCase() === options.category!.toLowerCase())
-    }
-    if (options?.featured !== undefined) {
-      filteredPosts = filteredPosts.filter(p => p.featured === options.featured)
-    }
-    if (options?.trending !== undefined) {
-      filteredPosts = filteredPosts.filter(p => p.trending === options.trending)
-    }
-    if (options?.limit) {
-      filteredPosts = filteredPosts.slice(0, options.limit)
-    }
-    
-    return filteredPosts
+    console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
+    return []
   }
   
   let query = supabase
@@ -195,15 +123,8 @@ export async function getPosts(options?: {
 export async function getPostBySlug(slug: string) {
   const supabase = await createClient()
   
-  // Demo mode fallback
   if (!supabase) {
-    const demoPost = getDemoPosts().find(p => p.slug === slug)
-    if (demoPost) {
-      return {
-        ...demoPost,
-        content: `# ${demoPost.title}\n\n${demoPost.excerpt}\n\n## Getting Started\n\nThis is a demo article. Connect your Supabase database to see real content with full formatting.\n\n### What You'll Learn\n\n- How to set up your development environment\n- Best practices for production deployments\n- Advanced configuration techniques\n- Monitoring and observability\n\n### Prerequisites\n\nBefore diving in, make sure you have:\n\n1. A working knowledge of DevOps fundamentals\n2. Access to a cloud provider (AWS, GCP, or Azure)\n3. Basic command-line experience\n\n> 💡 **Tip:** Follow the SETUP_GUIDE.md to connect your Supabase database and unlock all features including comments, likes, and bookmarks.\n\n---\n\n*This demo content will be replaced with your real articles once Supabase is configured.*`,
-      } as Post
-    }
+    console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
     return null
   }
   
@@ -505,7 +426,7 @@ export async function rejectPost(postId: string, adminId: string, reason: string
 export async function incrementPostView(postId: string) {
   const supabase = await createClient()
   
-  if (!supabase) return // Demo mode - no-op
+  if (!supabase) return
   
   const { error } = await supabase.rpc('increment_post_view', {
     post_id: postId
@@ -535,14 +456,7 @@ export async function searchPosts(query: string, limit = 5) {
   }
 
   if (!supabase) {
-    const q = sanitizedQuery.toLowerCase()
-    return getDemoPosts()
-      .filter(p => 
-        p.title.toLowerCase().includes(q) || 
-        p.excerpt.toLowerCase().includes(q) ||
-        p.tags?.some(tag => tag.toLowerCase().includes(q))
-      )
-      .slice(0, limit)
+    return []
   }
 
   try {
@@ -561,13 +475,6 @@ export async function searchPosts(query: string, limit = 5) {
     return (data || []) as Post[]
   } catch (error) {
     console.error('Error searching posts:', error)
-    // Fallback to demo data on error
-    const q = sanitizedQuery.toLowerCase()
-    return getDemoPosts()
-      .filter(p => 
-        p.title.toLowerCase().includes(q) || 
-        p.excerpt.toLowerCase().includes(q)
-      )
-      .slice(0, limit)
+    return []
   }
 }
