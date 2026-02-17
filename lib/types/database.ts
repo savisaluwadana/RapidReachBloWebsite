@@ -123,6 +123,33 @@ export interface NewsFeed {
   created_at: string
 }
 
+export interface LearningPath {
+  id: string
+  title: string
+  slug: string
+  description: string
+  cover_image_url?: string
+  difficulty: ContentDifficulty
+  estimated_duration?: number
+  category: string
+  modules: Array<{
+    title: string
+    description: string
+    post_ids: string[]
+    order: number
+  }>
+  prerequisites: string[]
+  learning_outcomes: string[]
+  created_by?: string
+  enrollment_count: number
+  completion_rate: number
+  average_rating: number
+  is_published: boolean
+  featured: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface AnalyticsSummary {
   id: string
   date: string

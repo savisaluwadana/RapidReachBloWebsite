@@ -275,3 +275,161 @@ export async function getUserLearningPathProgress(userId: string, learningPathId
     return null
   }
 }
+
+// =====================================================
+// ADMIN LEARNING PATH ACTIONS
+// =====================================================
+
+export async function getAllLearningPaths(options?: {
+  limit?: number
+  includeUnpublished?: boolean
+}) {
+  const supabase = await createClient()
+
+  if (!supabase) {
+    console.warn('⚠️  Supabase not configured.')
+    return getDemoLearningPaths()
+  }
+
+  try {
+    let query = supabase
+      .from('learning_paths')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (!options?.includeUnpublished) {
+      query = query.eq('is_published', true)
+    }
+
+    if (options?.limit) query = query.limit(options.limit)
+
+    const { data, error } = await query
+    if (error) throw error
+    return data as LearningPath[]
+  } catch (error) {
+    console.error('Error fetching all learning paths:', error)
+    return []
+  }
+}
+
+export async function createLearningPath(input: {
+  title: string
+  slug: string
+  description: string
+  cover_image_url?: string
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  estimated_duration?: number
+  category: string
+  modules: Array<{ title: string; description: string; post_ids: string[]; order: number }>
+  prerequisites: string[]
+  learning_outcomes: string[]
+  created_by: string
+  is_published: boolean
+  featured: boolean
+}) {
+  const supabase = await createClient()
+  if (!supabase) return { success: false, error: 'Database not configured' }
+
+  try {
+    const { data, error } = await supabase
+      .from('learning_paths')
+      .insert({
+        ...input,
+        enrollment_count: 0,
+        completion_rate: 0,
+        average_rating: 0,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    revalidatePath('/learning-paths')
+    revalidatePath('/admin/learning-paths')
+    return { success: true, data }
+  } catch (error: any) {
+    console.error('Error creating learning path:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function updateLearningPath(
+  id: string,
+  input: Partial<{
+    title: string
+    slug: string
+    description: string
+    cover_image_url: string
+    difficulty: 'beginner' | 'intermediate' | 'advanced'
+    estimated_duration: number
+    category: string
+    modules: Array<{ title: string; description: string; post_ids: string[]; order: number }>
+    prerequisites: string[]
+    learning_outcomes: string[]
+    is_published: boolean
+    featured: boolean
+  }>
+) {
+  const supabase = await createClient()
+  if (!supabase) return { success: false, error: 'Database not configured' }
+
+  try {
+    const { data, error } = await supabase
+      .from('learning_paths')
+      .update(input)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    revalidatePath('/learning-paths')
+    revalidatePath('/admin/learning-paths')
+    return { success: true, data }
+  } catch (error: any) {
+    console.error('Error updating learning path:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function deleteLearningPath(id: string) {
+  const supabase = await createClient()
+  if (!supabase) return { success: false, error: 'Database not configured' }
+
+  try {
+    const { error } = await supabase
+      .from('learning_paths')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    revalidatePath('/learning-paths')
+    revalidatePath('/admin/learning-paths')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting learning path:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function toggleLearningPathPublish(id: string, isPublished: boolean) {
+  const supabase = await createClient()
+  if (!supabase) return { success: false, error: 'Database not configured' }
+
+  try {
+    const { error } = await supabase
+      .from('learning_paths')
+      .update({ is_published: isPublished })
+      .eq('id', id)
+
+    if (error) throw error
+
+    revalidatePath('/learning-paths')
+    revalidatePath('/admin/learning-paths')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error toggling learning path publish:', error)
+    return { success: false, error: error.message }
+  }
+}

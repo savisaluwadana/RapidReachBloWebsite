@@ -1220,6 +1220,50 @@ EXCEPTION
 END $$;
 
 -- =====================================================
+-- LEARNING PATH HELPERS
+-- =====================================================
+
+-- Increment enrollment count when a user enrolls
+CREATE OR REPLACE FUNCTION increment_enrollment_count(path_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE learning_paths
+    SET enrollment_count = enrollment_count + 1
+    WHERE id = path_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Allow admins/editors to delete learning paths
+DO $$ BEGIN
+    CREATE POLICY "Admins can delete learning paths"
+        ON learning_paths FOR DELETE
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('editor', 'admin')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Allow admins/editors to update any learning path (not just their own)
+DO $$ BEGIN
+    CREATE POLICY "Admins can update any learning path"
+        ON learning_paths FOR UPDATE
+        USING (
+            EXISTS (
+                SELECT 1 FROM user_profiles
+                WHERE id = auth.uid()
+                AND role IN ('editor', 'admin')
+            )
+        );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- =====================================================
 -- SEED DATA (Optional - for development)
 -- =====================================================
 

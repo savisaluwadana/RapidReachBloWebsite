@@ -18,12 +18,14 @@ import {
   X,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Posts', href: '/admin/posts', icon: FileText },
+  { name: 'Learning Paths', href: '/admin/learning-paths', icon: BookOpen },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Comments', href: '/admin/comments', icon: MessageSquare },
   { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
