@@ -18,11 +18,13 @@ interface NewsItem {
 
 const categoryIcons: Record<string, string> = {
   Kubernetes: '☸️',
-  Terraform: '🔷',
-  'CI/CD': '🔄',
+  'Cloud Native': '🌐',
   Infrastructure: '🏗️',
   Containers: '📦',
   Cloud: '☁️',
+  DevOps: '🔄',
+  Terraform: '🔷',
+  'CI/CD': '🔄',
   GitOps: '🔄',
   Security: '🔒',
 }

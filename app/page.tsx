@@ -3,8 +3,8 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import Footer from '@/components/Footer'
-import { TrendingUp, Zap, BookOpen, Users, Award, Clock, Star } from 'lucide-react'
-import { getPosts } from '@/lib/actions/posts'
+import { TrendingUp, Zap, BookOpen, Users, Award, Clock } from 'lucide-react'
+import { getPosts, getSiteStats } from '@/lib/actions/posts'
 import Link from 'next/link'
 
 const sampleKubernetesYAML = `apiVersion: apps/v1
@@ -42,7 +42,6 @@ const learningDomains = [
     color: 'from-[#326CE5] to-[#1E44A3]',
     glow: 'rgba(50,108,229,0.35)',
     tools: ['Kubernetes', 'Docker', 'Containerd', 'Podman'],
-    articles: 42,
     href: '/blog?category=kubernetes',
     level: 'Beginner → Expert',
   },
@@ -53,7 +52,6 @@ const learningDomains = [
     color: 'from-[#5C4EE5] to-[#4040B2]',
     glow: 'rgba(92,78,229,0.35)',
     tools: ['Terraform', 'Pulumi', 'CloudFormation', 'Crossplane'],
-    articles: 38,
     href: '/blog?category=terraform',
     level: 'Intermediate',
   },
@@ -64,7 +62,6 @@ const learningDomains = [
     color: 'from-[#F97316] to-[#EA580C]',
     glow: 'rgba(249,115,22,0.35)',
     tools: ['ArgoCD', 'GitHub Actions', 'GitLab CI', 'Flux'],
-    articles: 35,
     href: '/blog?category=cicd',
     level: 'Beginner → Advanced',
   },
@@ -75,7 +72,6 @@ const learningDomains = [
     color: 'from-[#06B6D4] to-[#0891B2]',
     glow: 'rgba(6,182,212,0.35)',
     tools: ['Istio', 'Envoy', 'Cilium', 'Linkerd'],
-    articles: 28,
     href: '/blog?category=service-mesh',
     level: 'Advanced',
   },
@@ -86,7 +82,6 @@ const learningDomains = [
     color: 'from-[#FF9900] to-[#E68A00]',
     glow: 'rgba(255,153,0,0.35)',
     tools: ['AWS', 'GCP', 'Azure', 'DigitalOcean'],
-    articles: 56,
     href: '/blog?category=cloud',
     level: 'All Levels',
   },
@@ -97,7 +92,6 @@ const learningDomains = [
     color: 'from-[#E11D48] to-[#BE123C]',
     glow: 'rgba(225,29,72,0.35)',
     tools: ['Prometheus', 'Grafana', 'Jaeger', 'OpenTelemetry'],
-    articles: 31,
     href: '/blog?category=observability',
     level: 'Intermediate → Expert',
   },
@@ -108,7 +102,6 @@ const learningDomains = [
     color: 'from-[#10B981] to-[#059669]',
     glow: 'rgba(16,185,129,0.35)',
     tools: ['Vault', 'Falco', 'OPA', 'Trivy'],
-    articles: 24,
     href: '/blog?category=security',
     level: 'Intermediate → Advanced',
   },
@@ -119,7 +112,6 @@ const learningDomains = [
     color: 'from-[#8B5CF6] to-[#7C3AED]',
     glow: 'rgba(139,92,246,0.35)',
     tools: ['Backstage', 'Port', 'Kratix', 'Score'],
-    articles: 19,
     href: '/blog?category=platform-engineering',
     level: 'Advanced',
   },
@@ -157,10 +149,13 @@ const featuredPaths = [
 ]
 
 export default async function Home() {
-  const featuredPosts = await getPosts({ featured: true, status: 'published', limit: 1 })
+  const [featuredPosts, recentPosts, trendingPosts, siteStats] = await Promise.all([
+    getPosts({ featured: true, status: 'published', limit: 1 }),
+    getPosts({ status: 'published', limit: 6 }),
+    getPosts({ trending: true, status: 'published', limit: 3 }),
+    getSiteStats(),
+  ])
   const featuredArticle = featuredPosts[0]
-  const recentPosts = await getPosts({ status: 'published', limit: 6 })
-  const trendingPosts = await getPosts({ trending: true, status: 'published', limit: 3 })
 
   return (
     <main className="min-h-screen bg-deep-charcoal">
@@ -174,14 +169,14 @@ export default async function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#5C4EE5]/5 rounded-full blur-[140px]" />
 
         <div className="relative container mx-auto px-6">
-          {/* Trust Badge */}
+          {/* Live Indicator */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-lime opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyber-lime" />
               </span>
-              <span className="text-sm text-gray-300">Trusted by <span className="text-white font-semibold">12,000+</span> DevOps engineers worldwide</span>
+              <span className="text-sm text-gray-300">Live DevOps & Platform Engineering News</span>
             </div>
           </div>
 
@@ -219,13 +214,12 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* Quick Stats */}
+            {/* Quick Stats — real data from database */}
             <div className="flex flex-wrap justify-center gap-8 md:gap-14">
               {[
-                { icon: <BookOpen className="w-5 h-5" />, value: '200+', label: 'In-Depth Articles' },
-                { icon: <Users className="w-5 h-5" />, value: '12K+', label: 'Engineers Learning' },
+                { icon: <BookOpen className="w-5 h-5" />, value: String(siteStats.totalPosts), label: 'Published Articles' },
+                { icon: <Users className="w-5 h-5" />, value: String(siteStats.totalUsers), label: 'Registered Users' },
                 { icon: <Award className="w-5 h-5" />, value: '8', label: 'Learning Domains' },
-                { icon: <Clock className="w-5 h-5" />, value: '150h+', label: 'Content Hours' },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
@@ -308,7 +302,7 @@ export default async function Home() {
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
                     <span className="text-xs text-gray-500">
-                      <span className="text-white font-semibold">{domain.articles}</span> articles
+                      <span className="text-white font-semibold">{siteStats.domainCounts[domain.title] || 0}</span> articles
                     </span>
                     <span className="text-xs text-electric-cyan opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                       Explore
@@ -515,7 +509,7 @@ export default async function Home() {
                       Level Up Weekly
                     </h3>
                     <p className="text-white/80 mb-6 text-sm">
-                      Join 12,000+ engineers getting curated DevOps insights, tutorials, and industry news every week.
+                      Get curated DevOps insights, tutorials, and industry news delivered to your inbox every week.
                     </p>
                     <input
                       type="email"
@@ -617,9 +611,9 @@ export default async function Home() {
               </span>
             </h2>
             <p className="text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
-              Join thousands of engineers mastering Container Orchestration, Infrastructure as Code, GitOps, and Platform Engineering.
+              Master Container Orchestration, Infrastructure as Code, GitOps, and Platform Engineering with hands-on, practitioner-written content.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/auth/signup"
                 className="px-10 py-4 rounded-2xl bg-gradient-to-r from-electric-cyan to-[#5C4EE5] text-white font-semibold text-lg shadow-[0_0_40px_rgba(50,108,229,0.4)] hover:shadow-[0_0_60px_rgba(50,108,229,0.6)] transition-all hover:scale-[1.03]"
@@ -632,26 +626,6 @@ export default async function Home() {
               >
                 Browse Articles
               </Link>
-            </div>
-
-            {/* Social Proof */}
-            <div className="flex items-center justify-center gap-2">
-              <div className="flex -space-x-2">
-                {['A', 'B', 'C', 'D', 'E'].map((letter, i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-cyan to-[#5C4EE5] border-2 border-deep-charcoal flex items-center justify-center"
-                  >
-                    <span className="text-white text-xs font-bold">{letter}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-1 ml-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <span className="text-gray-400 text-sm ml-2">Loved by 12,000+ engineers</span>
             </div>
 
           </div>
