@@ -72,11 +72,11 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-electric-cyan to-cyber-lime flex items-center justify-center transition-transform group-hover:scale-105">
-                <span className="text-deep-charcoal font-bold text-sm">R</span>
+              <div className="relative w-8 h-8 rounded-lg bg-white/[0.08] border border-white/[0.1] flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-white font-bold text-sm">R</span>
               </div>
               <span className="text-lg font-bold text-white tracking-tight">
-                Rapid<span className="text-electric-cyan">Reach</span>
+                RapidReach
               </span>
             </Link>
 
@@ -115,8 +115,8 @@ export default function Navbar() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
                   >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-electric-cyan to-cyber-lime flex items-center justify-center">
-                      <span className="text-deep-charcoal text-[10px] font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
+                    <div className="w-6 h-6 rounded-full bg-white/[0.1] border border-white/[0.12] flex items-center justify-center">
+                      <span className="text-white text-[10px] font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
                     </div>
                     <span className="text-sm text-white font-medium">{user.full_name.split(' ')[0]}</span>
                     <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
@@ -222,8 +222,8 @@ export default function Navbar() {
             {user && (
               <div className="pb-4 mb-4 border-b border-white/[0.06]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-cyan to-cyber-lime flex items-center justify-center">
-                    <span className="text-deep-charcoal font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
+                  <div className="w-10 h-10 rounded-full bg-white/[0.1] border border-white/[0.12] flex items-center justify-center">
+                    <span className="text-white font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{user.full_name}</p>

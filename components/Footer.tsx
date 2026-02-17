@@ -52,11 +52,11 @@ export default function Footer() {
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-electric-cyan to-cyber-lime flex items-center justify-center">
-                <span className="text-deep-charcoal font-bold text-xs">R</span>
+              <div className="w-7 h-7 rounded-md bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">
+                <span className="text-white font-bold text-xs">R</span>
               </div>
               <span className="text-base font-bold text-white tracking-tight">
-                Rapid<span className="text-electric-cyan">Reach</span>
+                RapidReach
               </span>
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed mb-5 max-w-xs">

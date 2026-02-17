@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock, Eye, EyeOff, Shield, User } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react'
 import Link from 'next/link'
 import { signUp } from '@/lib/actions/auth'
 
@@ -77,8 +77,8 @@ export default function SignUp() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <div className="w-12 h-12 rounded-xl bg-electric-cyan mx-auto mb-4 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-white/[0.08] border border-white/[0.1] mx-auto mb-4 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">R</span>
             </div>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-1">Create Account</h1>
