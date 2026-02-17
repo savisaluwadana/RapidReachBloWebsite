@@ -12,7 +12,7 @@ export default {
       colors: {
         // Billion-Dollar Color Palette
         'deep-charcoal': {
-          DEFAULT: '#0B0B0B',
+          DEFAULT: '#050505',
           50: '#1A1A1A',
           100: '#0F0F0F',
           200: '#0B0B0B',
@@ -55,7 +55,7 @@ export default {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'gradient-cyber': 'linear-gradient(135deg, #326CE5 0%, #00FF88 100%)',
-        'gradient-dark': 'linear-gradient(180deg, #0B0B0B 0%, #1A1A1A 100%)',
+        'gradient-dark': 'linear-gradient(180deg, #050505 0%, #1A1A1A 100%)',
         'mesh-gradient': 'radial-gradient(at 40% 20%, rgba(50, 108, 229, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(0, 255, 136, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(50, 108, 229, 0.2) 0px, transparent 50%)',
       },
       fontFamily: {

@@ -3,7 +3,7 @@ import ArticleCard from '@/components/ArticleCard'
 import LiveInfrastructureFeed from '@/components/LiveInfrastructureFeed'
 import CodeSandbox from '@/components/CodeSandbox'
 import Footer from '@/components/Footer'
-import { TrendingUp, Zap, BookOpen, Users, Award, Clock } from 'lucide-react'
+import { BookOpen, Users, Award, Clock, ArrowRight, Zap, TrendingUp } from 'lucide-react'
 import { getPosts, getSiteStats } from '@/lib/actions/posts'
 import Link from 'next/link'
 
@@ -33,44 +33,40 @@ spec:
             memory: "256Mi"
             cpu: "500m"`
 
-/* ─── Learning Domains Data ─── */
+/* ─── Learning Domains ─── */
 const learningDomains = [
   {
     title: 'Container Orchestration',
-    description: 'Master container lifecycle, scaling, and management across distributed systems',
+    description: 'Container lifecycle, scaling, and management across distributed systems',
     icon: '⎈',
-    color: 'from-[#326CE5] to-[#1E44A3]',
-    glow: 'rgba(50,108,229,0.35)',
+    gradient: 'from-[#326CE5] to-[#1E44A3]',
     tools: ['Kubernetes', 'Docker', 'Containerd', 'Podman'],
     href: '/blog?category=kubernetes',
     level: 'Beginner → Expert',
   },
   {
     title: 'Infrastructure as Code',
-    description: 'Define, provision, and manage cloud infrastructure through declarative configuration',
+    description: 'Define and provision cloud infrastructure through declarative configuration',
     icon: '⟨/⟩',
-    color: 'from-[#5C4EE5] to-[#4040B2]',
-    glow: 'rgba(92,78,229,0.35)',
+    gradient: 'from-[#5C4EE5] to-[#4040B2]',
     tools: ['Terraform', 'Pulumi', 'CloudFormation', 'Crossplane'],
     href: '/blog?category=terraform',
     level: 'Intermediate',
   },
   {
     title: 'CI/CD & GitOps',
-    description: 'Automate build, test, and deployment pipelines with Git as the single source of truth',
+    description: 'Automate build, test, and deployment with Git as the source of truth',
     icon: '⟳',
-    color: 'from-[#F97316] to-[#EA580C]',
-    glow: 'rgba(249,115,22,0.35)',
+    gradient: 'from-[#F97316] to-[#EA580C]',
     tools: ['ArgoCD', 'GitHub Actions', 'GitLab CI', 'Flux'],
     href: '/blog?category=cicd',
     level: 'Beginner → Advanced',
   },
   {
     title: 'Service Mesh & Networking',
-    description: 'Secure, observe, and control traffic between microservices with zero-trust networking',
+    description: 'Secure, observe, and control traffic between microservices',
     icon: '◈',
-    color: 'from-[#06B6D4] to-[#0891B2]',
-    glow: 'rgba(6,182,212,0.35)',
+    gradient: 'from-[#06B6D4] to-[#0891B2]',
     tools: ['Istio', 'Envoy', 'Cilium', 'Linkerd'],
     href: '/blog?category=service-mesh',
     level: 'Advanced',
@@ -79,38 +75,34 @@ const learningDomains = [
     title: 'Cloud Platforms',
     description: 'Design, deploy, and operate applications across major cloud providers',
     icon: '☁',
-    color: 'from-[#FF9900] to-[#E68A00]',
-    glow: 'rgba(255,153,0,0.35)',
+    gradient: 'from-[#FF9900] to-[#E68A00]',
     tools: ['AWS', 'GCP', 'Azure', 'DigitalOcean'],
     href: '/blog?category=cloud',
     level: 'All Levels',
   },
   {
     title: 'Observability & SRE',
-    description: 'Monitor, trace, and debug distributed systems with modern observability stacks',
+    description: 'Monitor, trace, and debug distributed systems at scale',
     icon: '◉',
-    color: 'from-[#E11D48] to-[#BE123C]',
-    glow: 'rgba(225,29,72,0.35)',
+    gradient: 'from-[#E11D48] to-[#BE123C]',
     tools: ['Prometheus', 'Grafana', 'Jaeger', 'OpenTelemetry'],
     href: '/blog?category=observability',
     level: 'Intermediate → Expert',
   },
   {
     title: 'Security & Compliance',
-    description: 'Implement DevSecOps, supply chain security, and zero-trust architectures',
+    description: 'Implement DevSecOps, supply chain security, and zero-trust',
     icon: '⛨',
-    color: 'from-[#10B981] to-[#059669]',
-    glow: 'rgba(16,185,129,0.35)',
+    gradient: 'from-[#10B981] to-[#059669]',
     tools: ['Vault', 'Falco', 'OPA', 'Trivy'],
     href: '/blog?category=security',
     level: 'Intermediate → Advanced',
   },
   {
     title: 'Platform Engineering',
-    description: 'Build Internal Developer Platforms that accelerate delivery and reduce cognitive load',
+    description: 'Build Internal Developer Platforms that accelerate delivery',
     icon: '⬡',
-    color: 'from-[#8B5CF6] to-[#7C3AED]',
-    glow: 'rgba(139,92,246,0.35)',
+    gradient: 'from-[#8B5CF6] to-[#7C3AED]',
     tools: ['Backstage', 'Port', 'Kratix', 'Score'],
     href: '/blog?category=platform-engineering',
     level: 'Advanced',
@@ -124,27 +116,24 @@ const featuredPaths = [
     steps: 12,
     duration: '6 weeks',
     level: 'Beginner',
-    color: 'from-[#326CE5]/20 to-[#326CE5]/5',
-    border: 'border-[#326CE5]/30',
-    badge: '🔥 Most Popular',
+    accent: '#326CE5',
+    badge: 'Popular',
   },
   {
     title: 'GitOps Mastery with ArgoCD',
     steps: 8,
     duration: '4 weeks',
     level: 'Intermediate',
-    color: 'from-[#F97316]/20 to-[#F97316]/5',
-    border: 'border-[#F97316]/30',
-    badge: '⭐ New',
+    accent: '#F97316',
+    badge: 'New',
   },
   {
     title: 'Production-Grade IaC',
     steps: 10,
     duration: '5 weeks',
     level: 'Advanced',
-    color: 'from-[#5C4EE5]/20 to-[#5C4EE5]/5',
-    border: 'border-[#5C4EE5]/30',
-    badge: '🏆 Certified',
+    accent: '#5C4EE5',
+    badge: 'Certified',
   },
 ]
 
@@ -161,72 +150,66 @@ export default async function Home() {
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
 
-      {/* ━━━━━━━━━━━━ HERO ━━━━━━━━━━━━ */}
-      <section className="relative pt-20 pb-28 overflow-hidden">
-        <div className="absolute inset-0 bg-mesh-gradient opacity-30" />
-        <div className="absolute top-10 left-10 w-[500px] h-[500px] bg-electric-cyan/8 rounded-full blur-[120px]" />
-        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-cyber-lime/8 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#5C4EE5]/5 rounded-full blur-[140px]" />
+      {/* ━━━━ HERO ━━━━ */}
+      <section className="relative pt-24 pb-20 overflow-hidden">
+        <div className="absolute inset-0 dot-grid opacity-40" />
+        <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-electric-cyan/[0.04] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#5C4EE5]/[0.04] rounded-full blur-[120px]" />
 
         <div className="relative container mx-auto px-6">
-          {/* Live Indicator */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
-              <span className="flex h-2 w-2 relative">
+          {/* Status badge */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06]">
+              <span className="flex h-1.5 w-1.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-lime opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyber-lime" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyber-lime" />
               </span>
-              <span className="text-sm text-gray-300">Live DevOps & Platform Engineering News</span>
+              <span className="text-xs text-gray-400">Live DevOps &amp; Platform Engineering Content</span>
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto text-center mb-16">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-[1.05] tracking-tight">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-[1.1] tracking-tight">
               <span className="text-white">Learn </span>
-              <span className="bg-gradient-to-r from-electric-cyan via-[#5C4EE5] to-cyber-lime bg-clip-text text-transparent">
-                DevOps
-              </span>
+              <span className="bg-gradient-to-r from-electric-cyan to-[#5C4EE5] bg-clip-text text-transparent">DevOps</span>
               <br />
-              <span className="text-white">The </span>
-              <span className="bg-gradient-to-r from-cyber-lime to-electric-cyan bg-clip-text text-transparent">
-                Modern Way
-              </span>
+              <span className="text-white">the </span>
+              <span className="bg-gradient-to-r from-cyber-lime to-electric-cyan bg-clip-text text-transparent">modern way</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-3xl mx-auto mb-10">
-              From Container Orchestration to Platform Engineering — master the concepts, tools,
-              and practices that power today&apos;s cloud-native infrastructure. Hands-on learning paths
-              built by practitioners.
+            <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto mb-10">
+              From Container Orchestration to Platform Engineering — master the concepts,
+              tools, and practices that power today&apos;s cloud-native infrastructure.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
               <Link
                 href="/learning-paths"
-                className="group px-8 py-4 rounded-2xl bg-gradient-to-r from-electric-cyan to-[#5C4EE5] text-white font-semibold text-lg shadow-[0_0_30px_rgba(50,108,229,0.4)] hover:shadow-[0_0_50px_rgba(50,108,229,0.6)] transition-all hover:scale-[1.03] flex items-center justify-center gap-2"
+                className="group inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors"
               >
-                Start Learning Free
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                Start Learning
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
                 href="/blog"
-                className="px-8 py-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/10 transition-all"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white/[0.04] border border-white/[0.06] text-gray-300 text-sm font-medium hover:bg-white/[0.06] transition-colors"
               >
-                Explore Articles
+                Browse Articles
               </Link>
             </div>
 
-            {/* Quick Stats — real data from database */}
-            <div className="flex flex-wrap justify-center gap-8 md:gap-14">
+            {/* Real stats */}
+            <div className="flex flex-wrap justify-center gap-10 md:gap-16">
               {[
-                { icon: <BookOpen className="w-5 h-5" />, value: String(siteStats.totalPosts), label: 'Published Articles' },
-                { icon: <Users className="w-5 h-5" />, value: String(siteStats.totalUsers), label: 'Registered Users' },
-                { icon: <Award className="w-5 h-5" />, value: '8', label: 'Learning Domains' },
+                { icon: <BookOpen className="w-4 h-4" />, value: String(siteStats.totalPosts), label: 'Articles' },
+                { icon: <Users className="w-4 h-4" />, value: String(siteStats.totalUsers), label: 'Users' },
+                { icon: <Award className="w-4 h-4" />, value: '8', label: 'Domains' },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <span className="text-electric-cyan">{stat.icon}</span>
-                    <span className="text-2xl font-bold text-white">{stat.value}</span>
+                  <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                    <span className="text-gray-600">{stat.icon}</span>
+                    <span className="text-xl font-bold text-white tabular-nums">{stat.value}</span>
                   </div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wider">{stat.label}</span>
+                  <span className="text-[10px] text-gray-600 uppercase tracking-widest">{stat.label}</span>
                 </div>
               ))}
             </div>
@@ -234,79 +217,61 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━ LEARNING DOMAINS ━━━━━━━━━━━━ */}
-      <section className="py-20 bg-deep-charcoal relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-deep-charcoal via-deep-charcoal-100/50 to-deep-charcoal" />
-        <div className="relative container mx-auto px-6">
-          {/* Section Header */}
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-electric-cyan/10 border border-electric-cyan/20 text-electric-cyan text-sm font-medium mb-4">
-              Learning Domains
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              Master the Concepts,<br />
-              <span className="bg-gradient-to-r from-electric-cyan to-cyber-lime bg-clip-text text-transparent">
-                Not Just the Tools
-              </span>
+      {/* ━━━━ LEARNING DOMAINS ━━━━ */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">Learning Domains</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Master the concepts,{' '}
+              <span className="bg-gradient-to-r from-electric-cyan to-cyber-lime bg-clip-text text-transparent">not just the tools</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-              We organize learning around core DevOps domains. Each domain covers the concepts, best practices, and tools you need to become production-ready.
+            <p className="text-gray-500 max-w-xl mx-auto text-sm">
+              We organize learning around core DevOps domains — concepts, best practices, and tools to become production-ready.
             </p>
           </div>
 
-          {/* Domain Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {learningDomains.map((domain) => (
               <Link
                 key={domain.title}
                 href={domain.href}
-                className="group relative rounded-2xl bg-white/[0.03] border border-white/[0.06] p-6 hover:bg-white/[0.06] transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1"
+                className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
               >
-                {/* Hover glow */}
-                <div
-                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{ boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 40px ${domain.glow}` }}
-                />
-
                 <div className="relative z-10">
-                  {/* Icon + Level */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${domain.color} flex items-center justify-center text-white text-xl shadow-lg`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white text-lg`}>
                       {domain.icon}
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-1 rounded-md">
+                    <span className="text-[9px] font-medium uppercase tracking-wider text-gray-600 bg-white/[0.03] px-1.5 py-0.5 rounded">
                       {domain.level}
                     </span>
                   </div>
 
-                  {/* Title & Description */}
-                  <h3 className="text-white font-bold text-lg mb-2 group-hover:text-electric-cyan transition-colors">
+                  <h3 className="text-white font-semibold text-sm mb-1.5 group-hover:text-electric-cyan transition-colors">
                     {domain.title}
                   </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-2">
+                  <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
                     {domain.description}
                   </p>
 
-                  {/* Tools Row */}
-                  <div className="flex flex-wrap gap-1.5 mb-4">
+                  <div className="flex flex-wrap gap-1 mb-3">
                     {domain.tools.map((tool) => (
                       <span
                         key={tool}
-                        className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-gray-400 text-xs font-medium"
+                        className="px-1.5 py-0.5 rounded bg-white/[0.03] text-gray-500 text-[10px] font-medium"
                       >
                         {tool}
                       </span>
                     ))}
                   </div>
 
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
-                    <span className="text-xs text-gray-500">
-                      <span className="text-white font-semibold">{siteStats.domainCounts[domain.title] || 0}</span> articles
+                  <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.03]">
+                    <span className="text-[11px] text-gray-600">
+                      <span className="text-gray-400 font-medium">{siteStats.domainCounts[domain.title] || 0}</span> articles
                     </span>
-                    <span className="text-xs text-electric-cyan opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      Explore
-                      <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    <span className="text-[11px] text-electric-cyan opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                      Explore <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
                 </div>
@@ -316,83 +281,78 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━ LEARNING PATHS ━━━━━━━━━━━━ */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-deep-charcoal to-deep-charcoal-100/30" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#5C4EE5]/5 rounded-full blur-[140px]" />
-
+      {/* ━━━━ LEARNING PATHS ━━━━ */}
+      <section className="py-20 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-deep-charcoal-100/20 to-transparent" />
         <div className="relative container mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 gap-4">
             <div>
-              <span className="inline-block px-4 py-1.5 rounded-full bg-cyber-lime/10 border border-cyber-lime/20 text-cyber-lime text-sm font-medium mb-4">
-                Structured Learning
-              </span>
-              <h2 className="text-3xl md:text-5xl font-bold text-white">
-                Guided Learning Paths
-              </h2>
-              <p className="text-gray-400 mt-3 max-w-xl">
-                Follow curated, step-by-step paths from beginner to expert. Each path includes hands-on projects, assessments, and real-world scenarios.
+              <p className="text-xs text-cyber-lime uppercase tracking-widest font-medium mb-3">Structured Learning</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Guided Learning Paths</h2>
+              <p className="text-gray-500 mt-2 max-w-lg text-sm">
+                Step-by-step paths from beginner to expert, with hands-on projects and real-world scenarios.
               </p>
             </div>
             <Link
               href="/learning-paths"
-              className="text-electric-cyan font-semibold flex items-center gap-2 hover:gap-3 transition-all shrink-0"
+              className="text-sm text-electric-cyan font-medium flex items-center gap-1.5 hover:gap-2.5 transition-all shrink-0"
             >
-              View All Paths
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              View All <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {featuredPaths.map((path) => (
               <Link
                 key={path.title}
                 href="/learning-paths"
-                className={`group relative rounded-2xl bg-gradient-to-br ${path.color} border ${path.border} p-6 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300`}
+                className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-bold bg-white/10 text-white px-2.5 py-1 rounded-full">
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${path.accent}40, transparent)` }} />
+
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded" style={{ color: path.accent, backgroundColor: `${path.accent}15` }}>
                     {path.badge}
                   </span>
-                  <span className="text-xs text-gray-400 font-medium">{path.level}</span>
+                  <span className="text-[10px] text-gray-600">{path.level}</span>
                 </div>
 
-                <h3 className="text-white font-bold text-xl mb-3">{path.title}</h3>
+                <h3 className="text-white font-semibold text-base mb-3 group-hover:text-electric-cyan transition-colors">{path.title}</h3>
 
-                <div className="flex items-center gap-4 text-sm text-gray-400 mb-5">
-                  <span className="flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4" />
+                <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="w-3.5 h-3.5" />
                     {path.steps} modules
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
                     {path.duration}
                   </span>
                 </div>
 
-                {/* Progress bar */}
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-electric-cyan to-cyber-lime rounded-full w-0" />
+                <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full w-0" style={{ background: `linear-gradient(90deg, ${path.accent}, ${path.accent}80)` }} />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Start this path →</p>
+                <p className="text-[11px] text-gray-600 mt-2 flex items-center gap-1">
+                  Start this path <ArrowRight className="w-3 h-3" />
+                </p>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━ MAIN CONTENT ━━━━━━━━━━━━ */}
-      <section className="py-16 bg-gradient-dark">
+      {/* ━━━━ MAIN CONTENT ━━━━ */}
+      <section className="py-16">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Articles Column */}
-            <div className="lg:col-span-2 space-y-12">
-              {/* Featured Article */}
+            <div className="lg:col-span-2 space-y-10">
               {featuredArticle && (
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                    <Zap className="w-6 h-6 text-cyber-lime" />
-                    Featured Article
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-cyber-lime" />
+                    Featured
                   </h2>
                   <ArticleCard
                     title={featuredArticle.title}
@@ -403,7 +363,7 @@ export default async function Home() {
                       role: featuredArticle.author?.role || 'Contributor',
                     }}
                     category={featuredArticle.category}
-                    readTime={`${featuredArticle.estimated_read_time || 5} min read`}
+                    readTime={`${featuredArticle.estimated_read_time || 5} min`}
                     date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     image={featuredArticle.cover_image_url || ''}
                     slug={featuredArticle.slug}
@@ -413,14 +373,13 @@ export default async function Home() {
                 </div>
               )}
 
-              {/* Latest Articles */}
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <BookOpen className="w-6 h-6 text-electric-cyan" />
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-electric-cyan" />
                   Latest Articles
                 </h2>
                 {recentPosts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {recentPosts.map((article) => (
                       <ArticleCard
                         key={article.id}
@@ -432,7 +391,7 @@ export default async function Home() {
                           role: article.author?.role || 'Contributor',
                         }}
                         category={article.category}
-                        readTime={`${article.estimated_read_time || 5} min read`}
+                        readTime={`${article.estimated_read_time || 5} min`}
                         date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         image={article.cover_image_url || ''}
                         slug={article.slug}
@@ -441,39 +400,37 @@ export default async function Home() {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-12 text-center">
-                    <BookOpen className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">No Articles Yet</h3>
-                    <p className="text-gray-400 mb-4">Check back soon for exciting DevOps content!</p>
-                    <p className="text-sm text-electric-cyan">💡 Configure Supabase to load real posts (see SETUP_GUIDE.md)</p>
+                  <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
+                    <BookOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+                    <h3 className="text-base font-semibold text-white mb-1">No Articles Yet</h3>
+                    <p className="text-sm text-gray-500">Articles will appear here once published.</p>
                   </div>
                 )}
               </div>
 
-              {/* Trending This Week */}
               {trendingPosts.length > 0 && (
-                <div className="rounded-3xl backdrop-blur-xl bg-gradient-to-br from-electric-cyan/10 to-cyber-lime/10 border border-electric-cyan/20 p-8">
-                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                    <TrendingUp className="w-6 h-6 text-electric-cyan" />
+                <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-electric-cyan" />
                     Trending This Week
                   </h2>
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {trendingPosts.map((post, index) => (
                       <Link
                         key={post.id}
                         href={`/blog/${post.slug}`}
-                        className="flex gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all group"
+                        className="flex gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors group"
                       >
-                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-cyber flex items-center justify-center text-white font-bold text-xl">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-md bg-white/[0.04] flex items-center justify-center text-gray-500 font-mono text-sm font-bold">
                           {index + 1}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white group-hover:text-electric-cyan transition-colors line-clamp-2 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-2 mb-0.5">
                             {post.title}
                           </h3>
-                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                          <div className="flex items-center gap-2 text-[11px] text-gray-600">
                             <span>{post.author?.full_name || 'Anonymous'}</span>
-                            <span>•</span>
+                            <span>·</span>
                             <span>{post.view_count} views</span>
                           </div>
                         </div>
@@ -483,55 +440,47 @@ export default async function Home() {
                 </div>
               )}
 
-              {/* Code Example Section */}
-              <div className="rounded-3xl backdrop-blur-xl bg-white/5 border border-white/10 p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Learn by Example: Kubernetes Deployments
-                </h2>
+              <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Learn by Example</h2>
                 <CodeSandbox
                   code={sampleKubernetesYAML}
                   language="yaml"
-                  title="Production NGINX Deployment"
-                  description="A production-ready configuration with 3 replicas and resource limits"
+                  title="Kubernetes Deployment"
+                  description="A production-ready NGINX deployment with replicas and resource limits"
                   runnable={true}
                 />
               </div>
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="sticky top-24 space-y-6">
-                {/* Newsletter CTA */}
-                <div className="rounded-2xl bg-gradient-to-br from-electric-cyan/90 to-[#5C4EE5]/90 p-8 text-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[url(&apos;data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==&apos;)] opacity-50" />
+            <div className="lg:col-span-1">
+              <div className="sticky top-20 space-y-4">
+                <div className="rounded-xl bg-gradient-to-br from-electric-cyan/90 to-[#5C4EE5]/90 p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 dot-grid opacity-10" />
                   <div className="relative z-10">
-                    <h3 className="text-2xl font-bold text-white mb-3">
-                      Level Up Weekly
-                    </h3>
-                    <p className="text-white/80 mb-6 text-sm">
-                      Get curated DevOps insights, tutorials, and industry news delivered to your inbox every week.
+                    <h3 className="text-lg font-bold text-white mb-1.5">Level Up Weekly</h3>
+                    <p className="text-white/70 mb-4 text-xs leading-relaxed">
+                      Curated DevOps insights, tutorials, and news — every week.
                     </p>
                     <input
                       type="email"
                       placeholder="your@email.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-xl border border-white/30 text-white placeholder:text-white/50 mb-3 focus:outline-none focus:ring-2 focus:ring-white/50"
+                      className="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/20 text-sm text-white placeholder:text-white/40 mb-2 focus:outline-none focus:ring-1 focus:ring-white/40"
                     />
-                    <button className="w-full px-6 py-3 rounded-xl bg-white text-electric-cyan font-semibold hover:bg-white/90 transition-colors shadow-lg">
-                      Subscribe — It&apos;s Free
+                    <button className="w-full px-4 py-2.5 rounded-lg bg-white text-electric-cyan text-sm font-semibold hover:bg-white/90 transition-colors">
+                      Subscribe Free
                     </button>
-                    <p className="text-white/50 text-xs mt-3">No spam. Unsubscribe anytime.</p>
+                    <p className="text-white/40 text-[10px] mt-2 text-center">No spam. Unsubscribe anytime.</p>
                   </div>
                 </div>
 
-                {/* Live Feed */}
-                <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 h-[600px] overflow-hidden">
+                <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] h-[520px] overflow-hidden">
                   <LiveInfrastructureFeed />
                 </div>
 
-                {/* Popular Topics */}
-                <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Popular Topics</h3>
-                  <div className="flex flex-wrap gap-2">
+                <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+                  <h3 className="text-sm font-semibold text-white mb-3">Popular Topics</h3>
+                  <div className="flex flex-wrap gap-1.5">
                     {[
                       'Kubernetes', 'Terraform', 'GitOps', 'Docker', 'Istio', 'ArgoCD',
                       'AWS', 'Platform Engineering', 'Prometheus', 'Helm', 'CI/CD', 'SRE',
@@ -539,9 +488,9 @@ export default async function Home() {
                       <Link
                         key={topic}
                         href={`/blog?category=${encodeURIComponent(topic.toLowerCase())}`}
-                        className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-sm hover:bg-electric-cyan/20 hover:text-electric-cyan transition-colors border border-white/[0.04]"
+                        className="px-2 py-1 rounded-md bg-white/[0.03] text-gray-500 text-xs hover:bg-electric-cyan/10 hover:text-electric-cyan transition-colors"
                       >
-                        #{topic}
+                        {topic}
                       </Link>
                     ))}
                   </div>
@@ -552,82 +501,73 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━ WHY RAPIDREACH ━━━━━━━━━━━━ */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-deep-charcoal-100/30 to-deep-charcoal" />
-        <div className="relative container mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-[#5C4EE5]/10 border border-[#5C4EE5]/20 text-[#5C4EE5] text-sm font-medium mb-4">
-              Why RapidReach
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              Built for Engineers Who<br />
-              <span className="bg-gradient-to-r from-[#5C4EE5] to-electric-cyan bg-clip-text text-transparent">
-                Ship to Production
-              </span>
+      {/* ━━━━ WHY RAPIDREACH ━━━━ */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs text-[#5C4EE5] uppercase tracking-widest font-medium mb-3">Why RapidReach</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Built for engineers who{' '}
+              <span className="bg-gradient-to-r from-[#5C4EE5] to-electric-cyan bg-clip-text text-transparent">ship to production</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
             {[
               {
                 icon: '🏗️',
                 title: 'Concept-First Learning',
-                description: 'Understand the WHY before the HOW. We teach patterns and architectures, not just tool-specific commands.',
+                description: 'Understand the WHY before the HOW. Patterns and architectures, not just tool-specific commands.',
               },
               {
                 icon: '🔬',
                 title: 'Production Scenarios',
-                description: 'Every article includes real-world configs, failure modes, and battle-tested best practices from production environments.',
+                description: 'Real-world configs, failure modes, and battle-tested best practices from production environments.',
               },
               {
                 icon: '🗺️',
                 title: 'Guided Progression',
-                description: 'Structured learning paths take you from fundamentals to advanced topics with clear milestones and hands-on projects.',
+                description: 'Structured paths from fundamentals to advanced topics with clear milestones and hands-on projects.',
               },
             ].map((feature) => (
-              <div key={feature.title} className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 text-center hover:bg-white/[0.05] transition-all">
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-white font-bold text-xl mb-3">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+              <div key={feature.title} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 hover:bg-white/[0.04] transition-colors">
+                <div className="text-2xl mb-3">{feature.icon}</div>
+                <h3 className="text-white font-semibold text-sm mb-2">{feature.title}</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━ CTA ━━━━━━━━━━━━ */}
+      {/* ━━━━ CTA ━━━━ */}
       <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-electric-cyan/10 via-[#5C4EE5]/10 to-cyber-lime/10" />
-        <div className="absolute inset-0 bg-mesh-gradient opacity-20" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-electric-cyan/5 rounded-full blur-[120px]" />
-        
+        <div className="absolute inset-0 dot-grid opacity-20" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-electric-cyan/[0.04] rounded-full blur-[100px]" />
+
         <div className="relative container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Your DevOps Journey<br />
-              <span className="bg-gradient-to-r from-electric-cyan to-cyber-lime bg-clip-text text-transparent">
-                Starts Here
-              </span>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+              Your DevOps journey{' '}
+              <span className="bg-gradient-to-r from-electric-cyan to-cyber-lime bg-clip-text text-transparent">starts here</span>
             </h2>
-            <p className="text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
-              Master Container Orchestration, Infrastructure as Code, GitOps, and Platform Engineering with hands-on, practitioner-written content.
+            <p className="text-base text-gray-500 mb-8 max-w-xl mx-auto">
+              Master Container Orchestration, Infrastructure as Code, GitOps, and Platform Engineering with practitioner-written content.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/auth/signup"
-                className="px-10 py-4 rounded-2xl bg-gradient-to-r from-electric-cyan to-[#5C4EE5] text-white font-semibold text-lg shadow-[0_0_40px_rgba(50,108,229,0.4)] hover:shadow-[0_0_60px_rgba(50,108,229,0.6)] transition-all hover:scale-[1.03]"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors"
               >
                 Get Started Free
               </Link>
               <Link
                 href="/blog"
-                className="px-10 py-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg hover:bg-white/20 transition-all"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white/[0.04] border border-white/[0.06] text-gray-300 text-sm font-medium hover:bg-white/[0.06] transition-colors"
               >
                 Browse Articles
               </Link>
             </div>
-
           </div>
         </div>
       </section>
