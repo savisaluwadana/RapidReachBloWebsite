@@ -1,78 +1,83 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
-import { Users, Target, Zap, BookOpen, Heart } from 'lucide-react'
+import { Users, Target, Zap, BookOpen, ArrowRight } from 'lucide-react'
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
-      
-      <div className="container mx-auto px-6 pt-32 pb-20">
+
+      <div className="container mx-auto px-6 pt-28 pb-20">
         {/* Header */}
-        <div className="max-w-4xl mx-auto text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-white via-electric-cyan to-cyber-lime bg-clip-text text-transparent">
-              About RapidReach
-            </span>
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">About Us</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            About RapidReach
           </h1>
-          <p className="text-xl text-gray-400 leading-relaxed">
-            Empowering DevOps professionals with cutting-edge insights and practical knowledge
+          <p className="text-sm text-gray-500 max-w-lg mx-auto">
+            Empowering DevOps professionals with practitioner-written, concept-first content.
           </p>
         </div>
 
         {/* Mission */}
-        <div className="max-w-4xl mx-auto mb-20">
-          <div className="rounded-2xl backdrop-blur-xl bg-gradient-to-br from-electric-cyan/10 to-cyber-lime/10 border border-electric-cyan/20 p-12 text-center">
-            <Target className="w-16 h-16 text-electric-cyan mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-white mb-4">Our Mission</h2>
-            <p className="text-xl text-gray-300 leading-relaxed">
-              To bridge the gap between DevOps theory and practice by providing high-quality, 
-              actionable content that helps engineers master Cloud Native technologies and 
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-8 md:p-10 text-center">
+            <Target className="w-10 h-10 text-electric-cyan mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-3">Our Mission</h2>
+            <p className="text-sm text-gray-400 leading-relaxed max-w-xl mx-auto">
+              To bridge the gap between DevOps theory and practice by providing high-quality,
+              actionable content that helps engineers master Cloud Native technologies and
               Platform Engineering principles.
             </p>
           </div>
         </div>
 
         {/* Values */}
-        <div className="max-w-7xl mx-auto mb-20">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">What We Stand For</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-8 text-center">
-              <BookOpen className="w-12 h-12 text-electric-cyan mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-3">Quality Content</h3>
-              <p className="text-gray-400">
-                Every article is thoroughly researched, tested, and reviewed by industry experts
-              </p>
-            </div>
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-8 text-center">
-              <Users className="w-12 h-12 text-cyber-lime mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-3">Community First</h3>
-              <p className="text-gray-400">
-                Built by practitioners, for practitioners. We prioritize real-world experience
-              </p>
-            </div>
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-8 text-center">
-              <Zap className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-3">Always Current</h3>
-              <p className="text-gray-400">
-                Staying ahead of the curve with the latest tools, trends, and best practices
-              </p>
-            </div>
+        <div className="max-w-4xl mx-auto mb-16">
+          <h2 className="text-lg font-semibold text-white text-center mb-8">What We Stand For</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              {
+                icon: <BookOpen className="w-8 h-8 text-electric-cyan" />,
+                title: 'Quality Content',
+                description: 'Every article is thoroughly researched, tested, and reviewed by industry practitioners.',
+              },
+              {
+                icon: <Users className="w-8 h-8 text-cyber-lime" />,
+                title: 'Community First',
+                description: 'Built by practitioners, for practitioners. Real-world experience over theoretical knowledge.',
+              },
+              {
+                icon: <Zap className="w-8 h-8 text-[#5C4EE5]" />,
+                title: 'Always Current',
+                description: 'Staying ahead of the curve with the latest tools, patterns, and production best practices.',
+              },
+            ].map((value) => (
+              <div
+                key={value.title}
+                className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 text-center hover:bg-white/[0.04] transition-colors"
+              >
+                <div className="mx-auto mb-3 w-fit">{value.icon}</div>
+                <h3 className="text-sm font-semibold text-white mb-2">{value.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{value.description}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-
-
         {/* CTA */}
-        <div className="max-w-4xl mx-auto mt-20 text-center">
-          <Heart className="w-16 h-16 text-red-400 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold text-white mb-4">Join Our Community</h2>
-          <p className="text-xl text-gray-400 mb-8">
-            Be part of a growing community of DevOps professionals sharing knowledge and best practices
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-white mb-3">Join Our Community</h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+            Be part of a growing community of DevOps professionals sharing knowledge and best practices.
           </p>
-          <Link href="/auth/signup" className="inline-block px-8 py-4 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-lg hover:shadow-glow-xl transition-all hover:scale-105">
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors"
+          >
             Get Started Free
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

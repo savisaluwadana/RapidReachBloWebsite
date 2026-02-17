@@ -1,14 +1,13 @@
 import Navbar from '@/components/Navbar'
 import ArticleCard from '@/components/ArticleCard'
 import Footer from '@/components/Footer'
-import { ArrowLeft, Filter } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getPosts } from '@/lib/actions/posts'
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
-  
-  // Map slug to display name
+
   const slugToName: Record<string, string> = {
     'kubernetes': 'Kubernetes',
     'platform-engineering': 'Platform Engineering',
@@ -24,65 +23,36 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     'monitoring': 'Monitoring',
   }
   const categoryName = slugToName[category] || category.charAt(0).toUpperCase() + category.slice(1)
-  
-  // Pass the raw category slug (matching DB enum) to the query
+
   const posts = await getPosts({ category, status: 'published' })
-  
+
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
-      
-      <section className="relative py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-mesh-gradient opacity-20" />
-        <div className="absolute top-20 left-20 w-96 h-96 bg-electric-cyan/10 rounded-full blur-3xl" />
-        
+
+      <section className="relative pt-28 pb-20 overflow-hidden">
+        <div className="absolute inset-0 dot-grid opacity-30" />
+        <div className="absolute top-20 left-20 w-[400px] h-[400px] bg-electric-cyan/[0.03] rounded-full blur-[120px]" />
+
         <div className="relative container mx-auto px-6">
-          {/* Breadcrumb */}
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-electric-cyan transition-colors mb-8"
+            href="/blog"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-electric-cyan transition-colors mb-6"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Articles
           </Link>
-          
-          {/* Header */}
-          <div className="max-w-4xl mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-white via-electric-cyan to-cyber-lime bg-clip-text text-transparent">
-                {categoryName}
-              </span>
-            </h1>
-            <p className="text-xl text-gray-400">
+
+          <div className="max-w-3xl mb-10">
+            <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">Category</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">{categoryName}</h1>
+            <p className="text-sm text-gray-500">
               Explore in-depth articles, tutorials, and best practices for {categoryName}.
             </p>
           </div>
-          
-          {/* Filters */}
-          <div className="flex items-center gap-4 mb-8">
-            <button className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
-            <div className="flex gap-2">
-              {['All', 'Beginner', 'Intermediate', 'Advanced'].map((level) => (
-                <button
-                  key={level}
-                  className={`px-4 py-2 rounded-xl transition-colors ${
-                    level === 'All'
-                      ? 'bg-electric-cyan/20 text-electric-cyan'
-                      : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                  }`}
-                >
-                  {level}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Articles Grid */}
+
           {posts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {posts.map((post) => (
                 <ArticleCard
                   key={post.id}
@@ -94,7 +64,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
                     role: post.author?.role || 'Contributor',
                   }}
                   category={post.category}
-                  readTime={`${post.estimated_read_time || 5} min read`}
+                  readTime={`${post.estimated_read_time || 5} min`}
                   date={new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   image={post.cover_image_url || ''}
                   slug={post.slug}
@@ -103,16 +73,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-12 text-center">
-              <h3 className="text-xl font-bold text-white mb-2">No Articles Yet</h3>
-              <p className="text-gray-400 mb-4">
-                We're working on adding great content for {categoryName}. Check back soon!
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
+              <h3 className="text-base font-semibold text-white mb-1">No Articles Yet</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                We&apos;re working on adding great content for {categoryName}.
               </p>
               <Link
-                href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-electric-cyan/20 text-electric-cyan hover:bg-electric-cyan/30 transition-colors"
+                href="/blog"
+                className="inline-flex items-center gap-1.5 text-sm text-electric-cyan font-medium hover:text-electric-cyan/80 transition-colors"
               >
-                Explore Other Categories
+                Browse All Articles <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
               </Link>
             </div>
           )}

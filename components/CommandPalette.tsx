@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Command } from 'cmdk'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Search, FileText, Zap, BookOpen, TrendingUp, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { searchPosts } from '@/lib/actions/posts'
@@ -15,7 +14,6 @@ interface CommandItem {
   icon: any
 }
 
-// Static navigation items always available
 const staticItems: CommandItem[] = [
   { id: 'nav-blog', title: 'All Articles', category: 'Navigation', url: '/blog', icon: FileText },
   { id: 'nav-learning', title: 'Learning Paths', category: 'Navigation', url: '/learning-paths', icon: BookOpen },
@@ -32,7 +30,6 @@ export default function CommandPalette() {
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
-  // Toggle with CMD/CTRL + K
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -41,7 +38,6 @@ export default function CommandPalette() {
       }
     }
 
-    // Allow other components (e.g. Navbar search button) to open the palette
     const handleOpenEvent = () => setOpen(true)
 
     document.addEventListener('keydown', down)
@@ -52,7 +48,6 @@ export default function CommandPalette() {
     }
   }, [])
 
-  // Search posts dynamically when search query changes
   useEffect(() => {
     if (!search) {
       setFilteredItems(staticItems)
@@ -61,13 +56,11 @@ export default function CommandPalette() {
       return
     }
 
-    // Filter static items immediately
     const filtered = staticItems.filter((item) =>
       item.title.toLowerCase().includes(search.toLowerCase()) ||
       item.category.toLowerCase().includes(search.toLowerCase())
     )
 
-    // Debounce dynamic search
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     setIsSearching(true)
 
@@ -90,7 +83,6 @@ export default function CommandPalette() {
       }
     }, 300)
 
-    // Show static results immediately while dynamic loads
     setFilteredItems(filtered)
 
     return () => {
@@ -104,137 +96,112 @@ export default function CommandPalette() {
     router.push(url)
   }, [router])
 
+  if (!open) return null
+
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
-            onClick={() => setOpen(false)}
-          />
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 animate-fade-in"
+        onClick={() => setOpen(false)}
+      />
 
-          {/* Command Palette */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-4"
-          >
-            <Command
-              className="rounded-2xl border border-white/20 bg-deep-charcoal-50/95 backdrop-blur-2xl shadow-glass overflow-hidden"
-              shouldFilter={false}
+      {/* Command Palette */}
+      <div className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg z-50 px-4 animate-scale-in">
+        <Command
+          className="rounded-xl border border-white/[0.06] bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-2xl overflow-hidden"
+          shouldFilter={false}
+        >
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.04]">
+            <Search className="w-4 h-4 text-gray-500" />
+            <Command.Input
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Search articles, news, learning paths..."
+              className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+            />
+            <button
+              onClick={() => setOpen(false)}
+              className="p-1 rounded-md hover:bg-white/[0.06] transition-colors"
             >
-              {/* Search Input with Glassmorphism */}
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10">
-                <Search className="w-5 h-5 text-gray-400" />
-                <Command.Input
-                  value={search}
-                  onValueChange={setSearch}
-                  placeholder="Search articles, news, learning paths..."
-                  className="flex-1 bg-transparent text-white placeholder:text-gray-500 outline-none text-lg"
-                />
-                <button
-                  onClick={() => setOpen(false)}
-                  className="p-1 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+
+          <Command.List className="max-h-[320px] overflow-y-auto p-2">
+            {filteredItems.length === 0 && !isSearching && (
+              <Command.Empty className="py-6 text-center text-xs text-gray-600">
+                No results found.
+              </Command.Empty>
+            )}
+
+            {isSearching && (
+              <div className="py-6 text-center text-xs text-gray-600">
+                <div className="animate-spin w-4 h-4 border-2 border-electric-cyan border-t-transparent rounded-full mx-auto mb-2" />
+                Searching articles...
               </div>
+            )}
 
-              <Command.List className="max-h-[400px] overflow-y-auto p-3">
-                {filteredItems.length === 0 && !isSearching && (
-                  <Command.Empty className="py-8 text-center text-gray-500">
-                    No results found.
-                  </Command.Empty>
-                )}
+            {['Navigation', 'Articles', 'Learning Paths', 'News'].map((category) => {
+              const categoryItems = filteredItems.filter((item) => item.category === category)
+              if (categoryItems.length === 0) return null
 
-                {isSearching && (
-                  <div className="py-8 text-center text-gray-500">
-                    <div className="animate-spin w-5 h-5 border-2 border-electric-cyan border-t-transparent rounded-full mx-auto mb-2" />
-                    Searching articles...
+              return (
+                <Command.Group key={category} heading={category}>
+                  <div className="px-2 py-1.5 text-[9px] font-semibold text-gray-600 uppercase tracking-widest">
+                    {category}
                   </div>
-                )}
+                  {categoryItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <Command.Item
+                        key={item.id}
+                        value={item.title}
+                        onSelect={() => handleSelect(item.url)}
+                        className="group"
+                      >
+                        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-white/[0.04] transition-colors">
+                          <div className="p-1.5 rounded-md bg-white/[0.03] group-hover:bg-electric-cyan/10 transition-colors">
+                            <Icon className="w-3.5 h-3.5 text-gray-500 group-hover:text-electric-cyan transition-colors" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                              {item.title}
+                            </div>
+                          </div>
+                          <kbd className="opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-600 text-[9px] font-mono">
+                            ↵
+                          </kbd>
+                        </div>
+                      </Command.Item>
+                    )
+                  })}
+                </Command.Group>
+              )
+            })}
+          </Command.List>
 
-                {/* Group by category */}
-                {['Navigation', 'Articles', 'Learning Paths', 'News'].map((category) => {
-                  const categoryItems = filteredItems.filter((item) => item.category === category)
-                  
-                  if (categoryItems.length === 0) return null
-
-                  return (
-                    <Command.Group
-                      key={category}
-                      heading={category}
-                      className="mb-4"
-                    >
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        {category}
-                      </div>
-                      {categoryItems.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <Command.Item
-                            key={item.id}
-                            value={item.title}
-                            onSelect={() => handleSelect(item.url)}
-                            className="group"
-                          >
-                            <motion.div
-                              whileHover={{ x: 4 }}
-                              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-all duration-200"
-                            >
-                              <div className="p-2 rounded-lg bg-electric-cyan/10 group-hover:bg-electric-cyan/20 transition-colors">
-                                <Icon className="w-4 h-4 text-electric-cyan" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="text-white font-medium group-hover:text-electric-cyan transition-colors">
-                                  {item.title}
-                                </div>
-                              </div>
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <kbd className="px-2 py-1 rounded bg-white/10 text-white/60 text-xs font-mono">
-                                  ↵
-                                </kbd>
-                              </div>
-                            </motion.div>
-                          </Command.Item>
-                        )
-                      })}
-                    </Command.Group>
-                  )
-                })}
-              </Command.List>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between px-6 py-3 border-t border-white/10 bg-white/5">
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 font-mono">↑↓</kbd>
-                    <span>Navigate</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 font-mono">↵</kbd>
-                    <span>Select</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 font-mono">Esc</kbd>
-                    <span>Close</span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500">
-                  {filteredItems.length} results
-                </div>
+          <div className="flex items-center justify-between px-4 py-2 border-t border-white/[0.04] bg-white/[0.01]">
+            <div className="flex items-center gap-3 text-[9px] text-gray-600">
+              <div className="flex items-center gap-1">
+                <kbd className="px-1 py-0.5 rounded bg-white/[0.04] text-gray-500 font-mono">↑↓</kbd>
+                <span>Navigate</span>
               </div>
-            </Command>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+              <div className="flex items-center gap-1">
+                <kbd className="px-1 py-0.5 rounded bg-white/[0.04] text-gray-500 font-mono">↵</kbd>
+                <span>Select</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <kbd className="px-1 py-0.5 rounded bg-white/[0.04] text-gray-500 font-mono">Esc</kbd>
+                <span>Close</span>
+              </div>
+            </div>
+            <div className="text-[9px] text-gray-600">
+              {filteredItems.length} results
+            </div>
+          </div>
+        </Command>
+      </div>
+    </>
   )
 }

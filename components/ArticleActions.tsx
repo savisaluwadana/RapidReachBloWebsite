@@ -30,74 +30,74 @@ export default function ArticleActions({ postId, title = 'Article' }: ArticleAct
   const shareTitle = encodeURIComponent(title)
 
   return (
-    <div className="sticky top-24 space-y-3">
+    <div className="sticky top-24 space-y-2">
       {/* Like */}
       <button
         onClick={handleLike}
-        className={`w-full flex items-center justify-center gap-3 p-4 rounded-xl border transition-all ${
+        className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${
           isLiked
-            ? 'bg-red-500/20 border-red-500/50 text-red-400'
-            : 'bg-white/5 border-white/10 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30'
+            ? 'bg-red-500/10 border-red-500/30 text-red-400'
+            : 'bg-white/[0.02] border-white/[0.04] text-gray-500 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20'
         }`}
       >
-        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-        <span className="font-semibold">{likes}</span>
+        <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+        <span className="text-xs font-medium">{likes}</span>
       </button>
 
       {/* Bookmark */}
       <button
         onClick={() => setIsBookmarked(!isBookmarked)}
-        className={`w-full flex items-center justify-center p-4 rounded-xl border transition-all ${
+        className={`w-full flex items-center justify-center p-3 rounded-lg border transition-colors ${
           isBookmarked
-            ? 'bg-electric-cyan/20 border-electric-cyan/50 text-electric-cyan'
-            : 'bg-white/5 border-white/10 text-gray-400 hover:text-electric-cyan hover:bg-electric-cyan/10 hover:border-electric-cyan/30'
+            ? 'bg-electric-cyan/10 border-electric-cyan/30 text-electric-cyan'
+            : 'bg-white/[0.02] border-white/[0.04] text-gray-500 hover:text-electric-cyan hover:bg-electric-cyan/5 hover:border-electric-cyan/20'
         }`}
       >
-        <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
+        <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
       </button>
 
       {/* Share */}
       <div className="relative">
         <button
           onClick={() => setShowShareMenu(!showShareMenu)}
-          className="w-full flex items-center justify-center p-4 rounded-xl border bg-white/5 border-white/10 text-gray-400 hover:text-cyber-lime hover:bg-cyber-lime/10 hover:border-cyber-lime/30 transition-all"
+          className="w-full flex items-center justify-center p-3 rounded-lg border bg-white/[0.02] border-white/[0.04] text-gray-500 hover:text-cyber-lime hover:bg-cyber-lime/5 hover:border-cyber-lime/20 transition-colors"
         >
-          <Share2 className="w-5 h-5" />
+          <Share2 className="w-4 h-4" />
         </button>
 
         {showShareMenu && (
-          <div className="absolute left-full ml-4 top-0 w-48 rounded-xl bg-deep-charcoal border border-white/10 shadow-glow-lg p-2 space-y-1 z-50">
+          <div className="absolute left-full ml-3 top-0 w-44 rounded-xl bg-[#0a0a0a] border border-white/[0.06] shadow-2xl p-1.5 space-y-0.5 z-50">
             <a
               href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-all"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.04] text-gray-400 hover:text-white transition-colors"
             >
-              <Twitter className="w-5 h-5" />
-              <span className="text-sm font-semibold">Twitter</span>
+              <Twitter className="w-3.5 h-3.5" />
+              <span className="text-xs">Twitter</span>
             </a>
             <a
               href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-all"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.04] text-gray-400 hover:text-white transition-colors"
             >
-              <Linkedin className="w-5 h-5" />
-              <span className="text-sm font-semibold">LinkedIn</span>
+              <Linkedin className="w-3.5 h-3.5" />
+              <span className="text-xs">LinkedIn</span>
             </a>
             <button
               onClick={handleCopyLink}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-all"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.04] text-gray-400 hover:text-white transition-colors"
             >
               {copied ? (
                 <>
-                  <Check className="w-5 h-5 text-cyber-lime" />
-                  <span className="text-sm font-semibold text-cyber-lime">Copied!</span>
+                  <Check className="w-3.5 h-3.5 text-cyber-lime" />
+                  <span className="text-xs text-cyber-lime">Copied!</span>
                 </>
               ) : (
                 <>
-                  <LinkIcon className="w-5 h-5" />
-                  <span className="text-sm font-semibold">Copy Link</span>
+                  <LinkIcon className="w-3.5 h-3.5" />
+                  <span className="text-xs">Copy Link</span>
                 </>
               )}
             </button>

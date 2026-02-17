@@ -5,28 +5,26 @@ import { getPosts } from '@/lib/actions/posts'
 
 export default async function BlogPage() {
   const allPosts = await getPosts({ status: 'published' })
-  
+
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
-      
-      <section className="relative py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-mesh-gradient opacity-20" />
-        
+
+      <section className="relative pt-28 pb-20 overflow-hidden">
+        <div className="absolute inset-0 dot-grid opacity-30" />
+        <div className="absolute top-20 right-1/4 w-[500px] h-[500px] bg-electric-cyan/[0.03] rounded-full blur-[120px]" />
+
         <div className="relative container mx-auto px-6">
-          {/* Header */}
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-white via-electric-cyan to-cyber-lime bg-clip-text text-transparent">
-                All Articles
-              </span>
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">Articles</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              All Articles
             </h1>
-            <p className="text-xl text-gray-400 mb-8">
+            <p className="text-sm text-gray-500 max-w-lg mx-auto">
               Comprehensive guides, tutorials, and insights on DevOps and Cloud Native technologies.
             </p>
           </div>
-          
-          {/* Interactive Filter & Articles */}
+
           <BlogFilterClient initialPosts={allPosts} />
         </div>
       </section>

@@ -48,7 +48,7 @@ export async function getSiteStats() {
 
     const domainCounts: Record<string, number> = {}
     for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
-      domainCounts[domain] = (posts || []).filter(p =>
+      domainCounts[domain] = (posts || []).filter((p: { category?: string | null }) =>
         cats.some(c => p.category?.toLowerCase().includes(c))
       ).length
     }

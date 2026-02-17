@@ -73,146 +73,124 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen bg-deep-charcoal flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-cyber mx-auto mb-4 flex items-center justify-center">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-electric-cyan mx-auto mb-4 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join the RapidReach community</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Create Account</h1>
+          <p className="text-sm text-gray-500">Join the RapidReach community</p>
         </div>
 
         {/* Sign Up Form */}
-        <form onSubmit={handleSignUp} className="rounded-2xl bg-white/5 border border-white/10 p-8 space-y-6">
-          {/* Error Message */}
+        <form onSubmit={handleSignUp} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+              <p className="text-xs text-red-400">{error}</p>
             </div>
           )}
 
-          {/* Name Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              Full Name
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Full Name</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/50 focus:border-electric-cyan/30 transition-all"
                 required
               />
             </div>
           </div>
 
-          {/* Email Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              Email Address
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="you@example.com"
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/50 focus:border-electric-cyan/30 transition-all"
                 required
               />
             </div>
           </div>
 
-          {/* Password Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              Password
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Create a strong password"
-                className="w-full pl-12 pr-12 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 transition-all"
+                className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/50 focus:border-electric-cyan/30 transition-all"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              Confirm Password
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 placeholder="Confirm your password"
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/50 focus:border-electric-cyan/30 transition-all"
                 required
               />
             </div>
           </div>
 
-          {/* Terms */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2.5">
             <input
               type="checkbox"
               id="terms"
-              className="w-4 h-4 mt-1 rounded border-white/10 bg-white/5 text-electric-cyan focus:ring-2 focus:ring-electric-cyan/50"
+              className="w-3.5 h-3.5 mt-0.5 rounded border-white/[0.06] bg-white/[0.03] text-electric-cyan focus:ring-1 focus:ring-electric-cyan/50"
               required
             />
-            <label htmlFor="terms" className="text-sm text-gray-300">
+            <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed">
               I agree to the{' '}
-              <Link href="/terms" className="text-electric-cyan hover:text-cyber-lime transition-colors">
+              <Link href="/terms" className="text-electric-cyan hover:text-electric-cyan/80 transition-colors">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-electric-cyan hover:text-cyber-lime transition-colors">
+              <Link href="/privacy" className="text-electric-cyan hover:text-electric-cyan/80 transition-colors">
                 Privacy Policy
               </Link>
             </label>
           </div>
 
-          {/* Sign Up Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-md hover:shadow-glow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Creating account...' : 'Create Account'}
           </button>
-
-
         </form>
 
-        {/* Sign In Link */}
-        <p className="text-center mt-6 text-gray-400">
+        <p className="text-center mt-5 text-xs text-gray-500">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="text-electric-cyan hover:text-cyber-lime transition-colors font-semibold">
+          <Link href="/auth/signin" className="text-electric-cyan hover:text-electric-cyan/80 transition-colors font-medium">
             Sign in
           </Link>
         </p>
