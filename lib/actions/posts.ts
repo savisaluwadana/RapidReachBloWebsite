@@ -288,27 +288,47 @@ export async function updatePost(id: string, updates: Partial<Post>) {
     throw new Error(`Too many updates. Please try again in ${rateLimit.retryAfter} seconds.`)
   }
 
-  // Strip relation objects and read-only fields that are not DB columns
-  const {
-    author,
-    id: _id,
-    created_at,
-    updated_at,
-    view_count,
-    unique_view_count,
-    like_count,
-    comment_count,
-    share_count,
-    bookmark_count,
-    ...safeUpdates
-  } = updates as any
+  // Build a strict allowlist of writable DB columns — never pass joined
+  // relations, computed fields, or enum values in the wrong case.
+  const VALID_ENUM_CATEGORIES = new Set([
+    'kubernetes','terraform','aws','azure','gcp','cicd',
+    'security','observability','platform-engineering','docker','monitoring',
+  ])
+  const VALID_DIFFICULTIES = new Set(['beginner','intermediate','advanced','expert'])
+  const VALID_STATUSES = new Set(['draft','pending','published','archived','rejected'])
 
-  // Cast category to the news_category enum via explicit typing
-  const payload: Record<string, unknown> = { ...safeUpdates }
-  if (payload.category) {
-    // Ensure the value is a lowercase string matching the news_category enum
-    payload.category = String(payload.category).toLowerCase().trim()
+  const rawCategory = String(updates.category ?? '').toLowerCase().trim()
+  const rawDifficulty = String(updates.difficulty ?? '').toLowerCase().trim()
+  const rawStatus = String(updates.status ?? '').toLowerCase().trim()
+
+  if (updates.category && !VALID_ENUM_CATEGORIES.has(rawCategory)) {
+    throw new Error(`Invalid category value: "${updates.category}"`)
   }
+  if (updates.difficulty && !VALID_DIFFICULTIES.has(rawDifficulty)) {
+    throw new Error(`Invalid difficulty value: "${updates.difficulty}"`)
+  }
+  if (updates.status && !VALID_STATUSES.has(rawStatus)) {
+    throw new Error(`Invalid status value: "${updates.status}"`)
+  }
+
+  // Only include columns that exist and are writable in the posts table
+  const payload: Record<string, unknown> = {}
+  if (updates.title           !== undefined) payload.title           = updates.title
+  if (updates.slug            !== undefined) payload.slug            = updates.slug
+  if (updates.excerpt         !== undefined) payload.excerpt         = updates.excerpt
+  if (updates.content         !== undefined) payload.content         = updates.content
+  if (updates.cover_image_url !== undefined) payload.cover_image_url = updates.cover_image_url
+  if (updates.category        !== undefined) payload.category        = rawCategory
+  if (updates.categories      !== undefined) payload.categories      = updates.categories
+  if (updates.tags            !== undefined) payload.tags            = updates.tags
+  if (updates.difficulty      !== undefined) payload.difficulty      = rawDifficulty
+  if (updates.status          !== undefined) payload.status          = rawStatus
+  if (updates.featured        !== undefined) payload.featured        = updates.featured
+  if (updates.trending        !== undefined) payload.trending        = updates.trending
+  if (updates.word_count      !== undefined) payload.word_count      = updates.word_count
+  if (updates.character_count !== undefined) payload.character_count = updates.character_count
+  if (updates.estimated_read_time !== undefined) payload.estimated_read_time = updates.estimated_read_time
+  if (updates.published_at    !== undefined) payload.published_at    = updates.published_at
 
   const { data, error } = await supabase
     .from('posts')
