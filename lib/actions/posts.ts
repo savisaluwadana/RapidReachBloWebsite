@@ -36,13 +36,16 @@ const _getSiteStatsInner = unstable_cache(
         .select('*', { count: 'exact', head: true })
       const { data: posts } = await supabase
         .from('posts')
-        .select('category')
+        .select('category, categories')
         .eq('status', 'published')
       const domainCounts: Record<string, number> = {}
       for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
-        domainCounts[domain] = (posts || []).filter((p: { category?: string | null }) => {
-          const cat = p.category?.toLowerCase() ?? ''
-          return cats.some(c => cat.includes(c))
+        domainCounts[domain] = (posts || []).filter((p: { category?: string | null; categories?: string[] | null }) => {
+          const allCats = [
+            ...(Array.isArray(p.categories) && p.categories.length ? p.categories : []),
+            p.category,
+          ].filter(Boolean).map(c => c!.toLowerCase())
+          return cats.some(c => allCats.some(ac => ac.includes(c)))
         }).length
       }
       return { totalPosts: totalPosts || 0, totalUsers: totalUsers || 0, domainCounts }
@@ -85,8 +88,8 @@ const _getPostsInner = unstable_cache(
       .order('created_at', { ascending: false })
     if (options?.status) query = query.eq('status', options.status)
     if (options?.category) {
-      // Match on the primary category enum only (categories array column may not exist in DB)
-      query = query.eq('category', options.category)
+      // Match on primary category enum OR categories array (if column exists)
+      query = query.or(`category.eq.${options.category},categories.cs.{${options.category}}`)
     }
     if (options?.authorId) query = query.eq('author_id', options.authorId)
     if (options?.featured !== undefined) query = query.eq('featured', options.featured)
@@ -195,17 +198,39 @@ export async function createPost(post: Partial<Post>) {
     throw new Error(`Too many posts created. Please try again in ${rateLimit.retryAfter} seconds.`)
   }
 
-  // Strip `categories` — the column may not exist in all Supabase deployments.
-  // The primary `category` enum field is the source of truth.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { categories: _categories, ...postWithoutCategories } = post as any
-  const postToInsert = postWithoutCategories
+  // Build insert payload — include categories if the column exists in the DB.
+  // Encode all selected categories: primary `category` + full list in `categories[]`.
+  const selectedCategories: string[] =
+    post.categories && post.categories.length > 0
+      ? post.categories
+      : post.category
+      ? [post.category as string]
+      : []
 
-  const { data, error } = await supabase
+  const postToInsert = {
+    ...post,
+    categories: selectedCategories,
+  }
+
+  // Try inserting with `categories`; if the column is missing fall back without it.
+  let { data, error } = await supabase
     .from('posts')
     .insert([postToInsert])
     .select()
     .single()
+
+  if (error?.code === 'PGRST204' && error.message.includes("'categories'")) {
+    // Column doesn't exist yet — strip it and retry
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { categories: _c, ...fallback } = postToInsert as any
+    const retried = await supabase
+      .from('posts')
+      .insert([fallback])
+      .select()
+      .single()
+    data = retried.data
+    error = retried.error
+  }
 
   if (error) {
     console.error('Error creating post:', error)
