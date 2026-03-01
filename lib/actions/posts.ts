@@ -437,6 +437,83 @@ export async function incrementPostView(postId: string) {
   }
 }
 
+export async function togglePostLike(postId: string): Promise<{ liked: boolean; count: number }> {
+  const supabase = await createClient()
+  if (!supabase) return { liked: false, count: 0 }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Must be signed in to like posts')
+
+  // Check if the user already liked this post
+  const { data: existing } = await supabase
+    .from('post_likes')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (existing) {
+    // Unlike
+    await supabase.from('post_likes').delete().eq('id', existing.id)
+    await supabase.rpc('decrement_post_like', { post_id: postId }).catch(() => {})
+    const { data: post } = await supabase.from('posts').select('like_count').eq('id', postId).single()
+    return { liked: false, count: post?.like_count ?? 0 }
+  } else {
+    // Like
+    await supabase.from('post_likes').insert({ post_id: postId, user_id: user.id })
+    await supabase.rpc('increment_post_like', { post_id: postId }).catch(() => {})
+    const { data: post } = await supabase.from('posts').select('like_count').eq('id', postId).single()
+    return { liked: true, count: post?.like_count ?? 0 }
+  }
+}
+
+export async function togglePostBookmark(postId: string): Promise<{ bookmarked: boolean }> {
+  const supabase = await createClient()
+  if (!supabase) return { bookmarked: false }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Must be signed in to bookmark posts')
+
+  const { data: existing } = await supabase
+    .from('post_bookmarks')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (existing) {
+    await supabase.from('post_bookmarks').delete().eq('id', existing.id)
+    await supabase.rpc('decrement_post_bookmark', { post_id: postId }).catch(() => {})
+    return { bookmarked: false }
+  } else {
+    await supabase.from('post_bookmarks').insert({ post_id: postId, user_id: user.id })
+    await supabase.rpc('increment_post_bookmark', { post_id: postId }).catch(() => {})
+    return { bookmarked: true }
+  }
+}
+
+export async function getPostInteractions(postId: string): Promise<{ liked: boolean; bookmarked: boolean; likeCount: number }> {
+  const supabase = await createClient()
+  if (!supabase) return { liked: false, bookmarked: false, likeCount: 0 }
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: post } = await supabase.from('posts').select('like_count').eq('id', postId).single()
+
+  if (!user) return { liked: false, bookmarked: false, likeCount: post?.like_count ?? 0 }
+
+  const [{ data: likeRow }, { data: bookmarkRow }] = await Promise.all([
+    supabase.from('post_likes').select('id').eq('post_id', postId).eq('user_id', user.id).maybeSingle(),
+    supabase.from('post_bookmarks').select('id').eq('post_id', postId).eq('user_id', user.id).maybeSingle(),
+  ])
+
+  return {
+    liked: !!likeRow,
+    bookmarked: !!bookmarkRow,
+    likeCount: post?.like_count ?? 0,
+  }
+}
+
 export async function searchPosts(query: string, limit = 5) {
   const supabase = await createClient()
 

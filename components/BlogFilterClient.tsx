@@ -12,12 +12,34 @@ interface BlogFilterClientProps {
 
 type SortOption = 'latest' | 'trending' | 'popular'
 
+const CATEGORIES = [
+  { label: 'All', value: '' },
+  { label: 'Kubernetes', value: 'kubernetes' },
+  { label: 'Terraform', value: 'terraform' },
+  { label: 'CI/CD', value: 'cicd' },
+  { label: 'Security', value: 'security' },
+  { label: 'Platform Eng.', value: 'platform-engineering' },
+  { label: 'Observability', value: 'observability' },
+  { label: 'Cloud', value: 'cloud' },
+  { label: 'Docker', value: 'docker' },
+  { label: 'Service Mesh', value: 'service-mesh' },
+]
+
 export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('latest')
+  const [activeCategory, setActiveCategory] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Filter by category
+  const filterByCategory = useCallback((postsToFilter: Post[], category: string) => {
+    if (!category) return postsToFilter
+    return postsToFilter.filter(p =>
+      p.category?.toLowerCase().includes(category.toLowerCase())
+    )
+  }, [])
 
   // Sort posts based on selected option
   const sortPosts = useCallback((postsToSort: Post[], sort: SortOption) => {
@@ -42,7 +64,7 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
   // Handle search with debounce
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setPosts(sortPosts(initialPosts, sortBy))
+      setPosts(sortPosts(filterByCategory(initialPosts, activeCategory), sortBy))
       setIsSearching(false)
       return
     }
@@ -55,7 +77,7 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
     searchTimerRef.current = setTimeout(async () => {
       try {
         const results = await searchPosts(searchQuery, 50)
-        setPosts(sortPosts(results, sortBy))
+        setPosts(sortPosts(filterByCategory(results, activeCategory), sortBy))
       } catch (error) {
         console.error('Search error:', error)
         // Fall back to client-side filtering
@@ -65,7 +87,7 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
             post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
             post.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
         )
-        setPosts(sortPosts(filtered, sortBy))
+        setPosts(sortPosts(filterByCategory(filtered, activeCategory), sortBy))
       } finally {
         setIsSearching(false)
       }
@@ -76,12 +98,14 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
         clearTimeout(searchTimerRef.current)
       }
     }
-  }, [searchQuery, initialPosts, sortBy, sortPosts])
+  }, [searchQuery, initialPosts, sortBy, activeCategory, sortPosts, filterByCategory])
 
-  // Handle sort change
+  // Handle sort / category change
   useEffect(() => {
-    setPosts((currentPosts) => sortPosts(currentPosts, sortBy))
-  }, [sortBy, sortPosts])
+    if (!searchQuery.trim()) {
+      setPosts(sortPosts(filterByCategory(initialPosts, activeCategory), sortBy))
+    }
+  }, [sortBy, activeCategory, initialPosts, searchQuery, sortPosts, filterByCategory])
 
   const clearSearch = () => {
     setSearchQuery('')
@@ -114,7 +138,24 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
         )}
       </div>
 
-      {/* Filter Tabs */}
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.value}
+            onClick={() => setActiveCategory(cat.value)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              activeCategory === cat.value
+                ? 'bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/20'
+                : 'bg-white/[0.02] text-gray-500 border border-white/[0.04] hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Sort + Results */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-gray-600">Sort:</span>
@@ -137,7 +178,7 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
             </button>
           ))}
         </div>
-        
+
         {searchQuery && (
           <div className="ml-auto text-xs text-gray-600">
             {posts.length} result{posts.length !== 1 ? 's' : ''} for &ldquo;{searchQuery}&rdquo;
