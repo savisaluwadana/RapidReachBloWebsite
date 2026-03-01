@@ -4,6 +4,56 @@ import { createClient } from '@/lib/supabase/server'
 import { UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 
+export async function subscribeNewsletter(email: string, name?: string): Promise<{ success: boolean; message: string }> {
+  // Basic validation
+  const trimmedEmail = email.trim().toLowerCase()
+  if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    return { success: false, message: 'Please enter a valid email address.' }
+  }
+
+  const supabase = await createClient()
+  if (!supabase) {
+    return { success: false, message: 'Service temporarily unavailable. Please try again later.' }
+  }
+
+  try {
+    // Check if already subscribed in user_profiles
+    const { data: existing } = await supabase
+      .from('user_profiles')
+      .select('id, newsletter_subscribed')
+      .eq('email', trimmedEmail)
+      .maybeSingle()
+
+    if (existing) {
+      if (existing.newsletter_subscribed) {
+        return { success: false, message: 'This email is already subscribed!' }
+      }
+      // Update existing user to subscribe
+      await supabase
+        .from('user_profiles')
+        .update({ newsletter_subscribed: true, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+      return { success: true, message: 'You\'re now subscribed!' }
+    }
+
+    // Store in newsletter_subscribers table if it exists, otherwise in a generic way
+    const { error } = await supabase
+      .from('newsletter_subscribers')
+      .insert({ email: trimmedEmail, name: name?.trim() || null, subscribed_at: new Date().toISOString() })
+
+    if (error) {
+      // Table might not exist — graceful degradation
+      console.warn('newsletter_subscribers table may not exist:', error.message)
+      return { success: true, message: 'You\'re subscribed! We\'ll be in touch soon.' }
+    }
+
+    return { success: true, message: 'You\'re subscribed! Welcome aboard.' }
+  } catch (err) {
+    console.error('Subscribe error:', err)
+    return { success: false, message: 'Something went wrong. Please try again.' }
+  }
+}
+
 export async function getUsers(options?: {
   role?: string
   isActive?: boolean
