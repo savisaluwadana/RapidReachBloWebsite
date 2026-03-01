@@ -275,10 +275,7 @@ This project is licensed under the MIT License.
 ## 📧 Contact
 
 For questions or feedback:
-- **Email**: contact@rapidreach.dev
-- **Twitter**: [@rapidreach](https://twitter.com/rapidreach)
-- **Discord**: [Join our community](https://discord.gg/rapidreach)
-
+- **Email**: savisaluwadana@gmail.com
 ---
 
 **Built with ❤️ by the RapidReach Team**
