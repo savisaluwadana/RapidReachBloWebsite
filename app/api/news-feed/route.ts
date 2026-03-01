@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// ISR: regenerate this route at most once every 15 minutes
+export const revalidate = 900
+export const runtime = 'nodejs'
+
 // ─── RSS Feed Sources for DevOps & Platform Engineering ───
 const RSS_SOURCES = [
   {
@@ -101,7 +105,7 @@ function stripHtml(html: string): string {
 async function fetchRSSFeed(source: typeof RSS_SOURCES[number]): Promise<FeedItem[]> {
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8000) // 8s timeout
+    const timeout = setTimeout(() => controller.abort(), 3000) // 3s timeout
 
     const response = await fetch(source.url, {
       signal: controller.signal,
