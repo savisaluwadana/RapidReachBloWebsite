@@ -196,8 +196,29 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
     throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
+  // Revalidate admin user list and the public profile page
   revalidatePath('/admin/users')
   revalidatePath('/profile')
+
+  // Also revalidate any blog posts authored by this user so the updated
+  // `bio` / `full_name` is reflected on article pages. We fetch the
+  // slugs for the user's posts and revalidate each `/blog/<slug>` path.
+  try {
+    const { data: posts } = await supabase
+      .from('posts')
+      .select('slug')
+      .eq('author_id', userId)
+
+    if (posts && Array.isArray(posts)) {
+      for (const p of posts) {
+        if (p?.slug) revalidatePath(`/blog/${p.slug}`)
+      }
+    }
+    // Also revalidate the home page which may show author info in lists
+    revalidatePath('/')
+  } catch (e) {
+    console.warn('Failed to revalidate author posts after profile update:', e)
+  }
   
   return data as UserProfile
 }
