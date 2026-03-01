@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Clock, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { getPosts, deletePost } from '@/lib/actions/posts'
 import type { Post } from '@/lib/types/database'
@@ -48,9 +48,9 @@ export default function PostsManagement() {
   })
 
   const statusColors = {
-    published: 'bg-cyber-lime/20 text-cyber-lime',
-    pending: 'bg-yellow-400/20 text-yellow-400',
-    draft: 'bg-gray-500/20 text-gray-400',
+    published: 'bg-cyber-lime/10 text-cyber-lime',
+    pending: 'bg-yellow-400/10 text-yellow-400',
+    draft: 'bg-gray-500/10 text-gray-500',
   }
 
   const statusIcons = {
@@ -65,41 +65,38 @@ export default function PostsManagement() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Posts Management</h1>
-            <p className="text-gray-400">Manage all blog posts and approvals</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Posts Management</h1>
+            <p className="text-sm text-gray-500">Manage all blog posts and approvals</p>
           </div>
           <Link href="/admin/posts/new">
-            <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-md hover:shadow-glow-lg transition-all">
-              <Plus className="w-5 h-5" />
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors">
+              <Plus className="w-4 h-4" />
               New Post
             </button>
           </Link>
         </div>
 
         {/* Filters and Search */}
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
               placeholder="Search posts by title or author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
             />
           </div>
-
-          {/* Status Filter */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {['all', 'published', 'pending', 'draft'].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-3 rounded-xl font-semibold capitalize transition-all ${
+                className={`px-3.5 py-2.5 rounded-lg text-xs font-medium capitalize transition-colors ${
                   filter === status
-                    ? 'bg-electric-cyan/20 text-electric-cyan'
-                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                    ? 'bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/20'
+                    : 'bg-white/[0.02] text-gray-500 border border-white/[0.04] hover:text-white'
                 }`}
               >
                 {status}
@@ -109,144 +106,121 @@ export default function PostsManagement() {
         </div>
 
         {/* Posts Table */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-white/5 border-b border-white/10">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Post
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Author
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Stats
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="flex justify-center">
-                        <div className="w-12 h-12 border-4 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
-                      </div>
-                    </td>
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-5 h-5 border-2 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-16 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+            <Edit className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+            <p className="text-sm text-gray-500 mb-1">No posts found</p>
+            <p className="text-xs text-gray-600">Try adjusting your search or filters.</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-white/[0.04] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-white/[0.02] border-b border-white/[0.04]">
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Post</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Author</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Status</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Stats</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Date</th>
+                    <th className="text-right px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Actions</th>
                   </tr>
-                ) : filteredPosts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                      No posts found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPosts.map((post) => {
+                </thead>
+                <tbody className="divide-y divide-white/[0.03]">
+                  {filteredPosts.map((post) => {
                     const StatusIcon = statusIcons[post.status as keyof typeof statusIcons]
                     return (
-                      <tr key={post.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-4">
+                      <tr key={post.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-4 py-3">
                           <div>
-                            <h3 className="font-semibold text-white mb-1">{post.title}</h3>
+                            <p className="text-sm font-medium text-white mb-0.5">{post.title}</p>
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 rounded bg-electric-cyan/10 text-electric-cyan text-xs font-semibold">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan font-medium">
                                 {post.category}
                               </span>
-                              <span className="text-gray-500 text-xs">{post.estimated_read_time || 5} min</span>
+                              <span className="text-xs text-gray-600">{post.estimated_read_time || 5} min</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-cyber flex items-center justify-center text-white font-bold text-sm">
-                              {post.author?.full_name?.charAt(0) || 'U'}
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
+                              <span className="text-[10px] font-medium text-gray-300">{post.author?.full_name?.charAt(0) || 'U'}</span>
                             </div>
-                            <span className="text-gray-300 text-sm">{post.author?.full_name || 'Unknown'}</span>
+                            <span className="text-xs text-gray-400">{post.author?.full_name || 'Unknown'}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${statusColors[post.status as keyof typeof statusColors]}`}>
-                            <StatusIcon className="w-3.5 h-3.5" />
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${statusColors[post.status as keyof typeof statusColors]}`}>
+                            <StatusIcon className="w-3 h-3" />
                             {post.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1 text-sm">
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <Eye className="w-4 h-4" />
-                              <span>{post.view_count.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <span>💬</span>
-                              <span>{post.comment_count}</span>
-                            </div>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3.5 h-3.5" />
+                              {post.view_count.toLocaleString()}
+                            </span>
+                            <span>💬 {post.comment_count}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-400 text-sm">
-                          {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <span className="text-xs text-gray-500">
+                            {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
                             <Link href={`/blog/${post.slug}`}>
-                              <button className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors" title="View">
-                                <Eye className="w-4 h-4" />
+                              <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="View">
+                                <Eye className="w-3.5 h-3.5" />
                               </button>
                             </Link>
                             <Link href={`/admin/posts/edit/${post.id}`}>
-                              <button className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-electric-cyan hover:bg-electric-cyan/10 transition-colors" title="Edit">
-                                <Edit className="w-4 h-4" />
+                              <button className="p-1.5 rounded-md hover:bg-electric-cyan/10 text-gray-500 hover:text-electric-cyan transition-colors" title="Edit">
+                                <Edit className="w-3.5 h-3.5" />
                               </button>
                             </Link>
                             <button 
                               onClick={() => handleDelete(post.id)}
-                              className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors" 
+                              className="p-1.5 rounded-md hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition-colors" 
                               title="Delete"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
                       </tr>
                     )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredPosts.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No posts found matching your criteria</p>
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="flex items-center justify-between">
-          <p className="text-gray-400 text-sm">
-            Showing <span className="font-semibold text-white">{filteredPosts.length}</span> of{' '}
-            <span className="font-semibold text-white">{posts.length}</span> posts
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-medium text-gray-400">{filteredPosts.length}</span> of{' '}
+            <span className="font-medium text-gray-400">{posts.length}</span> posts
           </p>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          <div className="flex gap-1">
+            <button className="px-3 py-1.5 rounded-md bg-white/[0.02] border border-white/[0.04] text-xs text-gray-500 hover:text-white transition-colors">
               Previous
             </button>
-            <button className="px-4 py-2 rounded-lg bg-electric-cyan/20 text-electric-cyan font-semibold">
+            <button className="px-3 py-1.5 rounded-md bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/20 text-xs font-medium">
               1
             </button>
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+            <button className="px-3 py-1.5 rounded-md bg-white/[0.02] border border-white/[0.04] text-xs text-gray-500 hover:text-white transition-colors">
               2
             </button>
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+            <button className="px-3 py-1.5 rounded-md bg-white/[0.02] border border-white/[0.04] text-xs text-gray-500 hover:text-white transition-colors">
               Next
             </button>
           </div>

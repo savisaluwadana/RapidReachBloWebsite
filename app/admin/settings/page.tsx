@@ -22,23 +22,23 @@ export default function Settings() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-gray-400">Manage your platform configuration</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
+          <p className="text-sm text-gray-500">Manage your platform configuration</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-electric-cyan/20 text-electric-cyan'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/20'
+                  : 'bg-white/[0.02] text-gray-500 border border-white/[0.04] hover:text-white'
               }`}
             >
-              <tab.icon className="w-5 h-5" />
+              <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           ))}
@@ -46,73 +46,73 @@ export default function Settings() {
 
         {/* General Settings */}
         {activeTab === 'general' && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Site Information</h2>
-              <div className="space-y-4">
+          <div className="space-y-5">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Site Information</h2>
+              <div className="space-y-3.5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Site Name</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Site Name</label>
                   <input
                     type="text"
                     defaultValue="RapidReach Blog"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Tagline</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Tagline</label>
                   <input
                     type="text"
                     defaultValue="DevOps, Platform Engineering & Cloud Native"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Description</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Description</label>
                   <textarea
                     rows={3}
                     defaultValue="World-class blog and news platform for DevOps, Platform Engineering, and Cloud Native ecosystems."
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30 resize-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Site URL</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Site URL</label>
                   <input
                     type="url"
                     defaultValue="https://rapidreach.blog"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Content Settings</h2>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Content Settings</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Auto-publish posts</p>
-                    <p className="text-sm text-gray-400">Automatically publish approved posts</p>
+                    <p className="text-sm font-medium text-white">Auto-publish posts</p>
+                    <p className="text-xs text-gray-500">Automatically publish approved posts</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Require approval</p>
-                    <p className="text-sm text-gray-400">All posts need admin approval before publishing</p>
+                    <p className="text-sm font-medium text-white">Require approval</p>
+                    <p className="text-xs text-gray-500">All posts need admin approval before publishing</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Enable comments</p>
-                    <p className="text-sm text-gray-400">Allow users to comment on posts</p>
+                    <p className="text-sm font-medium text-white">Enable comments</p>
+                    <p className="text-xs text-gray-500">Allow users to comment on posts</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
               </div>
@@ -122,37 +122,37 @@ export default function Settings() {
 
         {/* Security Settings */}
         {activeTab === 'security' && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Authentication</h2>
+          <div className="space-y-5">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Authentication</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Two-factor authentication</p>
-                    <p className="text-sm text-gray-400">Require 2FA for admin accounts</p>
+                    <p className="text-sm font-medium text-white">Two-factor authentication</p>
+                    <p className="text-xs text-gray-500">Require 2FA for admin accounts</p>
                   </div>
-                  <button className="w-14 h-8 bg-white/10 rounded-full relative">
-                    <div className="w-6 h-6 bg-gray-400 rounded-full absolute top-1 left-1" />
+                  <button className="w-11 h-6 bg-white/[0.06] rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-gray-500 rounded-full absolute top-[3px] left-[3px]" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Password strength</p>
-                    <p className="text-sm text-gray-400">Enforce strong password requirements</p>
+                    <p className="text-sm font-medium text-white">Password strength</p>
+                    <p className="text-xs text-gray-500">Enforce strong password requirements</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Content Moderation</h2>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Content Moderation</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Spam Filter Sensitivity</label>
-                  <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50">
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Spam Filter Sensitivity</label>
+                  <select className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30">
                     <option>Low</option>
                     <option>Medium</option>
                     <option>High</option>
@@ -160,11 +160,11 @@ export default function Settings() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">Auto-flag suspicious comments</p>
-                    <p className="text-sm text-gray-400">Automatically flag potentially harmful content</p>
+                    <p className="text-sm font-medium text-white">Auto-flag suspicious comments</p>
+                    <p className="text-xs text-gray-500">Automatically flag potentially harmful content</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
               </div>
@@ -174,28 +174,28 @@ export default function Settings() {
 
         {/* Database Settings */}
         {activeTab === 'database' && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Supabase Configuration</h2>
-              <div className="space-y-4">
+          <div className="space-y-5">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Supabase Configuration</h2>
+              <div className="space-y-3.5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Project URL</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Project URL</label>
                   <input
                     type="url"
                     placeholder="https://xxxxx.supabase.co"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Anon Key</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Anon Key</label>
                   <input
                     type="password"
                     placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
-                <div className="rounded-xl bg-yellow-400/10 border border-yellow-400/30 p-4">
-                  <p className="text-sm text-yellow-400">
+                <div className="rounded-lg bg-yellow-400/5 border border-yellow-400/20 p-3">
+                  <p className="text-xs text-yellow-400/80">
                     ⚠️ These credentials are stored in your .env.local file. Never commit this file to version control.
                   </p>
                 </div>
@@ -206,48 +206,48 @@ export default function Settings() {
 
         {/* Email Settings */}
         {activeTab === 'email' && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">SMTP Configuration</h2>
-              <div className="space-y-4">
+          <div className="space-y-5">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">SMTP Configuration</h2>
+              <div className="space-y-3.5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">From Email</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">From Email</label>
                   <input
                     type="email"
                     defaultValue="noreply@rapidreach.blog"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">From Name</label>
+                  <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">From Name</label>
                   <input
                     type="text"
                     defaultValue="RapidReach Blog"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Email Notifications</h2>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Email Notifications</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">New comment notifications</p>
-                    <p className="text-sm text-gray-400">Email admins when new comments are posted</p>
+                    <p className="text-sm font-medium text-white">New comment notifications</p>
+                    <p className="text-xs text-gray-500">Email admins when new comments are posted</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-white">New post notifications</p>
-                    <p className="text-sm text-gray-400">Email subscribers when new posts are published</p>
+                    <p className="text-sm font-medium text-white">New post notifications</p>
+                    <p className="text-xs text-gray-500">Email subscribers when new posts are published</p>
                   </div>
-                  <button className="w-14 h-8 bg-electric-cyan/20 rounded-full relative">
-                    <div className="w-6 h-6 bg-electric-cyan rounded-full absolute top-1 right-1" />
+                  <button className="w-11 h-6 bg-electric-cyan/20 rounded-full relative">
+                    <div className="w-4.5 h-4.5 bg-electric-cyan rounded-full absolute top-[3px] right-[3px]" />
                   </button>
                 </div>
               </div>
@@ -257,8 +257,8 @@ export default function Settings() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-cyber text-white font-semibold shadow-glow-md hover:shadow-glow-lg transition-all">
-            <Save className="w-5 h-5" />
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors">
+            <Save className="w-4 h-4" />
             Save Changes
           </button>
         </div>

@@ -141,32 +141,32 @@ export default function NewPost() {
 
   return (
     <AdminLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Create New Post</h1>
-            <p className="text-gray-400">Write and publish engaging DevOps content</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Create New Post</h1>
+            <p className="text-sm text-gray-500">Write and publish engaging DevOps content</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2">
-              <Eye className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <button className="px-3.5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 text-sm">
+              <Eye className="w-3.5 h-3.5" />
               Preview
             </button>
             <button 
               onClick={handleSaveDraft}
               disabled={isSaving}
-              className="px-4 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3.5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
               {isSaving ? 'Saving...' : 'Save Draft'}
             </button>
             <button 
               onClick={handlePublish}
               disabled={isPublishing}
-              className="px-6 py-2 rounded-lg bg-gradient-cyber text-white font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
               {isPublishing ? 'Publishing...' : 'Publish'}
             </button>
           </div>
@@ -174,18 +174,18 @@ export default function NewPost() {
 
         {/* Error Message */}
         {error && (
-          <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
-            <p className="text-sm text-red-400">{error}</p>
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+            <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
 
         {/* Main Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Editor */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
             {/* Title */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-2">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2">
                 Post Title *
               </label>
               <input
@@ -193,13 +193,13 @@ export default function NewPost() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter an engaging title..."
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-2xl font-bold placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-white text-lg font-bold placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
               />
             </div>
 
             {/* Excerpt */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-2">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2">
                 Excerpt *
               </label>
               <textarea
@@ -207,54 +207,54 @@ export default function NewPost() {
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="Brief description for social media and article listings..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50 resize-none"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30 resize-none"
               />
-              <p className="text-xs text-gray-500 mt-2">{excerpt.length}/280 characters</p>
+              <p className="text-[10px] text-gray-600 mt-1.5">{excerpt.length}/280 characters</p>
             </div>
 
             {/* Content Editor */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
               {/* Toolbar */}
-              <div className="flex items-center gap-2 p-4 border-b border-white/10 bg-white/5">
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="Bold">
-                  <Bold className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 p-3 border-b border-white/[0.04] bg-white/[0.01]">
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Bold">
+                  <Bold className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="Italic">
-                  <Italic className="w-4 h-4" />
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Italic">
+                  <Italic className="w-3.5 h-3.5" />
                 </button>
-                <div className="w-px h-6 bg-white/10" />
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="List">
-                  <List className="w-4 h-4" />
+                <div className="w-px h-4 bg-white/[0.06]" />
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="List">
+                  <List className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="Link">
-                  <LinkIcon className="w-4 h-4" />
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Link">
+                  <LinkIcon className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="Code">
-                  <Code className="w-4 h-4" />
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Code">
+                  <Code className="w-3.5 h-3.5" />
                 </button>
-                <div className="w-px h-6 bg-white/10" />
-                <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all" title="Image">
-                  <ImageIcon className="w-4 h-4" />
+                <div className="w-px h-4 bg-white/[0.06]" />
+                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Image">
+                  <ImageIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               {/* Content Area */}
-              <div className="p-6">
+              <div className="p-5">
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Start writing your article... (Supports Markdown)"
                   rows={20}
-                  className="w-full bg-transparent text-white placeholder:text-gray-600 focus:outline-none resize-none font-mono text-sm leading-relaxed"
+                  className="w-full bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none font-mono leading-relaxed"
                 />
               </div>
 
               {/* Stats */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-white/5 text-sm text-gray-400">
-                <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.04] bg-white/[0.01] text-xs text-gray-500">
+                <div className="flex items-center gap-5">
                   <span>{content.trim().split(/\s+/).filter(Boolean).length} words</span>
                   <span>{content.length} characters</span>
-                  <span className="text-electric-cyan font-semibold">{calculateReadTime()} min read</span>
+                  <span className="text-electric-cyan font-medium">{calculateReadTime()} min read</span>
                 </div>
                 <span>Last saved: Never</span>
               </div>
@@ -262,16 +262,16 @@ export default function NewPost() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Category */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-3">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2.5">
                 Category *
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
               >
                 {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -282,22 +282,22 @@ export default function NewPost() {
             </div>
 
             {/* Difficulty */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-3">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2.5">
                 Difficulty Level
               </label>
               <div className="space-y-2">
                 {difficulties.map((level) => (
-                  <label key={level} className="flex items-center gap-3 cursor-pointer group">
+                  <label key={level} className="flex items-center gap-2.5 cursor-pointer group">
                     <input
                       type="radio"
                       name="difficulty"
                       value={level.toLowerCase()}
                       checked={difficulty === level.toLowerCase()}
                       onChange={(e) => setDifficulty(e.target.value)}
-                      className="w-4 h-4 text-electric-cyan focus:ring-electric-cyan/50"
+                      className="w-3.5 h-3.5 text-electric-cyan focus:ring-electric-cyan/30"
                     />
-                    <span className="text-gray-300 group-hover:text-white transition-colors">
+                    <span className="text-sm text-gray-400 group-hover:text-white transition-colors">
                       {level}
                     </span>
                   </label>
@@ -306,8 +306,8 @@ export default function NewPost() {
             </div>
 
             {/* Cover Image */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-3">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2.5">
                 Cover Image URL
               </label>
               <input
@@ -315,22 +315,22 @@ export default function NewPost() {
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
                 placeholder="https://..."
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
               />
               {coverImage && (
-                <div className="mt-4 rounded-xl overflow-hidden bg-gradient-to-br from-electric-cyan/20 to-cyber-lime/20 aspect-video" />
+                <div className="mt-3 rounded-lg overflow-hidden bg-white/[0.02] border border-white/[0.04] aspect-video" />
               )}
             </div>
 
             {/* Tags */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <label className="block text-sm font-semibold text-gray-400 mb-3">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2.5">
                 Tags
               </label>
               <input
                 type="text"
                 placeholder="Press Enter to add tags..."
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-electric-cyan/50"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.currentTarget.value) {
                     setTags([...tags, e.currentTarget.value])
@@ -338,11 +338,11 @@ export default function NewPost() {
                   }
                 }}
               />
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
                 {tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 rounded-lg bg-electric-cyan/10 text-electric-cyan text-sm flex items-center gap-2"
+                    className="px-2 py-0.5 rounded-md bg-electric-cyan/10 text-electric-cyan text-xs flex items-center gap-1.5"
                   >
                     #{tag}
                     <button
@@ -357,23 +357,23 @@ export default function NewPost() {
             </div>
 
             {/* SEO */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <h3 className="text-sm font-semibold text-gray-400 mb-3">SEO Settings</h3>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
+              <h3 className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2.5">SEO Settings</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Meta Title</label>
+                  <label className="block text-[10px] text-gray-600 mb-1">Meta Title</label>
                   <input
                     type="text"
                     placeholder="Auto-generated from title"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-gray-600 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Meta Description</label>
+                  <label className="block text-[10px] text-gray-600 mb-1">Meta Description</label>
                   <textarea
                     placeholder="Auto-generated from excerpt"
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-gray-600 focus:outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30 resize-none"
                   />
                 </div>
               </div>
