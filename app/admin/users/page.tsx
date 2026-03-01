@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import { Plus, Search, Shield, UserCheck, UserX, Mail, Calendar, TrendingUp } from 'lucide-react'
-import { getUsers, updateUserRole } from '@/lib/actions/users'
+import { getUsers, updateUserRole, toggleUserStatus } from '@/lib/actions/users'
+import { getCurrentUser } from '@/lib/actions/auth'
 import type { UserProfile } from '@/lib/types/database'
 
 export default function UsersManagement() {
@@ -24,6 +25,45 @@ export default function UsersManagement() {
       console.error('Failed to load users:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleChangeRole = async (targetUserId: string) => {
+    try {
+      const admin = await getCurrentUser()
+      if (!admin) {
+        alert('You must be signed in as an admin to change roles')
+        return
+      }
+      const newRole = window.prompt('Enter new role (reader, contributor, editor, admin):')
+      if (!newRole) return
+      const role = newRole.trim().toLowerCase()
+      if (!['reader','contributor','editor','admin'].includes(role)) {
+        alert('Invalid role')
+        return
+      }
+      await updateUserRole(targetUserId, role, admin.id)
+      await loadUsers()
+    } catch (err) {
+      console.error('Failed to update role:', err)
+      alert('Failed to update role')
+    }
+  }
+
+  const handleToggleStatus = async (targetUserId: string) => {
+    try {
+      const admin = await getCurrentUser()
+      if (!admin) {
+        alert('You must be signed in as an admin to perform this action')
+        return
+      }
+      // confirm
+      if (!confirm('Are you sure?')) return
+      await toggleUserStatus(targetUserId, admin.id)
+      await loadUsers()
+    } catch (err) {
+      console.error('Failed to toggle status:', err)
+      alert('Failed to toggle status')
     }
   }
 
@@ -174,14 +214,27 @@ export default function UsersManagement() {
 
                 {/* Actions */}
                 <div className="flex gap-1.5">
-                  <button className="flex-1 px-3 py-1.5 rounded-md bg-electric-cyan/10 text-electric-cyan hover:bg-electric-cyan/20 transition-colors text-xs font-medium">
-                    Edit
+                  <button
+                    onClick={() => handleChangeRole(user.id)}
+                    className="flex-1 px-3 py-1.5 rounded-md bg-electric-cyan/10 text-electric-cyan hover:bg-electric-cyan/20 transition-colors text-xs font-medium"
+                  >
+                    Change Role
                   </button>
                   <button className="px-3 py-1.5 rounded-md bg-white/[0.02] border border-white/[0.04] text-gray-500 hover:text-white transition-colors">
                     <Mail className="w-3.5 h-3.5" />
                   </button>
-                  {!user.is_active && (
-                    <button className="px-3 py-1.5 rounded-md bg-cyber-lime/10 text-cyber-lime hover:bg-cyber-lime/20 transition-colors">
+                  {user.is_active ? (
+                    <button
+                      onClick={() => handleToggleStatus(user.id)}
+                      className="px-3 py-1.5 rounded-md bg-yellow-400/10 text-yellow-400 hover:bg-yellow-400/20 transition-colors"
+                    >
+                      Suspend
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleStatus(user.id)}
+                      className="px-3 py-1.5 rounded-md bg-cyber-lime/10 text-cyber-lime hover:bg-cyber-lime/20 transition-colors"
+                    >
                       <UserCheck className="w-3.5 h-3.5" />
                     </button>
                   )}
