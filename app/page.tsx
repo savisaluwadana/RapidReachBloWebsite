@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import { BookOpen, Users, Award, Clock, ArrowRight, Zap, TrendingUp } from 'lucide-react'
 import { getPosts, getSiteStats } from '@/lib/actions/posts'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 const sampleKubernetesYAML = `apiVersion: apps/v1
 kind: Deployment
@@ -137,15 +138,243 @@ const featuredPaths = [
   },
 ]
 
-export default async function Home() {
-  const [featuredPosts, recentPosts, trendingPosts, siteStats] = await Promise.all([
+/* ─── Async Server Components (streamed via Suspense) ─── */
+
+async function HeroStats() {
+  const siteStats = await getSiteStats()
+  return (
+    <div className="flex flex-wrap justify-center gap-10 md:gap-16">
+      {[
+        { icon: <BookOpen className="w-4 h-4" />, value: String(siteStats.totalPosts), label: 'Articles' },
+        { icon: <Users className="w-4 h-4" />, value: String(siteStats.totalUsers), label: 'Users' },
+        { icon: <Award className="w-4 h-4" />, value: '8', label: 'Domains' },
+      ].map((stat) => (
+        <div key={stat.label} className="text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-0.5">
+            <span className="text-gray-600">{stat.icon}</span>
+            <span className="text-xl font-bold text-white tabular-nums">{stat.value}</span>
+          </div>
+          <span className="text-[10px] text-gray-600 uppercase tracking-widest">{stat.label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function HeroStatsFallback() {
+  return (
+    <div className="flex flex-wrap justify-center gap-10 md:gap-16">
+      {['Articles', 'Users', 'Domains'].map((label) => (
+        <div key={label} className="text-center">
+          <div className="h-7 w-8 shimmer rounded mx-auto mb-1" />
+          <span className="text-[10px] text-gray-600 uppercase tracking-widest">{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+async function DomainGrid() {
+  const siteStats = await getSiteStats()
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {learningDomains.map((domain) => (
+        <Link
+          key={domain.title}
+          href={domain.href}
+          className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
+        >
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white text-lg`}>
+                {domain.icon}
+              </div>
+              <span className="text-[9px] font-medium uppercase tracking-wider text-gray-600 bg-white/[0.03] px-1.5 py-0.5 rounded">
+                {domain.level}
+              </span>
+            </div>
+            <h3 className="text-white font-semibold text-sm mb-1.5 group-hover:text-electric-cyan transition-colors">
+              {domain.title}
+            </h3>
+            <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
+              {domain.description}
+            </p>
+            <div className="flex flex-wrap gap-1 mb-3">
+              {domain.tools.map((tool) => (
+                <span key={tool} className="px-1.5 py-0.5 rounded bg-white/[0.03] text-gray-500 text-[10px] font-medium">
+                  {tool}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.03]">
+              <span className="text-[11px] text-gray-600">
+                <span className="text-gray-400 font-medium">{siteStats.domainCounts[domain.title] || 0}</span> articles
+              </span>
+              <span className="text-[11px] text-electric-cyan opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                Explore <ArrowRight className="w-3 h-3" />
+              </span>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+function DomainGridFallback() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 space-y-3">
+          <div className="h-10 w-10 shimmer rounded-lg" />
+          <div className="h-4 shimmer rounded w-3/4" />
+          <div className="h-3 shimmer rounded w-full" />
+          <div className="h-3 shimmer rounded w-2/3" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+async function ArticlesSection() {
+  const [featuredPosts, recentPosts, trendingPosts] = await Promise.all([
     getPosts({ featured: true, status: 'published', limit: 1 }),
     getPosts({ status: 'published', limit: 6 }),
     getPosts({ trending: true, status: 'published', limit: 3 }),
-    getSiteStats(),
   ])
   const featuredArticle = featuredPosts[0]
+  return (
+    <div className="space-y-10">
+      {featuredArticle && (
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyber-lime" />
+            Featured
+          </h2>
+          <ArticleCard
+            title={featuredArticle.title}
+            excerpt={featuredArticle.excerpt}
+            author={{
+              name: featuredArticle.author?.full_name || 'Anonymous',
+              avatar: featuredArticle.author?.avatar_url || '',
+              role: featuredArticle.author?.role || 'Contributor',
+            }}
+            category={featuredArticle.category}
+            readTime={`${featuredArticle.estimated_read_time || 5} min`}
+            date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            image={featuredArticle.cover_image_url || ''}
+            slug={featuredArticle.slug}
+            featured={featuredArticle.featured}
+            trending={featuredArticle.trending}
+          />
+        </div>
+      )}
 
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-electric-cyan" />
+          Latest Articles
+        </h2>
+        {recentPosts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recentPosts.map((article) => (
+              <ArticleCard
+                key={article.id}
+                title={article.title}
+                excerpt={article.excerpt}
+                author={{
+                  name: article.author?.full_name || 'Anonymous',
+                  avatar: article.author?.avatar_url || '',
+                  role: article.author?.role || 'Contributor',
+                }}
+                category={article.category}
+                readTime={`${article.estimated_read_time || 5} min`}
+                date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                image={article.cover_image_url || ''}
+                slug={article.slug}
+                trending={article.trending}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
+            <BookOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white mb-1">No Articles Yet</h3>
+            <p className="text-sm text-gray-500">Articles will appear here once published.</p>
+          </div>
+        )}
+      </div>
+
+      {trendingPosts.length > 0 && (
+        <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-electric-cyan" />
+            Trending This Week
+          </h2>
+          <div className="space-y-2">
+            {trendingPosts.map((post, index) => (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="flex gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors group"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-white/[0.04] flex items-center justify-center text-gray-500 font-mono text-sm font-bold">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-2 mb-0.5">
+                    {post.title}
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-gray-600">
+                    <span>{post.author?.full_name || 'Anonymous'}</span>
+                    <span>·</span>
+                    <span>{post.view_count} views</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Learn by Example</h2>
+        <CodeSandbox
+          code={sampleKubernetesYAML}
+          language="yaml"
+          title="Kubernetes Deployment"
+          description="A production-ready NGINX deployment with replicas and resource limits"
+          runnable={true}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ArticlesSectionFallback() {
+  return (
+    <div className="space-y-10">
+      <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 space-y-4">
+        <div className="h-5 shimmer rounded w-24" />
+        <div className="h-48 shimmer rounded-xl" />
+      </div>
+      <div>
+        <div className="h-5 shimmer rounded w-32 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 space-y-3">
+              <div className="h-4 shimmer rounded w-16" />
+              <div className="h-5 shimmer rounded w-full" />
+              <div className="h-4 shimmer rounded w-3/4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default async function Home() {
   return (
     <main className="min-h-screen bg-deep-charcoal">
       <Navbar />
@@ -197,22 +426,10 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* Real stats */}
-            <div className="flex flex-wrap justify-center gap-10 md:gap-16">
-              {[
-                { icon: <BookOpen className="w-4 h-4" />, value: String(siteStats.totalPosts), label: 'Articles' },
-                { icon: <Users className="w-4 h-4" />, value: String(siteStats.totalUsers), label: 'Users' },
-                { icon: <Award className="w-4 h-4" />, value: '8', label: 'Domains' },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                    <span className="text-gray-600">{stat.icon}</span>
-                    <span className="text-xl font-bold text-white tabular-nums">{stat.value}</span>
-                  </div>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-widest">{stat.label}</span>
-                </div>
-              ))}
-            </div>
+            {/* Stats — streamed, hero renders immediately */}
+            <Suspense fallback={<HeroStatsFallback />}>
+              <HeroStats />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -231,53 +448,10 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {learningDomains.map((domain) => (
-              <Link
-                key={domain.title}
-                href={domain.href}
-                className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
-              >
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white text-lg`}>
-                      {domain.icon}
-                    </div>
-                    <span className="text-[9px] font-medium uppercase tracking-wider text-gray-600 bg-white/[0.03] px-1.5 py-0.5 rounded">
-                      {domain.level}
-                    </span>
-                  </div>
-
-                  <h3 className="text-white font-semibold text-sm mb-1.5 group-hover:text-electric-cyan transition-colors">
-                    {domain.title}
-                  </h3>
-                  <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
-                    {domain.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {domain.tools.map((tool) => (
-                      <span
-                        key={tool}
-                        className="px-1.5 py-0.5 rounded bg-white/[0.03] text-gray-500 text-[10px] font-medium"
-                      >
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.03]">
-                    <span className="text-[11px] text-gray-600">
-                      <span className="text-gray-400 font-medium">{siteStats.domainCounts[domain.title] || 0}</span> articles
-                    </span>
-                    <span className="text-[11px] text-electric-cyan opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                      Explore <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {/* Domain grid — streamed */}
+          <Suspense fallback={<DomainGridFallback />}>
+            <DomainGrid />
+          </Suspense>
         </div>
       </section>
 
@@ -346,110 +520,11 @@ export default async function Home() {
       <section className="py-16">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Articles Column */}
-            <div className="lg:col-span-2 space-y-10">
-              {featuredArticle && (
-                <div>
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-cyber-lime" />
-                    Featured
-                  </h2>
-                  <ArticleCard
-                    title={featuredArticle.title}
-                    excerpt={featuredArticle.excerpt}
-                    author={{
-                      name: featuredArticle.author?.full_name || 'Anonymous',
-                      avatar: featuredArticle.author?.avatar_url || '',
-                      role: featuredArticle.author?.role || 'Contributor',
-                    }}
-                    category={featuredArticle.category}
-                    readTime={`${featuredArticle.estimated_read_time || 5} min`}
-                    date={new Date(featuredArticle.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    image={featuredArticle.cover_image_url || ''}
-                    slug={featuredArticle.slug}
-                    featured={featuredArticle.featured}
-                    trending={featuredArticle.trending}
-                  />
-                </div>
-              )}
-
-              <div>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-electric-cyan" />
-                  Latest Articles
-                </h2>
-                {recentPosts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {recentPosts.map((article) => (
-                      <ArticleCard
-                        key={article.id}
-                        title={article.title}
-                        excerpt={article.excerpt}
-                        author={{
-                          name: article.author?.full_name || 'Anonymous',
-                          avatar: article.author?.avatar_url || '',
-                          role: article.author?.role || 'Contributor',
-                        }}
-                        category={article.category}
-                        readTime={`${article.estimated_read_time || 5} min`}
-                        date={new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        image={article.cover_image_url || ''}
-                        slug={article.slug}
-                        trending={article.trending}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
-                    <BookOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-                    <h3 className="text-base font-semibold text-white mb-1">No Articles Yet</h3>
-                    <p className="text-sm text-gray-500">Articles will appear here once published.</p>
-                  </div>
-                )}
-              </div>
-
-              {trendingPosts.length > 0 && (
-                <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-electric-cyan" />
-                    Trending This Week
-                  </h2>
-                  <div className="space-y-2">
-                    {trendingPosts.map((post, index) => (
-                      <Link
-                        key={post.id}
-                        href={`/blog/${post.slug}`}
-                        className="flex gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors group"
-                      >
-                        <div className="flex-shrink-0 w-8 h-8 rounded-md bg-white/[0.04] flex items-center justify-center text-gray-500 font-mono text-sm font-bold">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-2 mb-0.5">
-                            {post.title}
-                          </h3>
-                          <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                            <span>{post.author?.full_name || 'Anonymous'}</span>
-                            <span>·</span>
-                            <span>{post.view_count} views</span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Learn by Example</h2>
-                <CodeSandbox
-                  code={sampleKubernetesYAML}
-                  language="yaml"
-                  title="Kubernetes Deployment"
-                  description="A production-ready NGINX deployment with replicas and resource limits"
-                  runnable={true}
-                />
-              </div>
+            {/* Articles Column — streamed */}
+            <div className="lg:col-span-2">
+              <Suspense fallback={<ArticlesSectionFallback />}>
+                <ArticlesSection />
+              </Suspense>
             </div>
 
             {/* Sidebar */}
