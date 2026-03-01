@@ -1,18 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
-import { Save, Eye, EyeOff, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as LinkIcon } from 'lucide-react'
+import { Save, Eye, EyeOff, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as LinkIcon, Heading2 } from 'lucide-react'
 import { createPost } from '@/lib/actions/posts'
 import { getCurrentUser } from '@/lib/actions/auth'
 import type { Post } from '@/lib/types/database'
+import MarkdownContent from '../../../blog/[slug]/MarkdownContent'
 
 export default function NewArticle() {
   const router = useRouter()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [linkText, setLinkText] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [categories, setCategories] = useState<string[]>(['kubernetes'])
   const [tags, setTags] = useState<string[]>([])
   const [difficulty, setDifficulty] = useState('intermediate')
@@ -21,6 +26,52 @@ export default function NewArticle() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [isPreview, setIsPreview] = useState(false)
+
+  // Insert markdown syntax around the selected text (or at cursor)
+  const insertMarkdown = (before: string, after: string = '', placeholder: string = '') => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = content.slice(start, end) || placeholder
+    const newContent =
+      content.slice(0, start) + before + selected + after + content.slice(end)
+    setContent(newContent)
+    // Restore focus and move cursor after inserted text
+    setTimeout(() => {
+      textarea.focus()
+      const cursorPos = start + before.length + selected.length + after.length
+      textarea.setSelectionRange(cursorPos, cursorPos)
+    }, 0)
+  }
+
+  const handleInsertLink = () => {
+    const textarea = textareaRef.current
+    const selected = textarea
+      ? content.slice(textarea.selectionStart, textarea.selectionEnd)
+      : ''
+    setLinkText(selected || '')
+    setLinkUrl('')
+    setShowLinkModal(true)
+  }
+
+  const confirmInsertLink = () => {
+    const url = linkUrl.trim() || '#'
+    const text = linkText.trim() || url
+    const textarea = textareaRef.current
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const newContent =
+        content.slice(0, start) + `[${text}](${url})` + content.slice(end)
+      setContent(newContent)
+    } else {
+      setContent(c => c + `[${text}](${url})`)
+    }
+    setShowLinkModal(false)
+    setLinkText('')
+    setLinkUrl('')
+  }
 
   const categoryOptions = [
     { label: 'Kubernetes', value: 'kubernetes' },
@@ -158,6 +209,50 @@ export default function NewArticle() {
   return (
     <AdminLayout>
       <div className="max-w-5xl mx-auto space-y-5">
+        {/* Link Insert Modal */}
+        {showLinkModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-xl bg-[#111] border border-white/[0.08] p-6 space-y-4 shadow-2xl">
+              <h3 className="text-sm font-semibold text-white">Insert Link</h3>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-widest">Link Text</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={linkText}
+                  onChange={e => setLinkText(e.target.value)}
+                  placeholder="Display text"
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/40"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-widest">URL</label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={e => setLinkUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  onKeyDown={e => e.key === 'Enter' && confirmInsertLink()}
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/40"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={confirmInsertLink}
+                  className="flex-1 py-2 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors"
+                >
+                  Insert
+                </button>
+                <button
+                  onClick={() => setShowLinkModal(false)}
+                  className="flex-1 py-2 rounded-lg bg-white/[0.04] text-gray-400 text-sm hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -239,24 +334,27 @@ export default function NewArticle() {
             <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
               {/* Toolbar */}
               <div className="flex items-center gap-1.5 p-3 border-b border-white/[0.04] bg-white/[0.01]">
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Bold">
+                <button onClick={() => insertMarkdown('**', '**', 'bold text')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Bold">
                   <Bold className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Italic">
+                <button onClick={() => insertMarkdown('*', '*', 'italic text')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Italic">
                   <Italic className="w-3.5 h-3.5" />
                 </button>
+                <button onClick={() => insertMarkdown('\n## ', '', 'Heading')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Heading">
+                  <Heading2 className="w-3.5 h-3.5" />
+                </button>
                 <div className="w-px h-4 bg-white/[0.06]" />
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="List">
+                <button onClick={() => insertMarkdown('\n- ', '', 'List item')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="List">
                   <List className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Link">
+                <button onClick={handleInsertLink} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Link">
                   <LinkIcon className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Code">
+                <button onClick={() => insertMarkdown('`', '`', 'code')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Inline Code">
                   <Code className="w-3.5 h-3.5" />
                 </button>
                 <div className="w-px h-4 bg-white/[0.06]" />
-                <button className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Image">
+                <button onClick={() => insertMarkdown('\n![Alt text](', ')', 'https://image-url.com')} className="p-1.5 rounded-md hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors" title="Image">
                   <ImageIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -272,16 +370,17 @@ export default function NewArticle() {
                       <p className="text-gray-400 italic mb-4 text-sm border-l-2 border-electric-cyan/40 pl-3">{excerpt}</p>
                     )}
                     {content ? (
-                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-300 leading-relaxed">{content}</pre>
+                      <MarkdownContent content={content} />
                     ) : (
                       <p className="text-gray-600 italic">Nothing to preview yet. Start writing in the editor.</p>
                     )}
                   </div>
                 ) : (
                   <textarea
+                    ref={textareaRef}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Start writing your article... (Supports Markdown)"
+                    placeholder={`Start writing your article... (Supports Markdown)\n\nTip: Select text then click toolbar buttons, or use:\n  [link text](https://url.com) for links\n  **bold**  *italic*  \`code\``}
                     rows={20}
                     className="w-full bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none font-mono leading-relaxed"
                   />
