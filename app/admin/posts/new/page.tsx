@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
-import { Save, Eye, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as LinkIcon } from 'lucide-react'
+import { Save, Eye, EyeOff, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as LinkIcon } from 'lucide-react'
 import { createPost } from '@/lib/actions/posts'
 import { getCurrentUser } from '@/lib/actions/auth'
 import type { Post } from '@/lib/types/database'
@@ -20,6 +20,7 @@ export default function NewArticle() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
+  const [isPreview, setIsPreview] = useState(false)
 
   const categoryOptions = [
     { label: 'Kubernetes', value: 'kubernetes' },
@@ -164,9 +165,16 @@ export default function NewArticle() {
             <p className="text-sm text-gray-500">Write and publish engaging DevOps content</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-3.5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 text-sm">
-              <Eye className="w-3.5 h-3.5" />
-              Preview
+            <button
+              onClick={() => setIsPreview(p => !p)}
+              className={`px-3.5 py-2 rounded-lg border transition-colors flex items-center gap-1.5 text-sm ${
+                isPreview
+                  ? 'bg-electric-cyan/10 border-electric-cyan/30 text-electric-cyan'
+                  : 'bg-white/[0.02] border-white/[0.04] text-gray-500 hover:text-white'
+              }`}
+            >
+              {isPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              {isPreview ? 'Edit' : 'Preview'}
             </button>
             <button 
               onClick={handleSaveDraft}
@@ -255,13 +263,29 @@ export default function NewArticle() {
 
               {/* Content Area */}
               <div className="p-5">
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Start writing your article... (Supports Markdown)"
-                  rows={20}
-                  className="w-full bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none font-mono leading-relaxed"
-                />
+                {isPreview ? (
+                  <div className="min-h-[480px] prose prose-invert prose-sm max-w-none">
+                    {title && (
+                      <h1 className="text-2xl font-bold text-white mb-2">{title}</h1>
+                    )}
+                    {excerpt && (
+                      <p className="text-gray-400 italic mb-4 text-sm border-l-2 border-electric-cyan/40 pl-3">{excerpt}</p>
+                    )}
+                    {content ? (
+                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-300 leading-relaxed">{content}</pre>
+                    ) : (
+                      <p className="text-gray-600 italic">Nothing to preview yet. Start writing in the editor.</p>
+                    )}
+                  </div>
+                ) : (
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Start writing your article... (Supports Markdown)"
+                    rows={20}
+                    className="w-full bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none font-mono leading-relaxed"
+                  />
+                )}
               </div>
 
               {/* Stats */}
