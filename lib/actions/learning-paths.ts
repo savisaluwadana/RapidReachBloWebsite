@@ -190,6 +190,38 @@ export async function getLearningPathBySlug(slug: string) {
   }
 }
 
+export async function getUserSavedLearningPaths() {
+  const supabase = await createClient()
+  if (!supabase) return []
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  try {
+    // Find learning_path_progress rows for this user
+    const { data: progressRows, error: progressError } = await supabase
+      .from('learning_path_progress')
+      .select('learning_path_id')
+      .eq('user_id', user.id)
+
+    if (progressError) throw progressError
+
+    const ids = (progressRows || []).map((r: any) => r.learning_path_id)
+    if (!ids.length) return []
+
+    const { data, error } = await supabase
+      .from('learning_paths')
+      .select('*')
+      .in('id', ids)
+
+    if (error) throw error
+    return (data || []) as LearningPath[]
+  } catch (error) {
+    console.error('Error fetching saved learning paths:', error)
+    return []
+  }
+}
+
 export async function enrollInLearningPath(userId: string, learningPathId: string) {
   const supabase = await createClient()
   if (!supabase) return { success: false, error: 'Database not configured' }

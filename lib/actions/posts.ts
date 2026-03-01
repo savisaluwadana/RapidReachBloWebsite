@@ -628,3 +628,52 @@ export async function searchPosts(query: string, limit = 5) {
     return []
   }
 }
+
+export async function getUserLikedPosts() {
+  const supabase = await createClient()
+  if (!supabase) return []
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('post_likes')
+      .select(`post:posts!post_likes_post_id_fkey(*, author:user_profiles!posts_author_id_fkey(*))`)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    // extract post objects
+    const posts = (data || []).map((r: any) => r.post) as Post[]
+    return posts
+  } catch (error) {
+    console.error('Error fetching liked posts:', error)
+    return []
+  }
+}
+
+export async function getUserBookmarkedPosts() {
+  const supabase = await createClient()
+  if (!supabase) return []
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('post_bookmarks')
+      .select(`post:posts!post_bookmarks_post_id_fkey(*, author:user_profiles!posts_author_id_fkey(*))`)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    const posts = (data || []).map((r: any) => r.post) as Post[]
+    return posts
+  } catch (error) {
+    console.error('Error fetching bookmarked posts:', error)
+    return []
+  }
+}

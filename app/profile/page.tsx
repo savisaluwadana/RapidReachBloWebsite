@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { getCurrentUser, signOut } from '@/lib/actions/auth'
+import { getUserLikedPosts, getUserBookmarkedPosts } from '@/lib/actions/posts'
+import { getUserSavedLearningPaths } from '@/lib/actions/learning-paths'
 import { updateUserProfile } from '@/lib/actions/users'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -9,6 +11,9 @@ import type { UserProfile } from '@/lib/types/database'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [likedPosts, setLikedPosts] = useState<any[]>([])
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<any[]>([])
+  const [savedLearningPaths, setSavedLearningPaths] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -30,6 +35,20 @@ export default function ProfilePage() {
         return
       }
       setUser(currentUser)
+      // fetch likes/bookmarks and saved learning paths
+      try {
+        const [likes, bookmarks, saved] = await Promise.all([
+          getUserLikedPosts(),
+          getUserBookmarkedPosts(),
+          getUserSavedLearningPaths(),
+        ])
+        setLikedPosts(likes || [])
+        setBookmarkedPosts(bookmarks || [])
+        setSavedLearningPaths(saved || [])
+      } catch (err) {
+        // non-fatal — don't block profile rendering
+        console.error('Error loading user activity:', err)
+      }
     } catch {
       window.location.href = '/auth/signin'
     } finally {
@@ -60,6 +79,54 @@ export default function ProfilePage() {
           </Link>
           <h1 className="text-2xl font-bold text-white mb-1">Profile</h1>
           <p className="text-sm text-gray-500">Manage your account settings</p>
+        </div>
+        {/* Liked Articles & Bookmarks */}
+        <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 mb-4">
+          <h3 className="text-sm font-semibold text-white mb-4">Liked Articles</h3>
+          {likedPosts.length === 0 ? (
+            <p className="text-xs text-gray-500">You haven't liked any articles yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {likedPosts.map((p) => (
+                <Link key={p.id} href={`/blog/${p.slug}`} className="block">
+                  <div className="text-sm text-white font-medium">{p.title}</div>
+                  <div className="text-[12px] text-gray-500">{p.excerpt}</div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 mb-4">
+          <h3 className="text-sm font-semibold text-white mb-4">Bookmarked Articles</h3>
+          {bookmarkedPosts.length === 0 ? (
+            <p className="text-xs text-gray-500">You haven't bookmarked any articles yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {bookmarkedPosts.map((p) => (
+                <Link key={p.id} href={`/blog/${p.slug}`} className="block">
+                  <div className="text-sm text-white font-medium">{p.title}</div>
+                  <div className="text-[12px] text-gray-500">{p.excerpt}</div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6 mb-4">
+          <h3 className="text-sm font-semibold text-white mb-4">Saved Learning Paths</h3>
+          {savedLearningPaths.length === 0 ? (
+            <p className="text-xs text-gray-500">You have not saved or enrolled in any learning paths.</p>
+          ) : (
+            <div className="space-y-3">
+              {savedLearningPaths.map((lp) => (
+                <Link key={lp.id} href={`/learning-paths/${lp.slug}`} className="block">
+                  <div className="text-sm text-white font-medium">{lp.title}</div>
+                  <div className="text-[12px] text-gray-500">{lp.description}</div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Profile Card */}
