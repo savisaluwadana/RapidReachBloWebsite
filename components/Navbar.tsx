@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Search, Menu, X, LayoutDashboard, LogOut, User as UserIcon, ChevronDown } from 'lucide-react'
 import { getCurrentUser, signOut } from '@/lib/actions/auth'
 import type { UserProfile } from '@/lib/types/database'
@@ -32,7 +32,10 @@ export default function Navbar() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [mobileSearch, setMobileSearch] = useState('')
+  const mobileSearchRef = useRef<HTMLInputElement>(null)
   const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
     loadUser()
@@ -218,6 +221,31 @@ export default function Navbar() {
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
+
+            {/* Mobile Search */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (mobileSearch.trim()) {
+                  router.push(`/blog?q=${encodeURIComponent(mobileSearch.trim())}`)
+                  setIsMenuOpen(false)
+                  setMobileSearch('')
+                }
+              }}
+              className="mb-5"
+            >
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+                <input
+                  ref={mobileSearchRef}
+                  type="text"
+                  value={mobileSearch}
+                  onChange={(e) => setMobileSearch(e.target.value)}
+                  placeholder="Search articles..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
+                />
+              </div>
+            </form>
 
             {user && (
               <div className="pb-4 mb-4 border-b border-white/[0.06]">

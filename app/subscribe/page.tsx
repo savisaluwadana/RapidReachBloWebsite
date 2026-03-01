@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Mail, CheckCircle, Zap } from 'lucide-react'
+import { subscribeNewsletter } from '@/lib/actions/users'
 
 export default function SubscribePage() {
   const [email, setEmail] = useState('')
@@ -20,14 +21,12 @@ export default function SubscribePage() {
     setError('')
 
     try {
-      const subscribers = JSON.parse(localStorage.getItem('rapidreach_subscribers') || '[]')
-      if (subscribers.some((s: any) => s.email === email)) {
-        setError('This email is already subscribed!')
-        return
+      const result = await subscribeNewsletter(email, name)
+      if (result.success) {
+        setSubmitted(true)
+      } else {
+        setError(result.message)
       }
-      subscribers.push({ email, name, subscribedAt: new Date().toISOString() })
-      localStorage.setItem('rapidreach_subscribers', JSON.stringify(subscribers))
-      setSubmitted(true)
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -94,37 +93,38 @@ export default function SubscribePage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-br from-electric-cyan/90 to-[#5C4EE5]/90 p-6 relative overflow-hidden">
-            <div className="absolute inset-0 dot-grid opacity-10" />
-            <form onSubmit={handleSubmit} className="relative z-10 space-y-3">
+          <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-6">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-white/80 mb-1.5">Email Address</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/40"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-white/80 mb-1.5">First Name (Optional)</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-1.5">
+                  First Name <span className="text-gray-700 normal-case">(optional)</span>
+                </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/40"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                 />
               </div>
               {error && (
-                <p className="text-xs text-red-200 bg-red-500/20 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">{error}</p>
               )}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-4 py-2.5 rounded-lg bg-white text-electric-cyan text-sm font-semibold hover:bg-white/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-4 py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Zap className="w-4 h-4" />
                 {isSubmitting ? 'Subscribing...' : 'Subscribe Now'}
