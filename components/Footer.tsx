@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { Github, Twitter, Linkedin, Rss } from 'lucide-react'
 
 const footerSections = [
   {
@@ -28,17 +27,9 @@ const footerSections = [
     title: 'Community',
     links: [
       { label: 'About', href: '/about' },
-      { label: 'Newsletter', href: '/subscribe' },
       { label: 'Sign Up', href: '/auth/signup' },
     ],
   },
-]
-
-const socialLinks = [
-  { icon: Github, href: '#', label: 'GitHub' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Rss, href: '/news', label: 'RSS' },
 ]
 
 export default function Footer() {
@@ -62,18 +53,6 @@ export default function Footer() {
             <p className="text-sm text-gray-500 leading-relaxed mb-5 max-w-xs">
               Practitioner-written DevOps and Platform Engineering content for the cloud-native era.
             </p>
-            <div className="flex items-center gap-2">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.label}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="p-2 rounded-lg text-gray-600 hover:text-white hover:bg-white/[0.04] transition-colors"
-                >
-                  <social.icon className="w-4 h-4" />
-                </Link>
-              ))}
-            </div>
           </div>
 
           {/* Link sections */}
