@@ -49,14 +49,30 @@ export default function Navbar() {
   }, [pathname])
 
   const loadUser = async () => {
+    // Check sessionStorage cache first to avoid hitting Supabase on every mount
+    try {
+      const cached = sessionStorage.getItem('rr_user_cache')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        // Serve from cache if fresher than 5 minutes
+        if (Date.now() - ts < 5 * 60 * 1000) {
+          setUser(data)
+          return
+        }
+      }
+    } catch {}
     const currentUser = await getCurrentUser()
     setUser(currentUser)
+    try {
+      sessionStorage.setItem('rr_user_cache', JSON.stringify({ data: currentUser, ts: Date.now() }))
+    } catch {}
   }
 
   const handleLogout = async () => {
     await signOut()
     setUser(null)
     setShowUserMenu(false)
+    try { sessionStorage.removeItem('rr_user_cache') } catch {}
     window.location.href = '/'
   }
 
