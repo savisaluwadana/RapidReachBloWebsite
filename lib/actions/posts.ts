@@ -288,9 +288,31 @@ export async function updatePost(id: string, updates: Partial<Post>) {
     throw new Error(`Too many updates. Please try again in ${rateLimit.retryAfter} seconds.`)
   }
 
+  // Strip relation objects and read-only fields that are not DB columns
+  const {
+    author,
+    id: _id,
+    created_at,
+    updated_at,
+    view_count,
+    unique_view_count,
+    like_count,
+    comment_count,
+    share_count,
+    bookmark_count,
+    ...safeUpdates
+  } = updates as any
+
+  // Cast category to the news_category enum via explicit typing
+  const payload: Record<string, unknown> = { ...safeUpdates }
+  if (payload.category) {
+    // Ensure the value is a lowercase string matching the news_category enum
+    payload.category = String(payload.category).toLowerCase().trim()
+  }
+
   const { data, error } = await supabase
     .from('posts')
-    .update(updates)
+    .update(payload)
     .eq('id', id)
     .select()
     .single()
@@ -302,7 +324,8 @@ export async function updatePost(id: string, updates: Partial<Post>) {
 
   revalidatePath('/admin/posts')
   revalidatePath(`/blog/${data.slug}`)
-  
+  revalidatePath('/')
+
   return data as Post
 }
 
