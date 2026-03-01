@@ -3,12 +3,20 @@
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/utils/rate-limit'
 
 export async function subscribeNewsletter(email: string, name?: string): Promise<{ success: boolean; message: string }> {
   // Basic validation
   const trimmedEmail = email.trim().toLowerCase()
   if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
     return { success: false, message: 'Please enter a valid email address.' }
+  }
+
+  // Rate limit: prevent the same address being submitted repeatedly (generates bounced emails)
+  const rateLimitKey = `newsletter:${trimmedEmail}`
+  const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.NEWSLETTER_SUBSCRIBE)
+  if (!rateLimit.allowed) {
+    return { success: false, message: `Please wait before subscribing again (${rateLimit.retryAfter}s).` }
   }
 
   const supabase = await createClient()

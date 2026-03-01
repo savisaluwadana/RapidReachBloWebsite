@@ -64,8 +64,9 @@ export function checkRateLimit(
 export const RATE_LIMITS = {
   // Authentication
   LOGIN: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts per 15 minutes
-  SIGNUP: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
-  PASSWORD_RESET: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
+  SIGNUP: { maxRequests: 2, windowMs: 60 * 60 * 1000 }, // 2 per hour — reduces duplicate confirmation emails
+  PASSWORD_RESET: { maxRequests: 2, windowMs: 60 * 60 * 1000 }, // 2 per hour — reduces bounced reset emails
+  NEWSLETTER_SUBSCRIBE: { maxRequests: 2, windowMs: 60 * 60 * 1000 }, // 2 subscribe attempts per hour per email
   
   // Content creation
   CREATE_POST: { maxRequests: 10, windowMs: 60 * 60 * 1000 }, // 10 posts per hour

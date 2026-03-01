@@ -63,6 +63,19 @@ export async function signUp(email: string, password: string, fullName: string) 
     throw new Error(`Too many signup attempts. Please try again in ${rateLimit.retryAfter} seconds.`)
   }
 
+  // Check if this email already exists in user_profiles before calling signUp.
+  // supabase.auth.signUp() always sends a confirmation email — even for existing
+  // accounts — which creates duplicate/bounced emails and degrades deliverability.
+  const { data: existingProfile } = await supabase
+    .from('user_profiles')
+    .select('id')
+    .eq('email', sanitizedEmail)
+    .maybeSingle()
+
+  if (existingProfile) {
+    throw new Error('An account with this email already exists. Please sign in instead.')
+  }
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: sanitizedEmail,
     password,
@@ -236,6 +249,21 @@ export async function resetPassword(email: string) {
   const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.PASSWORD_RESET)
   if (!rateLimit.allowed) {
     throw new Error(`Too many password reset attempts. Please try again in ${rateLimit.retryAfter} seconds.`)
+  }
+
+  // Only send a reset email if the address exists in user_profiles.
+  // Sending reset emails to non-existent addresses produces hard bounces
+  // and degrades transactional email deliverability for the whole project.
+  const { data: existingProfile } = await supabase
+    .from('user_profiles')
+    .select('id')
+    .eq('email', sanitizedEmail)
+    .maybeSingle()
+
+  if (!existingProfile) {
+    // Return silently — don't reveal whether the account exists (security best practice)
+    // and don't send an email that would bounce.
+    return
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
