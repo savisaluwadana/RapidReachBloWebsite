@@ -69,7 +69,8 @@ export default function EditArticle() {
         setExcerpt(data.excerpt)
         setContent(data.content)
         setCategories(
-          data.categories?.length ? data.categories : data.category ? [data.category] : []
+          (data.categories?.length ? data.categories : data.category ? [data.category] : [])
+            .map((c: string) => c.toLowerCase().trim())
         )
         setTags(data.tags ?? [])
         setDifficulty(data.difficulty ?? 'intermediate')
@@ -126,6 +127,11 @@ export default function EditArticle() {
     )
   }
 
+  const VALID_CATEGORIES = new Set([
+    'kubernetes','terraform','aws','azure','gcp','cicd',
+    'security','observability','platform-engineering','docker','monitoring',
+  ])
+
   const calculateReadTime = () => {
     const wordCount = content.trim().split(/\s+/).length
     return Math.ceil(wordCount / 200)
@@ -146,15 +152,27 @@ export default function EditArticle() {
       const wordCount = content.trim().split(/\s+/).length
       const characterCount = content.length
 
+      // Normalize categories: lowercase + trim, keep only valid enum values
+      const normalizedCategories = categories
+        .map(c => c.toLowerCase().trim())
+        .filter(c => VALID_CATEGORIES.has(c))
+
+      if (normalizedCategories.length === 0) {
+        setError('Please select at least one valid category')
+        setIsPublishing(false)
+        setIsSaving(false)
+        return
+      }
+
       const updates: Partial<Post> = {
         title: title.trim(),
         excerpt: excerpt.trim(),
         content: content.trim(),
-        category: categories[0] as Post['category'],
-        categories,
+        category: normalizedCategories[0] as Post['category'],
+        categories: normalizedCategories,
         tags,
-        difficulty: difficulty as Post['difficulty'],
-        cover_image_url: coverImage || undefined,
+        difficulty: difficulty.toLowerCase().trim() as Post['difficulty'],
+        cover_image_url: coverImage.trim() || null as any,
         word_count: wordCount,
         character_count: characterCount,
         estimated_read_time: calculateReadTime(),

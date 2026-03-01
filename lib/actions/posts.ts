@@ -301,14 +301,14 @@ export async function updatePost(id: string, updates: Partial<Post>) {
   const rawDifficulty = String(updates.difficulty ?? '').toLowerCase().trim()
   const rawStatus = String(updates.status ?? '').toLowerCase().trim()
 
-  if (updates.category && !VALID_ENUM_CATEGORIES.has(rawCategory)) {
-    throw new Error(`Invalid category value: "${updates.category}"`)
+  if (updates.category !== undefined && !VALID_ENUM_CATEGORIES.has(rawCategory)) {
+    throw new Error(`Invalid category value: "${updates.category}". Must be one of: ${[...VALID_ENUM_CATEGORIES].join(', ')}`)
   }
-  if (updates.difficulty && !VALID_DIFFICULTIES.has(rawDifficulty)) {
-    throw new Error(`Invalid difficulty value: "${updates.difficulty}"`)
+  if (updates.difficulty !== undefined && !VALID_DIFFICULTIES.has(rawDifficulty)) {
+    throw new Error(`Invalid difficulty value: "${updates.difficulty}". Must be one of: ${[...VALID_DIFFICULTIES].join(', ')}`)
   }
-  if (updates.status && !VALID_STATUSES.has(rawStatus)) {
-    throw new Error(`Invalid status value: "${updates.status}"`)
+  if (updates.status !== undefined && !VALID_STATUSES.has(rawStatus)) {
+    throw new Error(`Invalid status value: "${updates.status}". Must be one of: ${[...VALID_STATUSES].join(', ')}`)
   }
 
   // Only include columns that exist and are writable in the posts table
