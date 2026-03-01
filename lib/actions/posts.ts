@@ -36,13 +36,14 @@ const _getSiteStatsInner = unstable_cache(
         .select('*', { count: 'exact', head: true })
       const { data: posts } = await supabase
         .from('posts')
-        .select('category')
+        .select('category, categories')
         .eq('status', 'published')
       const domainCounts: Record<string, number> = {}
       for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
-        domainCounts[domain] = (posts || []).filter((p: { category?: string | null }) =>
-          cats.some(c => p.category?.toLowerCase().includes(c))
-        ).length
+        domainCounts[domain] = (posts || []).filter((p: { category?: string | null; categories?: string[] | null }) => {
+          const allCats = [...(p.categories?.length ? p.categories : []), p.category].filter(Boolean) as string[]
+          return cats.some(c => allCats.some(ac => ac.toLowerCase().includes(c)))
+        }).length
       }
       return { totalPosts: totalPosts || 0, totalUsers: totalUsers || 0, domainCounts }
     } catch (error) {
@@ -83,7 +84,10 @@ const _getPostsInner = unstable_cache(
       `)
       .order('created_at', { ascending: false })
     if (options?.status) query = query.eq('status', options.status)
-    if (options?.category) query = query.eq('category', options.category)
+    if (options?.category) {
+      // Match if category enum matches OR categories array contains the value
+      query = query.or(`category.eq.${options.category},categories.cs.{${options.category}}`)
+    }
     if (options?.authorId) query = query.eq('author_id', options.authorId)
     if (options?.featured !== undefined) query = query.eq('featured', options.featured)
     if (options?.trending !== undefined) query = query.eq('trending', options.trending)
@@ -191,9 +195,17 @@ export async function createPost(post: Partial<Post>) {
     throw new Error(`Too many posts created. Please try again in ${rateLimit.retryAfter} seconds.`)
   }
 
+  // Ensure categories[] is populated: use provided categories or fall back to [category]
+  const postToInsert = {
+    ...post,
+    categories: post.categories && post.categories.length > 0
+      ? post.categories
+      : (post.category ? [post.category] : []),
+  }
+
   const { data, error } = await supabase
     .from('posts')
-    .insert([post])
+    .insert([postToInsert])
     .select()
     .single()
 

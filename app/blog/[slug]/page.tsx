@@ -28,10 +28,12 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
         <article className="max-w-5xl mx-auto px-6">
           {/* Header */}
           <div className="max-w-3xl mx-auto mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-2 py-0.5 rounded bg-electric-cyan/10 text-electric-cyan text-[10px] font-semibold uppercase tracking-wider">
-                {formatCategory(post.category)}
-              </span>
+            <div className="flex items-center flex-wrap gap-2 mb-4">
+              {(post.categories?.length ? post.categories : [post.category]).map(cat => (
+                <span key={cat} className="px-2 py-0.5 rounded bg-electric-cyan/10 text-electric-cyan text-[10px] font-semibold uppercase tracking-wider">
+                  {formatCategory(cat)}
+                </span>
+              ))}
               {post.trending && (
                 <span className="px-2 py-0.5 rounded bg-cyber-lime/10 text-cyber-lime text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />

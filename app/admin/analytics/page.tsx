@@ -109,7 +109,7 @@ export default function Analytics() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total Views', value: formatNumber(stats.totalViews), icon: Eye, color: 'text-electric-cyan' },
-            { label: 'Total Posts', value: formatNumber(stats.totalPosts), icon: Heart, color: 'text-cyber-lime' },
+            { label: 'Total Articles', value: formatNumber(stats.totalPosts), icon: Heart, color: 'text-cyber-lime' },
             { label: 'Comments', value: formatNumber(stats.totalComments), icon: MessageSquare, color: 'text-yellow-400' },
             { label: 'Active Users', value: formatNumber(stats.totalUsers), icon: Share2, color: 'text-purple-400' },
           ].map((metric) => (
@@ -169,11 +169,11 @@ export default function Analytics() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Top Performing Posts */}
+          {/* Top Performing Articles */}
           <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 mb-5">
               <TrendingUp className="w-4 h-4 text-cyber-lime" />
-              <h2 className="text-sm font-bold text-white">Top Performing Posts</h2>
+              <h2 className="text-sm font-bold text-white">Top Performing Articles</h2>
             </div>
             <div className="space-y-2.5">
               {isLoading ? (
@@ -181,7 +181,7 @@ export default function Analytics() {
                   <div className="w-5 h-5 border-2 border-electric-cyan/30 border-t-electric-cyan rounded-full animate-spin" />
                 </div>
               ) : topPosts.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">No posts data available</p>
+                <p className="text-sm text-gray-500 text-center py-8">No articles data available</p>
               ) : (
                 topPosts.map((post, i) => (
                   <div key={post.id} className="flex items-start justify-between p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.03] transition-colors group">

@@ -115,7 +115,8 @@ CREATE TABLE IF NOT EXISTS posts (
     author_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
     
     -- Content Classification
-    category news_category NOT NULL,
+    category news_category NOT NULL,            -- primary category (backward compat)
+    categories TEXT[] DEFAULT '{}',             -- multi-category support
     tags TEXT[] DEFAULT '{}',
     difficulty content_difficulty DEFAULT 'intermediate',
     estimated_read_time INTEGER, -- in minutes (calculated as: word_count / 200)

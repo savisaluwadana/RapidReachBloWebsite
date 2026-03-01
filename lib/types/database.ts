@@ -45,6 +45,7 @@ export interface Post {
   author_id: string
   author?: UserProfile
   category: string
+  categories: string[]
   tags: string[]
   difficulty: ContentDifficulty
   status: PostStatus

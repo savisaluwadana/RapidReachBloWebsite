@@ -138,10 +138,12 @@ export default function ArticlesManagement() {
                         <td className="px-4 py-3">
                           <div>
                             <p className="text-sm font-medium text-white mb-0.5">{post.title}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan font-medium">
-                                {post.category}
-                              </span>
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              {(post.categories?.length ? post.categories : [post.category]).map(cat => (
+                                <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-electric-cyan/10 text-electric-cyan font-medium">
+                                  {cat}
+                                </span>
+                              ))}
                               <span className="text-xs text-gray-600">{post.estimated_read_time || 5} min</span>
                             </div>
                           </div>

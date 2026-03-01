@@ -13,6 +13,7 @@ interface ArticleCardProps {
     role?: string
   }
   category: string
+  categories?: string[]
   readTime: string
   date: string
   image: string
@@ -26,6 +27,7 @@ export default function ArticleCard({
   excerpt,
   author,
   category,
+  categories,
   readTime,
   date,
   slug,
@@ -42,11 +44,13 @@ export default function ArticleCard({
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-deep-charcoal-50 to-deep-charcoal-100">
           <div className="absolute inset-0 bg-mesh-gradient opacity-30" />
           
-          {/* Category pill */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className="px-2.5 py-1 rounded-md bg-deep-charcoal/80 backdrop-blur-md border border-white/[0.08] text-electric-cyan text-[11px] font-semibold uppercase tracking-wider">
-              {formatCategory(category)}
-            </span>
+          {/* Category pills */}
+          <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
+            {(categories?.length ? categories : [category]).map(cat => (
+              <span key={cat} className="px-2.5 py-1 rounded-md bg-deep-charcoal/80 backdrop-blur-md border border-white/[0.08] text-electric-cyan text-[11px] font-semibold uppercase tracking-wider">
+                {formatCategory(cat)}
+              </span>
+            ))}
           </div>
 
           {/* Badges */}
