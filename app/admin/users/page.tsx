@@ -5,6 +5,7 @@ import AdminLayout from '@/components/AdminLayout'
 import { Plus, Search, Shield, UserCheck, UserX, Mail, Calendar, TrendingUp } from 'lucide-react'
 import { getUsers, updateUserRole, toggleUserStatus } from '@/lib/actions/users'
 import { getCurrentUser } from '@/lib/actions/auth'
+import RoleChangeModal from '@/components/RoleChangeModal'
 import type { UserProfile } from '@/lib/types/database'
 
 export default function UsersManagement() {
@@ -12,6 +13,9 @@ export default function UsersManagement() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [users, setUsers] = useState<UserProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalUser, setModalUser] = useState<UserProfile | null>(null)
+  const [modalSaving, setModalSaving] = useState(false)
 
   useEffect(() => {
     loadUsers()
@@ -29,25 +33,9 @@ export default function UsersManagement() {
   }
 
   const handleChangeRole = async (targetUserId: string) => {
-    try {
-      const admin = await getCurrentUser()
-      if (!admin) {
-        alert('You must be signed in as an admin to change roles')
-        return
-      }
-      const newRole = window.prompt('Enter new role (reader, contributor, editor, admin):')
-      if (!newRole) return
-      const role = newRole.trim().toLowerCase()
-      if (!['reader','contributor','editor','admin'].includes(role)) {
-        alert('Invalid role')
-        return
-      }
-      await updateUserRole(targetUserId, role, admin.id)
-      await loadUsers()
-    } catch (err) {
-      console.error('Failed to update role:', err)
-      alert('Failed to update role')
-    }
+    const user = users.find(u => u.id === targetUserId) || null
+    setModalUser(user)
+    setModalOpen(true)
   }
 
   const handleToggleStatus = async (targetUserId: string) => {
@@ -64,6 +52,27 @@ export default function UsersManagement() {
     } catch (err) {
       console.error('Failed to toggle status:', err)
       alert('Failed to toggle status')
+    }
+  }
+
+  const handleModalSave = async (role: string) => {
+    if (!modalUser) return
+    setModalSaving(true)
+    try {
+      const admin = await getCurrentUser()
+      if (!admin) {
+        alert('You must be signed in as an admin to change roles')
+        return
+      }
+      await updateUserRole(modalUser.id, role, admin.id)
+      setModalOpen(false)
+      setModalUser(null)
+      await loadUsers()
+    } catch (err) {
+      console.error('Failed to update role:', err)
+      alert('Failed to update role')
+    } finally {
+      setModalSaving(false)
     }
   }
 
@@ -243,6 +252,15 @@ export default function UsersManagement() {
             ))}
           </div>
         )}
+        <RoleChangeModal
+          open={modalOpen}
+          user={modalUser}
+          onClose={() => {
+            setModalOpen(false)
+            setModalUser(null)
+          }}
+          onSave={handleModalSave}
+        />
       </div>
     </AdminLayout>
   )
