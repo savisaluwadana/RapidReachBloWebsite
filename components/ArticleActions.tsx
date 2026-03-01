@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bookmark, Heart, Share2, Twitter, Linkedin, Link as LinkIcon, Check } from 'lucide-react'
+import { togglePostLike, togglePostBookmark, getPostInteractions } from '@/lib/actions/posts'
 
 interface ArticleActionsProps {
   postId: string
@@ -14,10 +15,36 @@ export default function ArticleActions({ postId, title = 'Article' }: ArticleAct
   const [likes, setLikes] = useState(0)
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikes(prev => isLiked ? prev - 1 : prev + 1)
+  useEffect(() => {
+    getPostInteractions(postId).then((data) => {
+      setIsLiked(data.liked)
+      setIsBookmarked(data.bookmarked)
+      setLikes(data.likeCount)
+      setIsLoading(false)
+    }).catch(() => setIsLoading(false))
+  }, [postId])
+
+  const handleLike = async () => {
+    try {
+      const result = await togglePostLike(postId)
+      setIsLiked(result.liked)
+      setLikes(result.count)
+    } catch {
+      // Not signed in — optimistic local toggle for UX
+      setIsLiked(p => !p)
+      setLikes(p => isLiked ? p - 1 : p + 1)
+    }
+  }
+
+  const handleBookmark = async () => {
+    try {
+      const result = await togglePostBookmark(postId)
+      setIsBookmarked(result.bookmarked)
+    } catch {
+      setIsBookmarked(p => !p)
+    }
   }
 
   const handleCopyLink = () => {
@@ -34,6 +61,7 @@ export default function ArticleActions({ postId, title = 'Article' }: ArticleAct
       {/* Like */}
       <button
         onClick={handleLike}
+        disabled={isLoading}
         className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${
           isLiked
             ? 'bg-red-500/10 border-red-500/30 text-red-400'
@@ -46,7 +74,8 @@ export default function ArticleActions({ postId, title = 'Article' }: ArticleAct
 
       {/* Bookmark */}
       <button
-        onClick={() => setIsBookmarked(!isBookmarked)}
+        onClick={handleBookmark}
+        disabled={isLoading}
         className={`w-full flex items-center justify-center p-3 rounded-lg border transition-colors ${
           isBookmarked
             ? 'bg-electric-cyan/10 border-electric-cyan/30 text-electric-cyan'
