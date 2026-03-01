@@ -52,3 +52,21 @@ export function createCachedClient() {
     cookies: { getAll: () => [], setAll: () => {} },
   })
 }
+
+/**
+ * Create a Supabase client using the service role key.
+ * This client has elevated privileges and must only be used server-side
+ * for trusted maintenance tasks (e.g., logging admin activity).
+ */
+export function createServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey || supabaseUrl.includes('placeholder')) {
+    return null as any
+  }
+
+  return createServerClient(supabaseUrl, supabaseServiceKey, {
+    cookies: { getAll: () => [], setAll: () => {} },
+  })
+}

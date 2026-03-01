@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { UserProfile } from '@/lib/types/database'
 import { revalidatePath } from 'next/cache'
 
@@ -265,16 +265,34 @@ export async function updateUserRole(userId: string, role: string, adminId: stri
     throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
-  // Log admin action
-  await supabase
-    .from('admin_activity_log')
-    .insert([{
-      admin_id: adminId,
-      action: 'change_user_role',
-      resource_type: 'user',
-      resource_id: userId,
-      details: { new_role: role }
-    }])
+  // Log admin action (use service-role client to avoid RLS/permission issues)
+  try {
+    const service = createServiceRoleClient()
+    if (service) {
+      await service
+        .from('admin_activity_log')
+        .insert([{
+          admin_id: adminId,
+          action: 'change_user_role',
+          resource_type: 'user',
+          resource_id: userId,
+          details: { new_role: role }
+        }])
+    } else {
+      // fallback to regular client (may fail if policies block writes)
+      await supabase
+        .from('admin_activity_log')
+        .insert([{
+          admin_id: adminId,
+          action: 'change_user_role',
+          resource_type: 'user',
+          resource_id: userId,
+          details: { new_role: role }
+        }])
+    }
+  } catch (logErr) {
+    console.warn('Failed to write admin_activity_log with service role:', logErr)
+  }
 
   revalidatePath('/admin/users')
   
@@ -330,16 +348,33 @@ export async function toggleUserStatus(userId: string, adminId: string) {
     throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
-  // Log admin action
-  await supabase
-    .from('admin_activity_log')
-    .insert([{
-      admin_id: adminId,
-      action: newStatus ? 'activate_user' : 'suspend_user',
-      resource_type: 'user',
-      resource_id: userId,
-      details: { is_active: newStatus }
-    }])
+  // Log admin action (use service-role client to avoid RLS/permission issues)
+  try {
+    const service = createServiceRoleClient()
+    if (service) {
+      await service
+        .from('admin_activity_log')
+        .insert([{
+          admin_id: adminId,
+          action: newStatus ? 'activate_user' : 'suspend_user',
+          resource_type: 'user',
+          resource_id: userId,
+          details: { is_active: newStatus }
+        }])
+    } else {
+      await supabase
+        .from('admin_activity_log')
+        .insert([{
+          admin_id: adminId,
+          action: newStatus ? 'activate_user' : 'suspend_user',
+          resource_type: 'user',
+          resource_id: userId,
+          details: { is_active: newStatus }
+        }])
+    }
+  } catch (logErr) {
+    console.warn('Failed to write admin_activity_log with service role:', logErr)
+  }
 
   revalidatePath('/admin/users')
   
