@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createCachedClient } from '@/lib/supabase/server'
 import { Post, UserProfile } from '@/lib/types/database'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/utils/rate-limit'
 
 // =====================================================
@@ -21,48 +21,84 @@ const DOMAIN_CATEGORIES: Record<string, string[]> = {
   'Platform Engineering': ['platform-engineering', 'backstage', 'idp', 'developer-experience'],
 }
 
+// ─── Cached inner implementation (5-minute revalidation) ────────────────────
+const _getSiteStatsInner = unstable_cache(
+  async () => {
+    const supabase = createCachedClient()
+    if (!supabase) return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
+    try {
+      const { count: totalPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'published')
+      const { count: totalUsers } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('category')
+        .eq('status', 'published')
+      const domainCounts: Record<string, number> = {}
+      for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
+        domainCounts[domain] = (posts || []).filter((p: { category?: string | null }) =>
+          cats.some(c => p.category?.toLowerCase().includes(c))
+        ).length
+      }
+      return { totalPosts: totalPosts || 0, totalUsers: totalUsers || 0, domainCounts }
+    } catch (error) {
+      console.error('Error fetching site stats:', error)
+      return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
+    }
+  },
+  ['site-stats'],
+  { revalidate: 300, tags: ['stats'] }
+)
+
 export async function getSiteStats() {
-  const supabase = await createClient()
-
-  if (!supabase) {
-    return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
-  }
-
-  try {
-    // Get total published posts
-    const { count: totalPosts } = await supabase
-      .from('posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'published')
-
-    // Get total users
-    const { count: totalUsers } = await supabase
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true })
-
-    // Get all published posts' categories for domain counting
-    const { data: posts } = await supabase
-      .from('posts')
-      .select('category')
-      .eq('status', 'published')
-
-    const domainCounts: Record<string, number> = {}
-    for (const [domain, cats] of Object.entries(DOMAIN_CATEGORIES)) {
-      domainCounts[domain] = (posts || []).filter((p: { category?: string | null }) =>
-        cats.some(c => p.category?.toLowerCase().includes(c))
-      ).length
-    }
-
-    return {
-      totalPosts: totalPosts || 0,
-      totalUsers: totalUsers || 0,
-      domainCounts,
-    }
-  } catch (error) {
-    console.error('Error fetching site stats:', error)
-    return { totalPosts: 0, totalUsers: 0, domainCounts: {} as Record<string, number> }
-  }
+  return _getSiteStatsInner()
 }
+
+// ─── Cached inner implementation — keyed by serialised options (60s revalidation) ─
+const _getPostsInner = unstable_cache(
+  async (optionsKey: string) => {
+    const options = JSON.parse(optionsKey) as {
+      status?: string
+      category?: string
+      authorId?: string
+      featured?: boolean
+      trending?: boolean
+      limit?: number
+      offset?: number
+    }
+    const supabase = createCachedClient()
+    if (!supabase) {
+      console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
+      return [] as Post[]
+    }
+    let query = supabase
+      .from('posts')
+      .select(`
+        *,
+        author:user_profiles!posts_author_id_fkey(*)
+      `)
+      .order('created_at', { ascending: false })
+    if (options?.status) query = query.eq('status', options.status)
+    if (options?.category) query = query.eq('category', options.category)
+    if (options?.authorId) query = query.eq('author_id', options.authorId)
+    if (options?.featured !== undefined) query = query.eq('featured', options.featured)
+    if (options?.trending !== undefined) query = query.eq('trending', options.trending)
+    if (options?.limit) query = query.limit(options.limit)
+    if (options?.offset) query = query.range(options.offset, options.offset + (options.limit || 10) - 1)
+    const { data, error } = await query
+    if (error) {
+      console.error('Error fetching posts:', error)
+      return [] as Post[]
+    }
+    return data as Post[]
+  },
+  ['posts'],
+  { revalidate: 60, tags: ['posts'] }
+)
 
 export async function getPosts(options?: {
   status?: string
@@ -73,76 +109,34 @@ export async function getPosts(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await createClient()
-  
-  if (!supabase) {
-    console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
-    return []
-  }
-  
-  let query = supabase
-    .from('posts')
-    .select(`
-      *,
-      author:user_profiles!posts_author_id_fkey(*)
-    `)
-    .order('created_at', { ascending: false })
-
-  if (options?.status) {
-    query = query.eq('status', options.status)
-  }
-  if (options?.category) {
-    query = query.eq('category', options.category)
-  }
-  if (options?.authorId) {
-    query = query.eq('author_id', options.authorId)
-  }
-  if (options?.featured !== undefined) {
-    query = query.eq('featured', options.featured)
-  }
-  if (options?.trending !== undefined) {
-    query = query.eq('trending', options.trending)
-  }
-  if (options?.limit) {
-    query = query.limit(options.limit)
-  }
-  if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 10) - 1)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Error fetching posts:', error)
-    return []
-  }
-
-  return data as Post[]
+  return _getPostsInner(JSON.stringify(options ?? {}))
 }
 
 export async function getPostBySlug(slug: string) {
-  const supabase = await createClient()
-  
-  if (!supabase) {
-    console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
-    return null
-  }
-  
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      *,
-      author:user_profiles!posts_author_id_fkey(*)
-    `)
-    .eq('slug', slug)
-    .single()
-
-  if (error) {
-    console.error('Error fetching post:', error)
-    return null
-  }
-
-  return data as Post
+  return unstable_cache(
+    async () => {
+      const supabase = createCachedClient()
+      if (!supabase) {
+        console.warn('⚠️  Supabase not configured. Check SETUP_GUIDE.md.')
+        return null
+      }
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          author:user_profiles!posts_author_id_fkey(*)
+        `)
+        .eq('slug', slug)
+        .single()
+      if (error) {
+        console.error('Error fetching post:', error)
+        return null
+      }
+      return data as Post
+    },
+    [`post-${slug}`],
+    { revalidate: 60, tags: ['posts', `post-${slug}`] }
+  )()
 }
 
 export async function getPostById(id: string) {

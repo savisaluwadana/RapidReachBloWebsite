@@ -35,3 +35,20 @@ export async function createClient() {
     }
   )
 }
+
+/**
+ * A cookie-free Supabase client safe to use inside `unstable_cache`.
+ * Only use for unauthenticated read-only queries (public posts, stats, etc.)
+ */
+export function createCachedClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
+    return null as any
+  }
+
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: { getAll: () => [], setAll: () => {} },
+  })
+}
