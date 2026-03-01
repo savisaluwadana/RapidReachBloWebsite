@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-import { Plus, Search, Eye, Edit, Trash2, Clock, CheckCircle } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Clock, CheckCircle, XCircle, Archive } from 'lucide-react'
 import Link from 'next/link'
 import { getPosts, deletePost } from '@/lib/actions/posts'
 import type { Post } from '@/lib/types/database'
@@ -51,12 +51,16 @@ export default function ArticlesManagement() {
     published: 'bg-cyber-lime/10 text-cyber-lime',
     pending: 'bg-yellow-400/10 text-yellow-400',
     draft: 'bg-gray-500/10 text-gray-500',
+    archived: 'bg-gray-600/10 text-gray-600',
+    rejected: 'bg-red-500/10 text-red-400',
   }
 
   const statusIcons = {
     published: CheckCircle,
     pending: Clock,
     draft: Edit,
+    archived: Archive,
+    rejected: XCircle,
   }
 
   return (

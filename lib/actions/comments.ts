@@ -139,7 +139,7 @@ export async function createComment(comment: {
 
   if (error) {
     console.error('Error creating comment:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath(`/blog/*`)
@@ -175,7 +175,13 @@ export async function updateCommentStatus(commentId: string, status: string, mod
     throw new Error('Unauthorized: Moderator privileges required')
   }
 
-  const updates: any = { status }
+  const VALID_COMMENT_STATUSES = new Set(['pending', 'approved', 'rejected', 'flagged'])
+  const normalizedStatus = String(status).toLowerCase().trim()
+  if (!VALID_COMMENT_STATUSES.has(normalizedStatus)) {
+    throw new Error(`Invalid comment status: "${status}". Must be one of: ${[...VALID_COMMENT_STATUSES].join(', ')}`)
+  }
+
+  const updates: any = { status: normalizedStatus }
   
   if (moderatorId) {
     updates.moderated_at = new Date().toISOString()
@@ -191,7 +197,7 @@ export async function updateCommentStatus(commentId: string, status: string, mod
 
   if (error) {
     console.error('Error updating comment:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/comments')
@@ -244,7 +250,7 @@ export async function deleteComment(commentId: string) {
 
   if (error) {
     console.error('Error deleting comment:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/comments')
@@ -292,7 +298,7 @@ export async function flagComment(commentId: string, reason: string) {
 
   if (error) {
     console.error('Error flagging comment:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   return data as Comment

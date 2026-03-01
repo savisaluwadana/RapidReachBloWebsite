@@ -193,7 +193,7 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
 
   if (error) {
     console.error('Error updating user:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/users')
@@ -241,7 +241,7 @@ export async function updateUserRole(userId: string, role: string, adminId: stri
 
   if (error) {
     console.error('Error updating user role:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   // Log admin action
@@ -295,7 +295,7 @@ export async function toggleUserStatus(userId: string, adminId: string) {
     .eq('id', userId)
     .single()
 
-  const newStatus = !user?.is_active
+  const newStatus = !currentUser?.is_active
   
   const { data, error } = await supabase
     .from('user_profiles')
@@ -306,7 +306,7 @@ export async function toggleUserStatus(userId: string, adminId: string) {
 
   if (error) {
     console.error('Error toggling user status:', error)
-    throw error
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   // Log admin action

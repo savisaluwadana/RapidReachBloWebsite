@@ -159,7 +159,7 @@ export async function getLearningPaths(options?: {
 
     const { data, error } = await query
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
     return data as LearningPath[]
   } catch (error) {
     console.error('Error fetching learning paths:', error)
@@ -182,7 +182,7 @@ export async function getLearningPathBySlug(slug: string) {
       .eq('is_published', true)
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
     return data as LearningPath
   } catch (error) {
     console.error('Error fetching learning path:', error)
@@ -207,7 +207,7 @@ export async function enrollInLearningPath(userId: string, learningPathId: strin
       .select()
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     // Increment enrollment count
     await supabase.rpc('increment_enrollment_count', { path_id: learningPathId })
@@ -246,7 +246,7 @@ export async function updateLearningPathProgress(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     revalidatePath('/learning-paths')
     return { success: true, data }
@@ -268,7 +268,7 @@ export async function getUserLearningPathProgress(userId: string, learningPathId
       .eq('learning_path_id', learningPathId)
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
     return data as LearningPathProgress
   } catch (error) {
     console.error('Error fetching user progress:', error)
@@ -294,7 +294,7 @@ export async function getLearningPathById(id: string) {
       .eq('id', id)
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
     return data as LearningPath
   } catch (error) {
     console.error('Error fetching learning path by id:', error)
@@ -326,7 +326,7 @@ export async function getAllLearningPaths(options?: {
     if (options?.limit) query = query.limit(options.limit)
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
     return data as LearningPath[]
   } catch (error) {
     console.error('Error fetching all learning paths:', error)
@@ -364,7 +364,7 @@ export async function createLearningPath(input: {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     revalidatePath('/learning-paths')
     revalidatePath('/admin/learning-paths')
@@ -403,7 +403,7 @@ export async function updateLearningPath(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     revalidatePath('/learning-paths')
     revalidatePath('/admin/learning-paths')
@@ -424,7 +424,7 @@ export async function deleteLearningPath(id: string) {
       .delete()
       .eq('id', id)
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     revalidatePath('/learning-paths')
     revalidatePath('/admin/learning-paths')
@@ -445,7 +445,7 @@ export async function toggleLearningPathPublish(id: string, isPublished: boolean
       .update({ is_published: isPublished })
       .eq('id', id)
 
-    if (error) throw error
+    if (error) throw new Error((error as any).message ?? String(error))
 
     revalidatePath('/learning-paths')
     revalidatePath('/admin/learning-paths')
