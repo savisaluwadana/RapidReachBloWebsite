@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/AdminLayout'
 import Link from 'next/link'
-import { Plus, Search, Trash2, Eye, EyeOff, Star, Users, BookOpen, GraduationCap } from 'lucide-react'
+import { Plus, Search, Trash2, Eye, EyeOff, Star, Users, BookOpen, GraduationCap, Edit } from 'lucide-react'
 import { getAllLearningPaths, deleteLearningPath, toggleLearningPathPublish } from '@/lib/actions/learning-paths'
 import type { LearningPath } from '@/lib/actions/learning-paths'
 
@@ -199,6 +199,14 @@ export default function LearningPathsAdmin() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          <Link href={`/admin/learning-paths/edit/${path.id}`}>
+                            <button
+                              title="Edit"
+                              className="p-1.5 rounded-md hover:bg-electric-cyan/10 text-gray-500 hover:text-electric-cyan transition-colors"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          </Link>
                           <button
                             onClick={() => handleTogglePublish(path.id, path.is_published)}
                             title={path.is_published ? 'Unpublish' : 'Publish'}

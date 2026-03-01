@@ -280,6 +280,28 @@ export async function getUserLearningPathProgress(userId: string, learningPathId
 // ADMIN LEARNING PATH ACTIONS
 // =====================================================
 
+export async function getLearningPathById(id: string) {
+  const supabase = await createClient()
+
+  if (!supabase) {
+    return getDemoLearningPaths().find(lp => lp.id === id) || null
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('learning_paths')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data as LearningPath
+  } catch (error) {
+    console.error('Error fetching learning path by id:', error)
+    return null
+  }
+}
+
 export async function getAllLearningPaths(options?: {
   limit?: number
   includeUnpublished?: boolean
