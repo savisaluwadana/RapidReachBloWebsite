@@ -12,8 +12,7 @@ export async function getCommentsByPostId(postId: string) {
     .from('comments')
     .select(`
       *,
-      author:user_profiles!comments_author_id_fkey(*),
-      post:posts(id, title, slug)
+      author:user_profiles!comments_author_id_fkey(id, full_name, avatar_url)
     `)
     .eq('post_id', postId)
     .eq('status', 'approved')
@@ -25,27 +24,66 @@ export async function getCommentsByPostId(postId: string) {
     return []
   }
 
+  // Helper to normalize author shape for the component
+  const normalizeAuthor = (raw: any) => {
+    const a = Array.isArray(raw) ? raw[0] : raw
+    return {
+      id: a?.id || '',
+      name: a?.full_name || a?.name || 'Anonymous',
+      avatar_url: a?.avatar_url || null,
+    }
+  }
+
   // Fetch replies for each comment
   const commentsWithReplies = await Promise.all(
-    (data || []).map(async (comment: any) => {
+    (data || []).filter(Boolean).map(async (comment: any) => {
       const { data: replies } = await supabase
         .from('comments')
         .select(`
           *,
-          author:user_profiles!comments_author_id_fkey(*)
+          author:user_profiles!comments_author_id_fkey(id, full_name, avatar_url)
         `)
         .eq('parent_comment_id', comment.id)
         .eq('status', 'approved')
         .order('created_at', { ascending: true })
 
       return {
-        ...comment,
-        replies: replies || []
+        id: comment.id,
+        post_id: comment.post_id,
+        author_id: comment.author_id,
+        content: comment.content,
+        status: comment.status,
+        is_flagged: comment.is_flagged,
+        flag_count: comment.flag_count,
+        like_count: comment.like_count ?? 0,
+        reply_count: comment.reply_count ?? 0,
+        is_spam: comment.is_spam,
+        created_at: comment.created_at,
+        updated_at: comment.updated_at,
+        parent_comment_id: comment.parent_comment_id,
+        author: normalizeAuthor(comment.author),
+        replies: (replies || []).filter(Boolean).map((r: any) => ({
+          id: r.id,
+          post_id: r.post_id,
+          author_id: r.author_id,
+          content: r.content,
+          status: r.status,
+          is_flagged: r.is_flagged,
+          flag_count: r.flag_count,
+          like_count: r.like_count ?? 0,
+          reply_count: r.reply_count ?? 0,
+          is_spam: r.is_spam,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          parent_comment_id: r.parent_comment_id,
+          author: normalizeAuthor(r.author),
+          replies: [],
+        })),
       }
     })
   )
 
-  return commentsWithReplies as Comment[]
+  return commentsWithReplies
 }
 
 export async function getAllComments(options?: {

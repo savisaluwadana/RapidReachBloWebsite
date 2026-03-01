@@ -40,9 +40,12 @@ function formatTimeAgo(dateString: string): string {
 function CommentItem({ comment, depth = 0, onReply }: { comment: Comment; depth?: number; onReply: (parentId: string, content: string) => void }) {
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  const [likes, setLikes] = useState(comment.like_count)
+  const [likes, setLikes] = useState(comment?.like_count ?? 0)
   const [replyContent, setReplyContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Guard AFTER all hooks — never put hooks after a conditional return
+  if (!comment) return null
 
   const handleLike = async () => {
     setIsLiked(!isLiked)
@@ -64,7 +67,9 @@ function CommentItem({ comment, depth = 0, onReply }: { comment: Comment; depth?
     }
   }
 
-  const displayName = comment.author?.name || 'Anonymous'
+  // author.name is always set by getCommentsByPostId normalisation;
+  // fall back defensively in case of any edge case
+  const displayName = String(comment.author?.name || 'Anonymous')
 
   return (
     <div className={`${depth > 0 ? 'ml-10 mt-3' : ''}`}>
@@ -139,7 +144,7 @@ function CommentItem({ comment, depth = 0, onReply }: { comment: Comment; depth?
           {/* Nested Replies */}
           {comment.replies && comment.replies.length > 0 && (
             <div className="space-y-3">
-              {comment.replies.map(reply => (
+              {comment.replies.filter(Boolean).map(reply => (
                 <CommentItem key={reply.id} comment={reply} depth={depth + 1} onReply={onReply} />
               ))}
             </div>
@@ -160,29 +165,10 @@ export default function CommentsSection({ postId }: { postId: string }) {
     loadComments()
   }, [postId])
 
-  const transformComment = (comment: any): Comment => {
-    const displayName =
-      comment.author?.full_name ||
-      comment.author?.name ||
-      'Anonymous'
-    return {
-      id: comment.id,
-      content: comment.content,
-      created_at: comment.created_at,
-      like_count: comment.like_count ?? 0,
-      author: {
-        id: comment.author?.id || '',
-        name: displayName,
-        avatar_url: comment.author?.avatar_url ?? undefined,
-      },
-      replies: (comment.replies || []).map(transformComment),
-    }
-  }
-
   const loadComments = async () => {
     try {
       const data = await getCommentsByPostId(postId)
-      setComments(data.map(transformComment))
+      setComments((data || []) as unknown as Comment[])
     } catch (error) {
       console.error('Failed to load comments:', error)
     } finally {
