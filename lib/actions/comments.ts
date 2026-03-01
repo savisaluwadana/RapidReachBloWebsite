@@ -122,6 +122,97 @@ export async function getAllComments(options?: {
   return data as Comment[]
 }
 
+export async function getCommentById(id: string) {
+  const supabase = await createClient()
+  if (!supabase) return null
+
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        author:user_profiles!comments_author_id_fkey(id, full_name, avatar_url),
+        post:posts(id, slug)
+      `)
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data as Comment
+  } catch (error) {
+    console.error('Error fetching comment by id:', error)
+    return null
+  }
+}
+
+export async function updateComment(commentId: string, updates: Partial<{ content: string }>) {
+  const supabase = await createClient()
+  if (!supabase) {
+    throw new Error('Supabase client not configured')
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized: You must be logged in')
+
+  // Fetch existing comment
+  const { data: existing } = await supabase
+    .from('comments')
+    .select('author_id, post_id')
+    .eq('id', commentId)
+    .single()
+
+  if (!existing) throw new Error('Comment not found')
+
+  // Check permissions: author can edit their own comment; admins/editors can edit any
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAuthor = existing.author_id === user.id
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'editor'
+  if (!isAuthor && !isAdmin) throw new Error('Unauthorized: You can only edit your own comments')
+
+  // Validate updates
+  const payload: any = {}
+  if (updates.content !== undefined) {
+    const c = String(updates.content).trim()
+    if (!c || c.length < 1) throw new Error('Comment cannot be empty')
+    if (c.length > 5000) throw new Error('Comment is too long (max 5000 characters)')
+    payload.content = c
+    payload.updated_at = new Date().toISOString()
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error('No valid fields to update')
+  }
+
+  const { data, error } = await supabase
+    .from('comments')
+    .update(payload)
+    .eq('id', commentId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating comment:', error)
+    throw new Error(error.message ?? `Database error (${error.code})`)
+  }
+
+  // Revalidate related pages
+  try {
+    revalidatePath('/admin/comments')
+    // If we have the post id, revalidate the post page; otherwise revalidate blog listing
+    if (existing.post_id) revalidatePath(`/blog/${existing.post_id}`)
+    revalidatePath('/blog/*')
+  } catch (e) {
+    console.warn('Failed to revalidate after comment update:', e)
+  }
+
+  return data as Comment
+}
+
 export async function createComment(comment: {
   post_id: string
   author_id: string
