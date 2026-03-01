@@ -1030,7 +1030,7 @@ DECLARE
     admin_user_id UUID;
 BEGIN
     -- Determine the action type
-    IF NEW.status = 'approved' AND OLD.status = 'pending' THEN
+    IF NEW.status = 'published' AND OLD.status = 'pending' THEN
         action_name := 'approve_post';
     ELSIF NEW.status = 'rejected' AND OLD.status = 'pending' THEN
         action_name := 'reject_post';
