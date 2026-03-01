@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Search, TrendingUp, Clock, Zap, X } from 'lucide-react'
 import ArticleCard from '@/components/ArticleCard'
-import { searchPosts } from '@/lib/actions/posts'
 import type { Post } from '@/lib/types/database'
 
 interface BlogFilterClientProps {
@@ -76,7 +75,8 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
     setIsSearching(true)
     searchTimerRef.current = setTimeout(async () => {
       try {
-        const results = await searchPosts(searchQuery, 50)
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=50`)
+        const results: Post[] = await res.json()
         setPosts(sortPosts(filterByCategory(results, activeCategory), sortBy))
       } catch (error) {
         console.error('Search error:', error)
