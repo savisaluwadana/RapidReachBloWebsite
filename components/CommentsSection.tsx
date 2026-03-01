@@ -64,18 +64,20 @@ function CommentItem({ comment, depth = 0, onReply }: { comment: Comment; depth?
     }
   }
 
+  const displayName = comment.author?.name || 'Anonymous'
+
   return (
     <div className={`${depth > 0 ? 'ml-10 mt-3' : ''}`}>
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="w-8 h-8 rounded-full bg-white/[0.06] flex-shrink-0 flex items-center justify-center text-xs text-gray-400 font-medium">
-          {comment.author.name.charAt(0).toUpperCase()}
+          {displayName.charAt(0).toUpperCase()}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-sm font-medium text-gray-200">{comment.author.name}</h4>
+            <h4 className="text-sm font-medium text-gray-200">{displayName}</h4>
             <span className="text-[10px] text-gray-600">{formatTimeAgo(comment.created_at)}</span>
           </div>
           
@@ -158,19 +160,29 @@ export default function CommentsSection({ postId }: { postId: string }) {
     loadComments()
   }, [postId])
 
+  const transformComment = (comment: any): Comment => {
+    const displayName =
+      comment.author?.full_name ||
+      comment.author?.name ||
+      'Anonymous'
+    return {
+      id: comment.id,
+      content: comment.content,
+      created_at: comment.created_at,
+      like_count: comment.like_count ?? 0,
+      author: {
+        id: comment.author?.id || '',
+        name: displayName,
+        avatar_url: comment.author?.avatar_url ?? undefined,
+      },
+      replies: (comment.replies || []).map(transformComment),
+    }
+  }
+
   const loadComments = async () => {
     try {
       const data = await getCommentsByPostId(postId)
-      // Transform the data to match our interface
-      const transformedComments: Comment[] = data.map((comment: any) => ({
-        ...comment,
-        author: {
-          id: comment.author?.id || '',
-          name: comment.author?.full_name || 'Anonymous',
-          avatar_url: comment.author?.avatar_url
-        }
-      }))
-      setComments(transformedComments)
+      setComments(data.map(transformComment))
     } catch (error) {
       console.error('Failed to load comments:', error)
     } finally {
@@ -222,9 +234,9 @@ export default function CommentsSection({ postId }: { postId: string }) {
       })
       
       await loadComments()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to post reply:', error)
-      throw error
+      throw new Error(error?.message || 'Failed to post reply')
     }
   }
 
