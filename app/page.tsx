@@ -5,6 +5,7 @@ import CodeSandbox from '@/components/CodeSandbox'
 import Footer from '@/components/Footer'
 import { BookOpen, Users, Award, Clock, ArrowRight, Zap, TrendingUp } from 'lucide-react'
 import { getPosts, getSiteStats } from '@/lib/actions/posts'
+import { getLearningPaths } from '@/lib/actions/learning-paths'
 import Link from 'next/link'
 import { Suspense } from 'react'
 
@@ -110,35 +111,96 @@ const learningDomains = [
   },
 ]
 
-/* ─── Featured Learning Paths ─── */
-const featuredPaths = [
-  {
-    title: 'Kubernetes Zero to Hero',
-    steps: 12,
-    duration: '6 weeks',
-    level: 'Beginner',
-    accent: '#326CE5',
-    badge: 'Popular',
-  },
-  {
-    title: 'GitOps Mastery with ArgoCD',
-    steps: 8,
-    duration: '4 weeks',
-    level: 'Intermediate',
-    accent: '#F97316',
-    badge: 'New',
-  },
-  {
-    title: 'Production-Grade IaC',
-    steps: 10,
-    duration: '5 weeks',
-    level: 'Advanced',
-    accent: '#5C4EE5',
-    badge: 'Certified',
-  },
-]
-
 /* ─── Async Server Components (streamed via Suspense) ─── */
+
+const DIFFICULTY_ACCENT: Record<string, string> = {
+  beginner: '#22c55e',
+  intermediate: '#F97316',
+  advanced: '#5C4EE5',
+  expert: '#ef4444',
+}
+
+async function FeaturedLearningPaths() {
+  const paths = await getLearningPaths({ featured: true, limit: 3 })
+  // Only show a second attempt if zero paths — don't fall back to demo data on homepage
+  const display = paths.filter(p => !p.id.startsWith('demo-'))
+  const fallback = display.length === 0
+    ? (await getLearningPaths({ limit: 3 })).filter(p => !p.id.startsWith('demo-'))
+    : display
+
+  if (fallback.length === 0) {
+    return (
+      <div className="col-span-3 rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
+        <p className="text-sm text-gray-600">No learning paths published yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {fallback.map((path) => {
+        const accent = DIFFICULTY_ACCENT[path.difficulty] ?? '#326CE5'
+        const durationWeeks = path.estimated_duration
+          ? `${Math.ceil(path.estimated_duration / 40)} weeks`
+          : 'Self-paced'
+        return (
+          <Link
+            key={path.id}
+            href={`/learning-paths/${path.slug}`}
+            className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent}40, transparent)` }} />
+
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded capitalize" style={{ color: accent, backgroundColor: `${accent}15` }}>
+                {path.difficulty}
+              </span>
+              <span className="text-[10px] text-gray-600 capitalize">{path.category}</span>
+            </div>
+
+            <h3 className="text-white font-semibold text-base mb-3 group-hover:text-electric-cyan transition-colors">{path.title}</h3>
+
+            <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+              <span className="flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5" />
+                {path.modules.length} modules
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                {durationWeeks}
+              </span>
+            </div>
+
+            <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
+              <div className="h-full rounded-full w-0" style={{ background: `linear-gradient(90deg, ${accent}, ${accent}80)` }} />
+            </div>
+            <p className="text-[11px] text-gray-600 mt-2 flex items-center gap-1">
+              Start this path <ArrowRight className="w-3 h-3" />
+            </p>
+          </Link>
+        )
+      })}
+    </>
+  )
+}
+
+function FeaturedLearningPathsFallback() {
+  return (
+    <>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 space-y-3">
+          <div className="flex justify-between">
+            <div className="h-4 w-16 shimmer rounded" />
+            <div className="h-4 w-20 shimmer rounded" />
+          </div>
+          <div className="h-5 w-3/4 shimmer rounded" />
+          <div className="h-3 w-1/2 shimmer rounded" />
+          <div className="h-1 w-full shimmer rounded-full" />
+        </div>
+      ))}
+    </>
+  )
+}
 
 async function HeroStats() {
   const siteStats = await getSiteStats()
@@ -478,42 +540,9 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {featuredPaths.map((path) => (
-              <Link
-                key={path.title}
-                href="/learning-paths"
-                className="group relative rounded-xl bg-white/[0.02] border border-white/[0.04] p-5 hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300 overflow-hidden"
-              >
-                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${path.accent}40, transparent)` }} />
-
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded" style={{ color: path.accent, backgroundColor: `${path.accent}15` }}>
-                    {path.badge}
-                  </span>
-                  <span className="text-[10px] text-gray-600">{path.level}</span>
-                </div>
-
-                <h3 className="text-white font-semibold text-base mb-3 group-hover:text-electric-cyan transition-colors">{path.title}</h3>
-
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-3.5 h-3.5" />
-                    {path.steps} modules
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {path.duration}
-                  </span>
-                </div>
-
-                <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
-                  <div className="h-full rounded-full w-0" style={{ background: `linear-gradient(90deg, ${path.accent}, ${path.accent}80)` }} />
-                </div>
-                <p className="text-[11px] text-gray-600 mt-2 flex items-center gap-1">
-                  Start this path <ArrowRight className="w-3 h-3" />
-                </p>
-              </Link>
-            ))}
+            <Suspense fallback={<FeaturedLearningPathsFallback />}>
+              <FeaturedLearningPaths />
+            </Suspense>
           </div>
         </div>
       </section>
