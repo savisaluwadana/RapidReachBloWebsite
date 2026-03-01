@@ -530,25 +530,6 @@ export default async function Home() {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-20 space-y-4">
-                <div className="rounded-xl bg-gradient-to-br from-electric-cyan/90 to-[#5C4EE5]/90 p-6 relative overflow-hidden">
-                  <div className="absolute inset-0 dot-grid opacity-10" />
-                  <div className="relative z-10">
-                    <h3 className="text-lg font-bold text-white mb-1.5">Level Up Weekly</h3>
-                    <p className="text-white/70 mb-4 text-xs leading-relaxed">
-                      Curated DevOps insights, tutorials, and news — every week.
-                    </p>
-                    <input
-                      type="email"
-                      placeholder="your@email.com"
-                      className="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/20 text-sm text-white placeholder:text-white/40 mb-2 focus:outline-none focus:ring-1 focus:ring-white/40"
-                    />
-                    <button className="w-full px-4 py-2.5 rounded-lg bg-white text-electric-cyan text-sm font-semibold hover:bg-white/90 transition-colors">
-                      Subscribe Free
-                    </button>
-                    <p className="text-white/40 text-[10px] mt-2 text-center">No spam. Unsubscribe anytime.</p>
-                  </div>
-                </div>
-
                 <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] h-[520px] overflow-hidden">
                   <LiveInfrastructureFeed />
                 </div>
