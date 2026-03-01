@@ -23,7 +23,7 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Posts', href: '/admin/posts', icon: FileText },
+  { name: 'Articles', href: '/admin/posts', icon: FileText },
   { name: 'Learning Paths', href: '/admin/learning-paths', icon: BookOpen },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Comments', href: '/admin/comments', icon: MessageSquare },
@@ -184,7 +184,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Search posts, users, comments..."
+                  placeholder="Search articles, users, comments..."
                   className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
                 />
               </div>

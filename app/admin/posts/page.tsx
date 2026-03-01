@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { getPosts, deletePost } from '@/lib/actions/posts'
 import type { Post } from '@/lib/types/database'
 
-export default function PostsManagement() {
+export default function ArticlesManagement() {
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<Post[]>([])
@@ -29,14 +29,14 @@ export default function PostsManagement() {
   }
 
   const handleDelete = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return
+    if (!confirm('Are you sure you want to delete this article?')) return
     
     try {
       await deletePost(postId)
       await loadPosts()
     } catch (error) {
-      console.error('Failed to delete post:', error)
-      alert('Failed to delete post')
+      console.error('Failed to delete article:', error)
+      alert('Failed to delete article')
     }
   }
 
@@ -65,13 +65,13 @@ export default function PostsManagement() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Posts Management</h1>
-            <p className="text-sm text-gray-500">Manage all blog posts and approvals</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Articles Management</h1>
+            <p className="text-sm text-gray-500">Manage all articles and approvals</p>
           </div>
           <Link href="/admin/posts/new">
             <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors">
               <Plus className="w-4 h-4" />
-              New Post
+              New Article
             </button>
           </Link>
         </div>
@@ -82,7 +82,7 @@ export default function PostsManagement() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Search posts by title or author..."
+              placeholder="Search articles by title or author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
@@ -113,7 +113,7 @@ export default function PostsManagement() {
         ) : filteredPosts.length === 0 ? (
           <div className="text-center py-16 rounded-xl bg-white/[0.02] border border-white/[0.04]">
             <Edit className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-            <p className="text-sm text-gray-500 mb-1">No posts found</p>
+            <p className="text-sm text-gray-500 mb-1">No articles found</p>
             <p className="text-xs text-gray-600">Try adjusting your search or filters.</p>
           </div>
         ) : (
@@ -122,7 +122,7 @@ export default function PostsManagement() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-white/[0.02] border-b border-white/[0.04]">
-                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Post</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Article</th>
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Author</th>
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Status</th>
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Stats</th>

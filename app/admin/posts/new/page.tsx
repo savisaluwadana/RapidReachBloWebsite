@@ -7,7 +7,7 @@ import { Save, Eye, Send, Image as ImageIcon, Code, Bold, Italic, List, Link as 
 import { createPost } from '@/lib/actions/posts'
 import { getCurrentUser } from '@/lib/actions/auth'
 
-export default function NewPost() {
+export default function NewArticle() {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
@@ -87,7 +87,7 @@ export default function NewPost() {
       router.push('/admin/posts')
       router.refresh()
     } catch (err: any) {
-      setError(err.message || 'Failed to publish post')
+      setError(err.message || 'Failed to publish article')
       console.error('Publish error:', err)
     } finally {
       setIsPublishing(false)
@@ -145,7 +145,7 @@ export default function NewPost() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Create New Post</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">Create New Article</h1>
             <p className="text-sm text-gray-500">Write and publish engaging DevOps content</p>
           </div>
           <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export default function NewPost() {
             {/* Title */}
             <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-5">
               <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2">
-                Post Title *
+                Article Title *
               </label>
               <input
                 type="text"

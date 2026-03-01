@@ -9,7 +9,7 @@ export default async function AdminDashboard() {
   const pendingPostsData = await getPosts({ status: 'draft', limit: 3 })
   
   const dashboardStats = [
-    { name: 'Total Posts', value: stats.totalPosts.toLocaleString(), icon: FileText, color: 'text-electric-cyan' },
+    { name: 'Total Articles', value: stats.totalPosts.toLocaleString(), icon: FileText, color: 'text-electric-cyan' },
     { name: 'Active Users', value: stats.totalUsers.toLocaleString(), icon: Users, color: 'text-cyber-lime' },
     { name: 'Comments', value: stats.totalComments.toLocaleString(), icon: MessageSquare, color: 'text-electric-cyan' },
     { name: 'Monthly Views', value: stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews.toString(), icon: TrendingUp, color: 'text-cyber-lime' },
@@ -58,8 +58,8 @@ export default async function AdminDashboard() {
               {pendingPostsData.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No pending posts</p>
-                  <p className="text-xs text-gray-600 mt-0.5">All posts are reviewed!</p>
+                  <p className="text-sm text-gray-500">No pending articles</p>
+                  <p className="text-xs text-gray-600 mt-0.5">All articles are reviewed!</p>
                 </div>
               ) : (
                 pendingPostsData.map((post) => (
@@ -99,7 +99,7 @@ export default async function AdminDashboard() {
 
             <Link href="/admin/posts">
               <button className="w-full mt-3 px-3 py-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] text-xs text-gray-500 hover:text-white hover:bg-white/[0.04] transition-colors font-medium">
-                View All Pending Posts
+                View All Pending Articles
               </button>
             </Link>
           </div>
@@ -110,7 +110,7 @@ export default async function AdminDashboard() {
           <Link href="/admin/posts/new">
             <button className="w-full p-5 rounded-xl bg-electric-cyan text-white hover:bg-electric-cyan/90 transition-colors text-left group">
               <FileText className="w-5 h-5 mb-2.5 group-hover:scale-110 transition-transform" />
-              <h3 className="font-medium text-sm mb-1">Create New Post</h3>
+              <h3 className="font-medium text-sm mb-1">Create New Article</h3>
               <p className="text-white/70 text-xs">Start writing a new article</p>
             </button>
           </Link>
