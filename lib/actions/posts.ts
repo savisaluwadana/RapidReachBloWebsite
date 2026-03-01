@@ -233,8 +233,8 @@ export async function createPost(post: Partial<Post>) {
   }
 
   if (error) {
-    console.error('Error creating post:', error)
-    throw error
+    console.error('Error creating post — code:', error.code, '| message:', error.message)
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/posts')
@@ -338,8 +338,9 @@ export async function updatePost(id: string, updates: Partial<Post>) {
     .single()
 
   if (error) {
-    console.error('Error updating post:', error)
-    throw error
+    console.error('Error updating post — code:', error.code, '| message:', error.message, '| detail:', error.details, '| hint:', error.hint)
+    // Throw a plain Error so Next.js can serialize it across the server action boundary
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/posts')
@@ -392,8 +393,8 @@ export async function deletePost(id: string) {
     .eq('id', id)
 
   if (error) {
-    console.error('Error deleting post:', error)
-    throw error
+    console.error('Error deleting post — code:', error.code, '| message:', error.message)
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/posts')
@@ -436,8 +437,8 @@ export async function approvePost(postId: string, adminId: string) {
     .single()
 
   if (error) {
-    console.error('Error approving post:', error)
-    throw error
+    console.error('Error approving post — code:', error.code, '| message:', error.message)
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/posts')
@@ -486,8 +487,8 @@ export async function rejectPost(postId: string, adminId: string, reason: string
     .single()
 
   if (error) {
-    console.error('Error rejecting post:', error)
-    throw error
+    console.error('Error rejecting post — code:', error.code, '| message:', error.message)
+    throw new Error(error.message ?? `Database error (${error.code})`)
   }
 
   revalidatePath('/admin/posts')
