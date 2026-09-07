@@ -1,5 +1,5 @@
 import type { Post } from '@/lib/types/database'
-import { getPosts, getPostBySlug } from '@/lib/actions/posts'
+import { getPosts as getDatabasePosts, getPostBySlug as getDatabasePostBySlug } from '@/lib/actions/posts-db'
 import { getLearningPaths, getLearningPathBySlug, type LearningPath } from '@/lib/actions/learning-paths'
 import {
   BUILT_IN_POSTS,
@@ -32,8 +32,9 @@ function filterBuiltInPosts(options: PostOptions = {}) {
   if (options.category) {
     const target = options.category.toLowerCase()
     posts = posts.filter((post) =>
-      post.category.toLowerCase() === target ||
-      post.categories.some((category) => category.toLowerCase() === target)
+      [post.category, ...(post.categories || [])]
+        .map((category) => category.toLowerCase())
+        .some((category) => category === target || category.includes(target))
     )
   }
   if (options.authorId) posts = posts.filter((post) => post.author_id === options.authorId)
@@ -46,7 +47,7 @@ function filterBuiltInPosts(options: PostOptions = {}) {
 }
 
 export async function getContentPosts(options: PostOptions = {}): Promise<Post[]> {
-  const databasePosts = await getPosts(options)
+  const databasePosts = await getDatabasePosts(options)
   const builtInPosts = filterBuiltInPosts({ ...options, limit: undefined, offset: undefined })
 
   const merged = new Map<string, Post>()
@@ -63,7 +64,7 @@ export async function getContentPosts(options: PostOptions = {}): Promise<Post[]
 }
 
 export async function getContentPostBySlug(slug: string): Promise<Post | null> {
-  const databasePost = await getPostBySlug(slug)
+  const databasePost = await getDatabasePostBySlug(slug)
   return databasePost ?? getBuiltInPostBySlug(slug)
 }
 
@@ -87,8 +88,6 @@ export async function getContentLearningPathBySlug(slug: string): Promise<Learni
   const databasePath = await getLearningPathBySlug(slug)
   const builtIn = BUILT_IN_LEARNING_PATHS.find((path) => path.slug === slug) as LearningPath | undefined
 
-  // The legacy demo catalog contains only three shallow paths. Prefer the richer built-in
-  // path when the slug overlaps, while real database rows still win for custom content.
   if (databasePath && !databasePath.id.startsWith('demo-lp-')) return databasePath
   return builtIn ?? databasePath ?? null
 }
