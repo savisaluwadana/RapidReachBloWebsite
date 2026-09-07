@@ -313,6 +313,16 @@ func authenticated(handler http.Handler) http.Handler {
 func main() {
 	httpAddr := flag.String("http", "", "listen address for stateless Streamable HTTP, e.g. :8080; omit for stdio")
 	flag.Parse()
+
+	// Vercel and other managed HTTP platforms launch the standalone binary
+	// without custom CLI arguments and communicate the listener through PORT.
+	// Keep stdio as the local/CLI default when PORT is not present.
+	if *httpAddr == "" {
+		if port := strings.TrimSpace(os.Getenv("PORT")); port != "" {
+			*httpAddr = ":" + strings.TrimPrefix(port, ":")
+		}
+	}
+
 	server := newServer()
 	if *httpAddr == "" {
 		if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
