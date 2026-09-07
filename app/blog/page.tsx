@@ -1,10 +1,13 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import BlogFilterClient from '@/components/BlogFilterClient'
-import { getPosts } from '@/lib/actions/posts'
+import { getContentPosts, getBuiltInContentStats } from '@/lib/content/content-service'
 
 export default async function BlogPage() {
-  const allPosts = await getPosts({ status: 'published' })
+  const [allPosts, stats] = await Promise.all([
+    getContentPosts({ status: 'published', limit: 80 }),
+    Promise.resolve(getBuiltInContentStats()),
+  ])
 
   return (
     <main className="min-h-screen bg-deep-charcoal">
@@ -16,12 +19,12 @@ export default async function BlogPage() {
 
         <div className="relative container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">Articles</p>
+            <p className="text-xs text-electric-cyan uppercase tracking-widest font-medium mb-3">Engineering Knowledge Base</p>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-              All Articles
+              Production Engineering Guides
             </h1>
-            <p className="text-sm text-gray-500 max-w-lg mx-auto">
-              Comprehensive guides, tutorials, and insights on DevOps and Cloud Native technologies.
+            <p className="text-sm text-gray-500 max-w-2xl mx-auto leading-relaxed">
+              {stats.articles}+ practical guides across cloud-native architecture, Kubernetes, platform engineering, reliability, security, distributed systems, Go, and AI infrastructure.
             </p>
           </div>
 
