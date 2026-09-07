@@ -1,9 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { Search, Menu, X, LayoutDashboard, LogOut, User as UserIcon, ChevronDown } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import {
+  ArrowUpRight,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Search,
+  User as UserIcon,
+  X,
+} from 'lucide-react'
 import { getCurrentUser, signOut } from '@/lib/actions/auth'
 import type { UserProfile } from '@/lib/types/database'
 
@@ -14,101 +23,108 @@ const navLinks = [
   { label: 'About', href: '/about' },
 ]
 
-const categories = ['All', 'Orchestration', 'IaC', 'CI/CD & GitOps', 'Service Mesh', 'Cloud', 'Observability', 'Security', 'Platform Eng.']
-
-const categoryToSlug: Record<string, string> = {
-  'Orchestration': 'kubernetes',
-  'IaC': 'terraform',
-  'CI/CD & GitOps': 'cicd',
-  'Service Mesh': 'service-mesh',
-  'Cloud': 'cloud',
-  'Observability': 'observability',
-  'Security': 'security',
-  'Platform Eng.': 'platform-engineering',
+function getDisplayName(user: UserProfile) {
+  const fullName = user.full_name?.trim()
+  if (fullName) return fullName
+  return user.email?.split('@')[0] || 'Account'
 }
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [mobileSearch, setMobileSearch] = useState('')
-  const mobileSearchRef = useRef<HTMLInputElement>(null)
-  const pathname = usePathname()
-  const router = useRouter()
 
   useEffect(() => {
-    loadUser()
-    const onScroll = () => setScrolled(window.scrollY > 10)
+    let active = true
+
+    const loadUser = async () => {
+      try {
+        const cached = sessionStorage.getItem('rr_user_cache')
+        if (cached) {
+          const parsed = JSON.parse(cached) as { data?: UserProfile | null; ts?: number }
+          if (parsed.ts && Date.now() - parsed.ts < 5 * 60 * 1000) {
+            if (active) setUser(parsed.data ?? null)
+            return
+          }
+        }
+
+        const currentUser = await getCurrentUser()
+        if (!active) return
+        setUser(currentUser)
+        sessionStorage.setItem('rr_user_cache', JSON.stringify({ data: currentUser, ts: Date.now() }))
+      } catch (error) {
+        console.error('Unable to restore RapidReach session:', error)
+        if (active) setUser(null)
+        try { sessionStorage.removeItem('rr_user_cache') } catch {}
+      }
+    }
+
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    void loadUser()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+
+    return () => {
+      active = false
+      window.removeEventListener('scroll', onScroll)
+    }
   }, [])
 
   useEffect(() => {
     setIsMenuOpen(false)
+    setShowUserMenu(false)
   }, [pathname])
 
-  const loadUser = async () => {
-    // Check sessionStorage cache first to avoid hitting Supabase on every mount
-    try {
-      const cached = sessionStorage.getItem('rr_user_cache')
-      if (cached) {
-        const { data, ts } = JSON.parse(cached)
-        // Serve from cache if fresher than 5 minutes
-        if (Date.now() - ts < 5 * 60 * 1000) {
-          setUser(data)
-          return
-        }
-      }
-    } catch {}
-    const currentUser = await getCurrentUser()
-    setUser(currentUser)
-    try {
-      sessionStorage.setItem('rr_user_cache', JSON.stringify({ data: currentUser, ts: Date.now() }))
-    } catch {}
-  }
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   const handleLogout = async () => {
-    await signOut()
-    setUser(null)
-    setShowUserMenu(false)
-    try { sessionStorage.removeItem('rr_user_cache') } catch {}
-    window.location.href = '/'
+    try {
+      await signOut()
+    } finally {
+      setUser(null)
+      setShowUserMenu(false)
+      try { sessionStorage.removeItem('rr_user_cache') } catch {}
+      window.location.assign('/')
+    }
   }
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+  const displayName = user ? getDisplayName(user) : ''
+  const firstName = displayName.split(/\s+/)[0]
+  const initial = displayName.charAt(0).toUpperCase() || 'R'
 
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 transition-all duration-300 ${
+        className={`sticky top-0 z-50 border-b transition-all duration-300 ${
           scrolled
-            ? 'bg-deep-charcoal/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.5)]'
-            : 'bg-transparent border-b border-transparent'
+            ? 'border-white/[0.06] bg-[#050505]/88 shadow-[0_10px_40px_rgba(0,0,0,0.24)] backdrop-blur-2xl'
+            : 'border-transparent bg-[#050505]/55 backdrop-blur-xl'
         }`}
       >
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="relative w-8 h-8 rounded-lg bg-white/[0.08] border border-white/[0.1] flex items-center justify-center transition-transform group-hover:scale-105">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <span className="text-lg font-bold text-white tracking-tight">
-                RapidReach
+          <div className="flex h-[68px] items-center justify-between gap-6">
+            <Link href="/" className="group flex shrink-0 items-center gap-2.5" aria-label="RapidReach home">
+              <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-[9px] border border-white/[0.1] bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(50,108,229,0.24),transparent_58%)]" />
+                <span className="relative text-xs font-semibold tracking-[-0.04em] text-white">RR</span>
               </span>
+              <div className="leading-none">
+                <span className="block text-[15px] font-semibold tracking-[-0.025em] text-white">RapidReach</span>
+                <span className="mt-1 hidden text-[9px] font-medium uppercase tracking-[0.18em] text-zinc-700 xl:block">Engineering knowledge</span>
+              </div>
             </Link>
 
-            {/* Desktop Links */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden items-center gap-1 lg:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`rounded-lg px-3.5 py-2 text-sm transition-colors ${
                     isActive(link.href)
-                      ? 'text-white bg-white/[0.06]'
-                      : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-white/[0.055] text-white'
+                      : 'text-zinc-500 hover:bg-white/[0.035] hover:text-zinc-200'
                   }`}
                 >
                   {link.label}
@@ -116,242 +132,143 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Search */}
               <button
+                type="button"
                 onClick={() => document.dispatchEvent(new CustomEvent('open-command-palette'))}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                className="hidden min-h-9 items-center gap-2 rounded-lg border border-white/[0.065] bg-white/[0.025] px-3 text-xs text-zinc-500 transition-colors hover:border-white/[0.1] hover:bg-white/[0.04] hover:text-zinc-300 md:flex"
+                aria-label="Search RapidReach"
               >
-                <Search className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-xs text-gray-500">Search</span>
-                <kbd className="ml-3 px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] text-gray-500 font-mono">⌘K</kbd>
+                <Search className="h-3.5 w-3.5" />
+                <span>Search</span>
+                <kbd className="ml-2 rounded border border-white/[0.06] bg-black/20 px-1.5 py-0.5 font-mono text-[9px] text-zinc-700">⌘K</kbd>
               </button>
 
               {user ? (
                 <div className="relative hidden md:block">
                   <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                    type="button"
+                    onClick={() => setShowUserMenu((value) => !value)}
+                    className="flex min-h-9 items-center gap-2 rounded-lg border border-white/[0.065] bg-white/[0.025] px-2.5 text-sm text-zinc-300 transition-colors hover:bg-white/[0.045]"
+                    aria-expanded={showUserMenu}
+                    aria-haspopup="menu"
                   >
-                    <div className="w-6 h-6 rounded-full bg-white/[0.1] border border-white/[0.12] flex items-center justify-center">
-                      <span className="text-white text-[10px] font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <span className="text-sm text-white font-medium">{user.full_name.split(' ')[0]}</span>
-                    <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                    <span className="grid h-6 w-6 place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] text-[10px] font-semibold text-white">
+                      {initial}
+                    </span>
+                    <span className="max-w-28 truncate">{firstName}</span>
+                    <ChevronDown className={`h-3 w-3 text-zinc-600 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showUserMenu && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                      <div className="absolute right-0 mt-2 w-56 rounded-xl bg-deep-charcoal-50 border border-white/[0.08] shadow-glass p-1.5 z-50">
-                        <div className="px-3 py-2.5 mb-1">
-                          <p className="text-sm font-semibold text-white truncate">{user.full_name}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <button
+                        type="button"
+                        className="fixed inset-0 z-40 cursor-default"
+                        onClick={() => setShowUserMenu(false)}
+                        aria-label="Close account menu"
+                      />
+                      <div className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0b0b0b] p-1.5 shadow-[0_24px_70px_rgba(0,0,0,0.55)]" role="menu">
+                        <div className="px-3 py-3">
+                          <p className="truncate text-sm font-medium text-white">{displayName}</p>
+                          <p className="mt-1 truncate text-xs text-zinc-600">{user.email}</p>
                         </div>
-                        <div className="h-px bg-white/[0.06] my-1" />
-
+                        <div className="my-1 h-px bg-white/[0.05]" />
                         {user.role === 'admin' && (
-                          <Link
-                            href="/admin"
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.06] text-gray-300 hover:text-white transition-colors text-sm"
-                            onClick={() => setShowUserMenu(false)}
-                          >
-                            <LayoutDashboard className="w-4 h-4" />
-                            Admin Panel
+                          <Link href="/admin" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/[0.04] hover:text-white" role="menuitem">
+                            <LayoutDashboard className="h-4 w-4" /> Admin panel
                           </Link>
                         )}
-
-                        <Link
-                          href="/profile"
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.06] text-gray-300 hover:text-white transition-colors text-sm"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <UserIcon className="w-4 h-4" />
-                          Profile
+                        <Link href="/profile" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/[0.04] hover:text-white" role="menuitem">
+                          <UserIcon className="h-4 w-4" /> Profile
                         </Link>
-
-                        <div className="h-px bg-white/[0.06] my-1" />
-
                         <button
+                          type="button"
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors text-sm"
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                          role="menuitem"
                         >
-                          <LogOut className="w-4 h-4" />
-                          Sign Out
+                          <LogOut className="h-4 w-4" /> Sign out
                         </button>
                       </div>
                     </>
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/auth/signin"
-                  className="hidden md:flex px-4 py-1.5 rounded-lg bg-electric-cyan text-white text-sm font-medium hover:bg-electric-cyan/90 transition-colors"
-                >
-                  Sign In
+                <Link href="/auth/signup" className="hidden min-h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-sm font-medium text-black transition-colors hover:bg-zinc-200 md:flex">
+                  Join <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               )}
 
-              {/* Mobile toggle */}
               <button
-                className="lg:hidden p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label="Toggle menu"
+                type="button"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-white/[0.06] bg-white/[0.025] text-zinc-400 lg:hidden"
+                onClick={() => setIsMenuOpen((value) => !value)}
+                aria-expanded={isMenuOpen}
+                aria-label={isMenuOpen ? 'Close navigation' : 'Open navigation'}
               >
-                {isMenuOpen ? <X className="w-5 h-5 text-gray-300" /> : <Menu className="w-5 h-5 text-gray-300" />}
+                {isMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
               </button>
             </div>
-          </div>
-
-          {/* Category pills (desktop) */}
-          <div className="hidden lg:flex items-center gap-1.5 pb-3 overflow-x-auto no-scrollbar">
-            {categories.map((cat) => {
-              const href = cat === 'All' ? '/blog' : `/category/${categoryToSlug[cat] || cat.toLowerCase()}`
-              const active = cat === 'All' ? pathname === '/blog' : pathname === href
-              return (
-                <Link
-                  key={cat}
-                  href={href}
-                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
-                    active
-                      ? 'bg-electric-cyan/15 text-electric-cyan'
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  {cat}
-                </Link>
-              )
-            })}
           </div>
         </div>
       </nav>
 
-      {/* Mobile drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-deep-charcoal border-l border-white/[0.06] p-6 overflow-y-auto">
-            <div className="flex justify-end mb-6">
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-white/[0.06]">
-                <X className="w-5 h-5 text-gray-400" />
+          <button type="button" className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} aria-label="Close navigation overlay" />
+          <aside className="absolute bottom-0 right-0 top-0 w-[min(88vw,340px)] border-l border-white/[0.07] bg-[#080808] p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-white">RapidReach</span>
+              <button type="button" onClick={() => setIsMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-lg border border-white/[0.06] text-zinc-500" aria-label="Close navigation">
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Mobile Search */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (mobileSearch.trim()) {
-                  router.push(`/blog?q=${encodeURIComponent(mobileSearch.trim())}`)
-                  setIsMenuOpen(false)
-                  setMobileSearch('')
-                }
+            <button
+              type="button"
+              onClick={() => {
+                document.dispatchEvent(new CustomEvent('open-command-palette'))
+                setIsMenuOpen(false)
               }}
-              className="mb-5"
+              className="mt-7 flex w-full items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-sm text-zinc-500"
             >
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
-                <input
-                  ref={mobileSearchRef}
-                  type="text"
-                  value={mobileSearch}
-                  onChange={(e) => setMobileSearch(e.target.value)}
-                  placeholder="Search articles..."
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/30"
-                />
-              </div>
-            </form>
+              <Search className="h-4 w-4" /> Search RapidReach
+            </button>
 
-            {user && (
-              <div className="pb-4 mb-4 border-b border-white/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/[0.1] border border-white/[0.12] flex items-center justify-center">
-                    <span className="text-white font-bold">{user.full_name.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{user.full_name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1 mb-6">
+            <div className="mt-7 space-y-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(link.href) ? 'bg-white/[0.06] text-white' : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
-                  }`}
+                  className={`block rounded-xl px-3 py-3 text-sm ${isActive(link.href) ? 'bg-white/[0.05] text-white' : 'text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-200'}`}
                 >
                   {link.label}
                 </Link>
               ))}
             </div>
 
-            {/* Mobile categories */}
-            <div className="mb-6">
-              <p className="text-xs text-gray-600 uppercase tracking-wider mb-2 px-3">Categories</p>
-              <div className="space-y-0.5">
-                {categories.filter(c => c !== 'All').map((cat) => (
-                  <Link
-                    key={cat}
-                    href={`/category/${categoryToSlug[cat] || cat.toLowerCase()}`}
-                    className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] transition-colors"
-                  >
-                    {cat}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-4 border-t border-white/[0.06]">
+            <div className="absolute bottom-6 left-6 right-6 border-t border-white/[0.06] pt-5">
               {user ? (
-                <>
-                  {user.role === 'admin' && (
-                    <Link
-                      href="/admin"
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-electric-cyan hover:bg-electric-cyan/10 transition-colors"
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Admin Panel
-                    </Link>
-                  )}
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </>
+                <div className="space-y-2">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-white/[0.04] text-xs font-semibold text-white">{initial}</span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-white">{displayName}</p>
+                      <p className="truncate text-xs text-zinc-600">{user.email}</p>
+                    </div>
+                  </div>
+                  <Link href="/profile" className="block rounded-lg border border-white/[0.06] px-3 py-2.5 text-center text-sm text-zinc-300">Profile</Link>
+                  <button type="button" onClick={handleLogout} className="w-full rounded-lg px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10">Sign out</button>
+                </div>
               ) : (
-                <>
-                  <Link
-                    href="/auth/signin"
-                    className="block w-full px-4 py-2.5 rounded-lg bg-electric-cyan text-white text-sm font-medium text-center hover:bg-electric-cyan/90 transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    className="block w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-gray-300 text-sm font-medium text-center hover:bg-white/[0.06] transition-colors"
-                  >
-                    Create Account
-                  </Link>
-                </>
+                <div className="grid gap-2">
+                  <Link href="/auth/signup" className="rounded-lg bg-white px-4 py-2.5 text-center text-sm font-medium text-black">Create account</Link>
+                  <Link href="/auth/signin" className="rounded-lg border border-white/[0.07] px-4 py-2.5 text-center text-sm text-zinc-400">Sign in</Link>
+                </div>
               )}
             </div>
-          </div>
+          </aside>
         </div>
       )}
     </>
