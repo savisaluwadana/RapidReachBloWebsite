@@ -5,19 +5,23 @@ import ArticleActions from '@/components/ArticleActions'
 import CommentsSection from '@/components/CommentsSection'
 import Footer from '@/components/Footer'
 import { Calendar, Clock, User, TrendingUp } from 'lucide-react'
-import { getPostBySlug, incrementPostView } from '@/lib/actions/posts'
+import { incrementPostView } from '@/lib/actions/posts'
+import { getContentPostBySlug } from '@/lib/content/content-service'
 import { formatCategory } from '@/lib/utils'
 import MarkdownContent from './MarkdownContent'
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPostBySlug(slug)
+  const post = await getContentPostBySlug(slug)
 
   if (!post) {
     notFound()
   }
 
-  incrementPostView(post.id).catch(console.error)
+  const isBuiltIn = post.id.startsWith('rr-')
+  if (!isBuiltIn) {
+    incrementPostView(post.id).catch(console.error)
+  }
 
   return (
     <>
@@ -26,7 +30,6 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
       <main className="min-h-screen bg-deep-charcoal pt-24 pb-20">
         <article className="max-w-5xl mx-auto px-6">
-          {/* Header */}
           <div className="max-w-3xl mx-auto mb-10">
             <div className="flex items-center flex-wrap gap-2 mb-4">
               {(post.categories?.length ? post.categories : [post.category]).map(cat => (
@@ -40,16 +43,23 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                   Trending
                 </span>
               )}
+              {isBuiltIn && (
+                <span className="px-2 py-0.5 rounded bg-white/[0.04] text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
+                  RapidReach Guide
+                </span>
+              )}
             </div>
 
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
               {post.title}
             </h1>
 
+            <p className="text-base text-gray-400 leading-relaxed mb-5">{post.excerpt}</p>
+
             <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mb-6">
               <div className="flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5" />
-                <span className="font-medium text-gray-400">{post.author?.full_name || 'Anonymous'}</span>
+                <span className="font-medium text-gray-400">{post.author?.full_name || 'RapidReach Engineering'}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
@@ -82,7 +92,6 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             )}
           </div>
 
-          {/* Content Grid */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_60px] gap-10">
             <div className="max-w-3xl">
               <div className="prose prose-invert prose-lg max-w-none">
@@ -93,7 +102,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                 <div className="mt-14 p-6 rounded-xl bg-white/[0.02] border border-white/[0.04]">
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-full bg-electric-cyan flex-shrink-0 flex items-center justify-center text-white font-bold">
-                      {post.author.full_name?.charAt(0).toUpperCase() || 'A'}
+                      {post.author.full_name?.charAt(0).toUpperCase() || 'R'}
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white mb-1">{post.author.full_name}</h3>
@@ -106,9 +115,11 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                 </div>
               )}
 
-              <div className="mt-14">
-                <CommentsSection postId={post.id} />
-              </div>
+              {!isBuiltIn && (
+                <div className="mt-14">
+                  <CommentsSection postId={post.id} />
+                </div>
+              )}
             </div>
 
             <div className="hidden lg:block">
