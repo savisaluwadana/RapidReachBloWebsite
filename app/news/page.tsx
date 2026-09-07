@@ -28,12 +28,23 @@ async function fetchRSSItems(): Promise<RSSItem[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
     const res = await fetch(`${baseUrl}/api/news-feed`, {
       next: { revalidate: 900 },
     })
+
     if (!res.ok) return []
-    return res.json()
-  } catch {
+
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.toLowerCase().includes('application/json')) {
+      console.warn(`News feed returned non-JSON content from ${baseUrl}/api/news-feed`)
+      return []
+    }
+
+    const payload: unknown = await res.json()
+    return Array.isArray(payload) ? (payload as RSSItem[]) : []
+  } catch (error) {
+    console.warn('Unable to load RapidReach news feed during render:', error)
     return []
   }
 }
@@ -136,4 +147,3 @@ export default async function NewsPage() {
     </main>
   )
 }
-
