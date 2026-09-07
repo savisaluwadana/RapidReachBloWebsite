@@ -1,94 +1,81 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowUpRight } from 'lucide-react'
 
-const footerSections = [
+const sections = [
   {
     title: 'Learn',
     links: [
-      { label: 'All Articles', href: '/blog' },
-      { label: 'Learning Paths', href: '/learning-paths' },
-      { label: 'News Feed', href: '/news' },
-      { label: 'Kubernetes', href: '/category/kubernetes' },
-      { label: 'Terraform', href: '/category/terraform' },
+      { label: 'Articles', href: '/blog' },
+      { label: 'Learning paths', href: '/learning-paths' },
+      { label: 'News', href: '/news' },
     ],
   },
   {
-    title: 'Topics',
+    title: 'Domains',
     links: [
-      { label: 'CI/CD & GitOps', href: '/category/cicd' },
-      { label: 'Observability', href: '/category/observability' },
-      { label: 'Security', href: '/category/security' },
+      { label: 'Kubernetes', href: '/category/kubernetes' },
       { label: 'Platform Engineering', href: '/category/platform-engineering' },
-      { label: 'Cloud', href: '/category/cloud' },
+      { label: 'GitOps & CI/CD', href: '/category/cicd' },
+      { label: 'Observability', href: '/category/observability' },
     ],
   },
   {
-    title: 'Community',
+    title: 'RapidReach',
     links: [
       { label: 'About', href: '/about' },
-      { label: 'Sign Up', href: '/auth/signup' },
+      { label: 'Join', href: '/auth/signup' },
+      { label: 'Subscribe', href: '/subscribe' },
     ],
   },
 ]
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-white/[0.04] bg-deep-charcoal">
-      {/* Gradient line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-electric-cyan/30 to-transparent" />
-
-      <div className="container mx-auto px-6 pt-16 pb-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-          {/* Brand column */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-md bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">
-                <span className="text-white font-bold text-xs">R</span>
-              </div>
-              <span className="text-base font-bold text-white tracking-tight">
-                RapidReach
-              </span>
+    <footer className="border-t border-white/[0.05] bg-[#040404]">
+      <div className="container mx-auto px-6 py-14 md:py-16">
+        <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1.15fr_1.85fr]">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-[9px] border border-white/[0.09] bg-white/[0.035] text-[11px] font-semibold text-white">RR</span>
+              <span className="text-sm font-semibold tracking-[-0.02em] text-white">RapidReach</span>
             </Link>
-            <p className="text-sm text-gray-500 leading-relaxed mb-5 max-w-xs">
-              Practitioner-written DevOps and Platform Engineering content for the cloud-native era.
+            <p className="mt-5 max-w-sm text-sm leading-6 text-zinc-600">
+              Engineering knowledge for people building and operating modern cloud-native systems.
             </p>
-          </div>
-
-          {/* Link sections */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{section.title}</h4>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-white/[0.04]">
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} RapidReach. Built for the DevOps community.
-          </p>
-          <div className="flex items-center gap-4">
             <button
-              onClick={() => typeof document !== 'undefined' && document.dispatchEvent(new CustomEvent('open-command-palette'))}
-              className="text-xs text-gray-600 hover:text-gray-400 transition-colors flex items-center gap-1.5"
+              type="button"
+              onClick={() => document.dispatchEvent(new CustomEvent('open-command-palette'))}
+              className="mt-6 inline-flex items-center gap-2 text-xs text-zinc-700 transition-colors hover:text-zinc-400"
             >
-              <kbd className="px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px] font-mono">⌘K</kbd>
-              Quick nav
+              Search with <kbd className="rounded border border-white/[0.06] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
             </button>
           </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+            {sections.map((section) => (
+              <div key={section.title}>
+                <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-700">{section.title}</h3>
+                <ul className="mt-4 space-y-3">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="text-sm text-zinc-500 transition-colors hover:text-white">
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-4 border-t border-white/[0.05] pt-6 text-xs text-zinc-700 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} RapidReach. Built for engineers.</p>
+          <Link href="/about" className="inline-flex items-center gap-1.5 transition-colors hover:text-zinc-400">
+            Why RapidReach exists <ArrowUpRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
     </footer>
