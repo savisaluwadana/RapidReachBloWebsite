@@ -17,6 +17,12 @@ import type {
 
 const orgSlugPattern = /^[a-z0-9][a-z0-9-]{1,62}$/
 
+type DbRow = Record<string, unknown>
+type OrganizationMembershipRow = {
+  role: OrganizationRole | string
+  organizations: DbRow | DbRow[] | null
+}
+
 async function requireUser() {
   const supabase = await createClient()
   if (!supabase) throw new Error('Supabase is not configured')
@@ -25,7 +31,7 @@ async function requireUser() {
   return { supabase, user }
 }
 
-function mapOrganization(row: Record<string, unknown>, role: OrganizationRole): OrganizationSummary {
+function mapOrganization(row: DbRow, role: OrganizationRole): OrganizationSummary {
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -49,10 +55,11 @@ export async function getPlatformOrganizations(): Promise<OrganizationSummary[]>
     throw error
   }
 
-  return (memberships ?? []).flatMap((membership) => {
+  const typedMemberships = (memberships ?? []) as OrganizationMembershipRow[]
+  return typedMemberships.flatMap((membership: OrganizationMembershipRow) => {
     const rawOrg = membership.organizations
     if (!rawOrg || Array.isArray(rawOrg)) return []
-    return [mapOrganization(rawOrg as Record<string, unknown>, String(membership.role) as OrganizationRole)]
+    return [mapOrganization(rawOrg, String(membership.role) as OrganizationRole)]
   })
 }
 
@@ -72,7 +79,7 @@ export async function createOrganization(input: { name: string; slug: string }) 
   if (error) throw error
   revalidatePath('/teams')
   revalidatePath('/settings/platform')
-  return mapOrganization(data as Record<string, unknown>, 'owner')
+  return mapOrganization(data as DbRow, 'owner')
 }
 
 export async function getPlatformSnapshot(organizationId: string): Promise<PlatformSnapshot> {
@@ -97,7 +104,7 @@ export async function getPlatformSnapshot(organizationId: string): Promise<Platf
     supabase.from('usage_events').select('meter, quantity').eq('organization_id', organizationId).gte('occurred_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
   ])
 
-  const stack: StackComponentRecord[] = (stackResult.data ?? []).map((row) => ({
+  const stack: StackComponentRecord[] = ((stackResult.data ?? []) as DbRow[]).map((row: DbRow) => ({
     id: String(row.id),
     organizationId: String(row.organization_id),
     name: String(row.name),
@@ -111,7 +118,7 @@ export async function getPlatformSnapshot(organizationId: string): Promise<Platf
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
   }))
 
-  const signals: IntelligenceRecord[] = (signalResult.data ?? []).map((row) => ({
+  const signals: IntelligenceRecord[] = ((signalResult.data ?? []) as DbRow[]).map((row: DbRow) => ({
     id: String(row.id),
     organizationId: row.organization_id ? String(row.organization_id) : null,
     sourceProvider: String(row.source_provider),
@@ -131,7 +138,7 @@ export async function getPlatformSnapshot(organizationId: string): Promise<Platf
     evidence: (row.evidence ?? {}) as Record<string, unknown>,
   }))
 
-  const skills: SkillScoreRecord[] = (skillResult.data ?? []).map((row) => ({
+  const skills: SkillScoreRecord[] = ((skillResult.data ?? []) as DbRow[]).map((row: DbRow) => ({
     id: String(row.id),
     skillKey: String(row.skill_key),
     skillName: String(row.skill_name),
@@ -142,7 +149,7 @@ export async function getPlatformSnapshot(organizationId: string): Promise<Platf
     assessedAt: String(row.assessed_at),
   }))
 
-  const integrations: IntegrationRecord[] = (integrationResult.data ?? []).map((row) => ({
+  const integrations: IntegrationRecord[] = ((integrationResult.data ?? []) as DbRow[]).map((row: DbRow) => ({
     id: String(row.id),
     provider: String(row.provider),
     displayName: String(row.display_name),
@@ -154,14 +161,14 @@ export async function getPlatformSnapshot(organizationId: string): Promise<Platf
   }))
 
   const usageMap = new Map<string, number>()
-  for (const row of usageResult.data ?? []) {
+  for (const row of (usageResult.data ?? []) as DbRow[]) {
     const meter = String(row.meter)
     usageMap.set(meter, (usageMap.get(meter) ?? 0) + Number(row.quantity ?? 0))
   }
   const usage: UsageSummary[] = [...usageMap.entries()].map(([meter, quantity]) => ({ meter, quantity }))
 
   return {
-    organization: mapOrganization(membership.organizations as Record<string, unknown>, String(membership.role) as OrganizationRole),
+    organization: mapOrganization(membership.organizations as DbRow, String(membership.role) as OrganizationRole),
     stack,
     signals,
     skills,
