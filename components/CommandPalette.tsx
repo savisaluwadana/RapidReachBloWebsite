@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Command } from 'cmdk'
-import { BookOpen, BrainCircuit, Boxes, FileText, FlaskConical, Network, Search, ServerCog, Users, X } from 'lucide-react'
+import { BookOpen, Bot, BrainCircuit, Boxes, FileText, FlaskConical, Network, Search, ServerCog, Share2, Users, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { searchPosts } from '@/lib/actions/posts'
 
@@ -16,9 +16,11 @@ interface CommandItem {
 
 const staticItems: CommandItem[] = [
   { id: 'product-intelligence', title: 'Engineering Intelligence', category: 'Product', url: '/intelligence', icon: BrainCircuit },
+  { id: 'product-graph', title: 'Engineering Knowledge Graph', category: 'Product', url: '/graph', icon: Share2 },
   { id: 'product-skills', title: 'Skills Graph', category: 'Product', url: '/skills', icon: Network },
   { id: 'product-labs', title: 'Incident Labs', category: 'Product', url: '/labs', icon: FlaskConical },
   { id: 'product-stack', title: 'Stack Graph', category: 'Product', url: '/stack', icon: Boxes },
+  { id: 'product-evaluations', title: 'Agent Evaluations', category: 'Product', url: '/evaluations', icon: Bot },
   { id: 'product-mcp', title: 'RapidReach MCP', category: 'Product', url: '/mcp', icon: ServerCog },
   { id: 'product-teams', title: 'RapidReach Teams', category: 'Product', url: '/teams', icon: Users },
   { id: 'nav-learning', title: 'Learning Paths', category: 'Navigation', url: '/learning-paths', icon: BookOpen },
