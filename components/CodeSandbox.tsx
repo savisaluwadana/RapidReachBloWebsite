@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Copy, Check, Play, Terminal } from 'lucide-react'
+import { Check, Copy, Info, Terminal } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface CodeSandboxProps {
@@ -22,18 +22,18 @@ export default function CodeSandbox({
   runnable = false,
 }: CodeSandboxProps) {
   const [copied, setCopied] = useState(false)
-  const [output, setOutput] = useState<string | null>(null)
+  const [showExecutionNote, setShowExecutionNote] = useState(false)
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code)
-    setCopied(true)
-    toast.success('Code copied to clipboard!')
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleRun = () => {
-    setOutput('✓ Code executed successfully\n\nDeployment created: my-app\nService exposed on port 8080')
-    toast.success('Code executed!')
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      toast.success('Code copied to clipboard')
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('Unable to copy code:', error)
+      toast.error('Unable to copy code')
+    }
   }
 
   const customStyle = {
@@ -58,27 +58,24 @@ export default function CodeSandbox({
       {(title || description) && (
         <div className="mb-3">
           {title && (
-            <div className="flex items-center gap-2 mb-1">
-              <Terminal className="w-4 h-4 text-electric-cyan" />
+            <div className="mb-1 flex items-center gap-2">
+              <Terminal className="h-4 w-4 text-electric-cyan" />
               <h3 className="text-sm font-semibold text-white">{title}</h3>
             </div>
           )}
-          {description && (
-            <p className="text-xs text-gray-500">{description}</p>
-          )}
+          {description && <p className="text-xs text-gray-500">{description}</p>}
         </div>
       )}
 
-      <div className="relative rounded-xl overflow-hidden bg-[#080808] border border-white/[0.04]">
-        {/* Editor Header */}
-        <div className="flex items-center justify-between px-3 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+      <div className="relative overflow-hidden rounded-xl border border-white/[0.04] bg-[#080808]">
+        <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-3 py-2">
           <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+            <div className="flex gap-1" aria-hidden="true">
+              <div className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
             </div>
-            <span className="ml-2 text-[10px] text-gray-600 font-mono">
+            <span className="ml-2 font-mono text-[10px] text-gray-600">
               {language}.{language === 'yaml' ? 'yaml' : language === 'go' ? 'go' : 'sh'}
             </span>
           </div>
@@ -86,29 +83,23 @@ export default function CodeSandbox({
           <div className="flex items-center gap-1.5">
             {runnable && (
               <button
-                onClick={handleRun}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-cyber-lime/10 text-cyber-lime hover:bg-cyber-lime/20 transition-colors text-[10px] font-semibold"
+                type="button"
+                onClick={() => setShowExecutionNote((value) => !value)}
+                className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200"
+                aria-expanded={showExecutionNote}
               >
-                <Play className="w-3 h-3" />
-                Run
+                <Info className="h-3 w-3" />
+                Execution
               </button>
             )}
 
             <button
+              type="button"
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-electric-cyan/10 text-electric-cyan hover:bg-electric-cyan/20 transition-colors text-[10px] font-semibold"
+              className="flex items-center gap-1.5 rounded-md bg-electric-cyan/10 px-2 py-1 text-[10px] font-semibold text-electric-cyan transition-colors hover:bg-electric-cyan/20"
             >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  Copy
-                </>
-              )}
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
         </div>
@@ -118,10 +109,7 @@ export default function CodeSandbox({
             language={language}
             style={customStyle}
             showLineNumbers
-            customStyle={{
-              maxHeight: '360px',
-              overflow: 'auto',
-            }}
+            customStyle={{ maxHeight: '360px', overflow: 'auto' }}
             lineNumberStyle={{
               minWidth: '2.5em',
               paddingRight: '0.8em',
@@ -131,36 +119,29 @@ export default function CodeSandbox({
           >
             {code}
           </SyntaxHighlighter>
-
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none" />
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#080808] to-transparent" />
         </div>
 
-        {output && (
-          <div className="border-t border-white/[0.04] bg-black/40 animate-fade-in">
-            <div className="px-3 py-2 flex items-center gap-1.5 border-b border-white/[0.04]">
-              <Terminal className="w-3 h-3 text-cyber-lime" />
-              <span className="text-[10px] font-semibold text-white">Output</span>
-            </div>
-            <div className="px-3 py-2 font-mono text-xs text-gray-400 whitespace-pre-wrap">
-              {output}
-            </div>
+        {runnable && showExecutionNote && (
+          <div className="border-t border-amber-400/10 bg-amber-400/[0.035] px-4 py-3 text-xs leading-5 text-amber-200/70">
+            This example is illustrative only. RapidReach does not currently execute code or apply infrastructure from your browser. Copy it into a safe local or sandbox environment before running it.
           </div>
         )}
       </div>
 
       <div className="mt-2.5 flex gap-2">
-        <div className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-          <div className="text-[9px] text-gray-600 mb-0.5">Language</div>
-          <div className="text-xs font-semibold text-white uppercase">{language}</div>
+        <div className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+          <div className="mb-0.5 text-[9px] text-gray-600">Language</div>
+          <div className="text-xs font-semibold uppercase text-white">{language}</div>
         </div>
-        <div className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-          <div className="text-[9px] text-gray-600 mb-0.5">Lines</div>
+        <div className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+          <div className="mb-0.5 text-[9px] text-gray-600">Lines</div>
           <div className="text-xs font-semibold text-white">{code.split('\n').length}</div>
         </div>
         {runnable && (
-          <div className="flex-1 px-3 py-2 rounded-lg bg-cyber-lime/[0.05] border border-cyber-lime/10">
-            <div className="text-[9px] text-cyber-lime/60 mb-0.5">Status</div>
-            <div className="text-xs font-semibold text-cyber-lime">Interactive</div>
+          <div className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+            <div className="mb-0.5 text-[9px] text-gray-600">Mode</div>
+            <div className="text-xs font-semibold text-gray-300">Read-only</div>
           </div>
         )}
       </div>
