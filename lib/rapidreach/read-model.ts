@@ -44,6 +44,8 @@ export type TeamDashboardData = {
   live: boolean
 }
 
+type DbRow = Record<string, unknown>
+
 const skillDependencies: Record<string, string | undefined> = {
   networking: 'linux',
   containers: 'linux',
@@ -82,16 +84,19 @@ export async function getIntelligenceView(): Promise<IntelligenceViewSignal[]> {
     const { data: rows, error } = await query
     if (error || !rows?.length) return demoIntelligence()
 
-    const componentIds = [...new Set(rows.flatMap((row) => Array.isArray(row.affected_component_ids) ? row.affected_component_ids.map(String) : []))]
+    const typedRows = rows as DbRow[]
+    const componentIds = [...new Set(typedRows.flatMap((row: DbRow) =>
+      Array.isArray(row.affected_component_ids) ? row.affected_component_ids.map(String) : []
+    ))]
     const componentNames = new Map<string, string>()
     if (componentIds.length && current.organizationId && current.supabase) {
       const { data: components } = await current.supabase.from('stack_components').select('id, name').in('id', componentIds)
-      for (const component of components ?? []) componentNames.set(String(component.id), String(component.name))
+      for (const component of (components ?? []) as DbRow[]) componentNames.set(String(component.id), String(component.name))
     }
 
-    return rows.map((row) => {
+    return typedRows.map((row: DbRow) => {
       const affectedIds = Array.isArray(row.affected_component_ids) ? row.affected_component_ids.map(String) : []
-      const affected = affectedIds.map((id) => componentNames.get(id)).filter((value): value is string => Boolean(value))
+      const affected = affectedIds.map((id: string) => componentNames.get(id)).filter((value: string | undefined): value is string => Boolean(value))
       if (!affected.length && row.technology) affected.push(String(row.technology))
       return {
         id: String(row.id),
@@ -121,7 +126,7 @@ export async function getSkillView(): Promise<SkillView[]> {
     else query = query.is('organization_id', null)
     const { data, error } = await query
     if (error || !data?.length) return demoSkills.map((skill) => ({ ...skill, live: false }))
-    return data.map((row) => ({
+    return (data as DbRow[]).map((row: DbRow) => ({
       id: String(row.skill_key),
       name: String(row.skill_name),
       domain: String(row.domain),
@@ -145,7 +150,7 @@ export async function getStackView(): Promise<StackView[]> {
       .eq('organization_id', current.organizationId)
       .order('criticality', { ascending: false })
     if (error || !data?.length) return demoStack.map((item) => ({ ...item, live: false }))
-    return data.map((row) => ({
+    return (data as DbRow[]).map((row: DbRow) => ({
       id: String(row.id),
       name: String(row.name || row.technology),
       layer: String(row.kind),
@@ -168,7 +173,8 @@ export async function getTeamDashboard(): Promise<TeamDashboardData> {
       current.supabase.from('intelligence_signals').select('id', { count: 'exact', head: true }).eq('organization_id', current.organizationId).in('severity', ['high', 'critical']).neq('status', 'resolved'),
       current.supabase.from('user_skill_scores').select('score').eq('organization_id', current.organizationId),
     ])
-    const scores = (skillRows ?? []).map((row) => Number(row.score)).filter(Number.isFinite)
+    if (!org) return emptyTeamDashboard()
+    const scores = ((skillRows ?? []) as DbRow[]).map((row: DbRow) => Number(row.score)).filter(Number.isFinite)
     return {
       organizationId: String(org.id),
       organizationName: String(org.name),
@@ -176,7 +182,7 @@ export async function getTeamDashboard(): Promise<TeamDashboardData> {
       members: members ?? 0,
       stackComponents: stackComponents ?? 0,
       openHighSignals: highSignals ?? 0,
-      averageSkill: scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : null,
+      averageSkill: scores.length ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length) : null,
       live: true,
     }
   } catch {

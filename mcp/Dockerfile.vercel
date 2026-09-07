@@ -1,0 +1,14 @@
+FROM golang:1.25-alpine AS build
+
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/rapidreach-mcp ./cmd/server
+
+FROM alpine:3.22
+RUN apk add --no-cache ca-certificates
+COPY --from=build /out/rapidreach-mcp /rapidreach-mcp
+USER 65532:65532
+EXPOSE 3000
+CMD ["sh", "-c", "exec /rapidreach-mcp -http :${PORT:-3000}"]

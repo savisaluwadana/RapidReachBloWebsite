@@ -19,6 +19,8 @@ export type KnowledgeGraphEdge = {
   weight: number
 }
 
+type DbRow = Record<string, unknown>
+
 export async function getKnowledgeGraphView() {
   const authClient = await createClient()
   let organizationId: string | null = null
@@ -52,7 +54,7 @@ export async function getKnowledgeGraphView() {
     const { data: rawNodes, error: nodeError } = await nodeQuery
     if (nodeError || !rawNodes?.length) return { nodes: [] as KnowledgeGraphNode[], edges: [] as KnowledgeGraphEdge[], organizationId, live: false }
 
-    const nodes: KnowledgeGraphNode[] = rawNodes.map((row) => ({
+    const nodes: KnowledgeGraphNode[] = (rawNodes as DbRow[]).map((row: DbRow) => ({
       id: String(row.id),
       title: String(row.title),
       nodeType: String(row.node_type),
@@ -62,7 +64,7 @@ export async function getKnowledgeGraphView() {
       sourceUrl: row.source_url ? String(row.source_url) : null,
       tags: Array.isArray(row.tags) ? row.tags.map(String) : [],
     }))
-    const nodeIds = nodes.map((node) => node.id)
+    const nodeIds = nodes.map((node: KnowledgeGraphNode) => node.id)
     let edges: KnowledgeGraphEdge[] = []
     if (nodeIds.length) {
       const { data: rawEdges } = await client
@@ -71,7 +73,7 @@ export async function getKnowledgeGraphView() {
         .in('from_node_id', nodeIds)
         .in('to_node_id', nodeIds)
         .limit(160)
-      edges = (rawEdges ?? []).map((row) => ({
+      edges = ((rawEdges ?? []) as DbRow[]).map((row: DbRow) => ({
         id: String(row.id),
         from: String(row.from_node_id),
         to: String(row.to_node_id),
