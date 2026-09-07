@@ -1,0 +1,26 @@
+name: Engineering Intelligence Ingestion
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger RapidReach ingestion
+        env:
+          RAPIDREACH_BASE_URL: ${{ secrets.RAPIDREACH_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$RAPIDREACH_BASE_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --retry 3 --max-time 300 \
+            -X POST "$RAPIDREACH_BASE_URL/api/cron/intelligence" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json"
