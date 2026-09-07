@@ -1,4 +1,4 @@
-name: Engineering Intelligence Ingestion
+name: RapidReach Background Workers
 
 on:
   schedule:
@@ -9,18 +9,28 @@ permissions:
   contents: read
 
 jobs:
-  ingest:
+  workers:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    env:
+      RAPIDREACH_BASE_URL: ${{ secrets.RAPIDREACH_BASE_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      - name: Trigger RapidReach ingestion
-        env:
-          RAPIDREACH_BASE_URL: ${{ secrets.RAPIDREACH_BASE_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      - name: Validate worker configuration
         run: |
           test -n "$RAPIDREACH_BASE_URL"
           test -n "$CRON_SECRET"
+
+      - name: Ingest engineering intelligence
+        run: |
           curl --fail-with-body --retry 3 --max-time 300 \
             -X POST "$RAPIDREACH_BASE_URL/api/cron/intelligence" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json"
+
+      - name: Clean expired lab environments
+        run: |
+          curl --fail-with-body --retry 2 --max-time 120 \
+            -X POST "$RAPIDREACH_BASE_URL/api/cron/labs" \
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json"
