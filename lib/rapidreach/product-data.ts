@@ -127,5 +127,8 @@ export const mcpTools = [
   'recommend_learning',
   'explain_release_impact',
   'review_kubernetes_manifest',
+  'assess_skill_gap',
+  'review_architecture',
+  'compare_technologies',
   'generate_runbook',
 ] as const
