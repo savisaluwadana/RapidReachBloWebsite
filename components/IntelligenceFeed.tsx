@@ -10,7 +10,7 @@ export default function IntelligenceFeed({ signals }: { signals: IntelligenceVie
   const [filter, setFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all')
   const visibleSignals = useMemo(() => [...signals]
     .filter((signal) => filter === 'all' || signal.impact === filter)
-    .sort((a, b) => impactOrder[b.impact] - impactOrder[a.impact), [filter, signals])
+    .sort((a, b) => impactOrder[b.impact] - impactOrder[a.impact]), [filter, signals])
 
   const isLive = signals.some((signal) => signal.live)
 
