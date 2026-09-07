@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import {
   ArrowRight,
-  BookOpen,
   Boxes,
   Cloud,
   Code2,
@@ -11,17 +10,18 @@ import {
   LockKeyhole,
   Network,
   Radar,
-  Sparkles,
   TerminalSquare,
-  Users,
 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import EngineeringAtlas from '@/components/EngineeringAtlas'
+import RoleNavigator from '@/components/RoleNavigator'
 import { getPosts, getSiteStats } from '@/lib/actions/posts'
 
 const domains = [
   {
     title: 'Kubernetes & Containers',
+    countKey: 'Container Orchestration',
     description: 'Go beyond kubectl. Understand scheduling, networking, workloads, debugging, and production operations.',
     href: '/category/kubernetes',
     icon: Boxes,
@@ -29,6 +29,7 @@ const domains = [
   },
   {
     title: 'Platform Engineering',
+    countKey: 'Platform Engineering',
     description: 'Build internal platforms, golden paths, developer portals, and paved roads that teams actually use.',
     href: '/category/platform-engineering',
     icon: Layers3,
@@ -36,6 +37,7 @@ const domains = [
   },
   {
     title: 'GitOps & Delivery',
+    countKey: 'CI/CD & GitOps',
     description: 'Design safer delivery systems with GitOps, progressive delivery, CI/CD, and release engineering.',
     href: '/category/cicd',
     icon: GitBranch,
@@ -43,6 +45,7 @@ const domains = [
   },
   {
     title: 'Cloud Infrastructure',
+    countKey: 'Cloud Platforms',
     description: 'Reason about cloud architecture, IaC, reliability, cost, and the trade-offs behind production systems.',
     href: '/category/cloud',
     icon: Cloud,
@@ -50,6 +53,7 @@ const domains = [
   },
   {
     title: 'Observability & SRE',
+    countKey: 'Observability & SRE',
     description: 'Learn how to measure systems, debug incidents, design SLOs, and operate services with confidence.',
     href: '/category/observability',
     icon: Gauge,
@@ -57,6 +61,7 @@ const domains = [
   },
   {
     title: 'Cloud Native Security',
+    countKey: 'Security & Compliance',
     description: 'Understand workload security, policy, secrets, supply-chain controls, and practical DevSecOps.',
     href: '/category/security',
     icon: LockKeyhole,
@@ -102,115 +107,109 @@ export default async function Home() {
 
       <section className="relative isolate overflow-hidden border-b border-white/[0.05]">
         <div className="premium-grid absolute inset-0 -z-20" />
-        <div className="absolute inset-x-0 top-0 -z-10 mx-auto h-[620px] max-w-6xl premium-hero-glow" />
+        <div className="absolute inset-x-0 top-0 -z-10 mx-auto h-[700px] max-w-7xl premium-hero-glow" />
 
-        <div className="container mx-auto px-6 pb-20 pt-20 md:pb-28 md:pt-28">
-          <div className="mx-auto max-w-6xl">
+        <div className="container mx-auto px-6 pb-20 pt-16 md:pb-28 md:pt-24">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-10 flex flex-wrap items-center gap-3">
               <div className="premium-kicker">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyber-lime shadow-[0_0_14px_rgba(0,255,136,0.85)]" />
-                Engineering intelligence for cloud-native teams
+                Cloud-native engineering, mapped
               </div>
-              <span className="text-xs text-zinc-600">No hype. No vendor theatre.</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-700">RR:// KNOWLEDGE SYSTEM ONLINE</span>
             </div>
 
-            <div className="grid items-end gap-12 lg:grid-cols-[1.25fr_0.75fr]">
+            <div className="grid items-center gap-14 lg:grid-cols-[1.03fr_0.97fr] xl:gap-20">
               <div>
-                <h1 className="max-w-5xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-white md:text-7xl lg:text-[88px]">
-                  Understand the systems
-                  <span className="block premium-gradient-text">behind modern infrastructure.</span>
+                <p className="mb-5 text-sm font-medium text-zinc-500">For engineers who want the system, not another tutorial.</p>
+                <h1 className="max-w-4xl text-5xl font-semibold leading-[0.96] tracking-[-0.06em] text-white md:text-7xl xl:text-[84px]">
+                  See the whole system.
+                  <span className="block premium-gradient-text">Learn where it breaks.</span>
                 </h1>
                 <p className="mt-8 max-w-2xl text-base leading-7 text-zinc-400 md:text-lg">
-                  RapidReach is a practitioner-first knowledge platform for DevOps, platform engineering, Kubernetes, SRE, cloud infrastructure, and software delivery. Learn the architecture, trade-offs, and operating patterns that make production systems work.
+                  RapidReach connects Kubernetes, platform engineering, GitOps, cloud, SRE, and security into one navigable mental model—so you understand how production systems fit together before they fail together.
                 </p>
 
                 <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                   <Link href="/learning-paths" className="premium-button-primary group">
-                    Explore learning paths
+                    Build my engineering map
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link href="/blog" className="premium-button-secondary">
-                    Read the latest analysis
+                    Explore the knowledge base
                   </Link>
                 </div>
-              </div>
 
-              <div className="premium-panel relative overflow-hidden p-6 md:p-7">
-                <div className="absolute right-0 top-0 h-32 w-32 bg-electric-cyan/10 blur-3xl" />
-                <div className="mb-8 flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">RapidReach index</p>
-                    <p className="mt-1 text-sm text-zinc-300">A living map of cloud-native engineering.</p>
-                  </div>
-                  <Sparkles className="h-4 w-4 text-electric-cyan" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.06]">
-                  <div className="bg-[#090909] p-5">
-                    <BookOpen className="mb-6 h-4 w-4 text-zinc-500" />
-                    <p className="text-2xl font-semibold tracking-tight text-white">{siteStats.totalPosts}</p>
-                    <p className="mt-1 text-xs text-zinc-600">Published articles</p>
-                  </div>
-                  <div className="bg-[#090909] p-5">
-                    <Users className="mb-6 h-4 w-4 text-zinc-500" />
-                    <p className="text-2xl font-semibold tracking-tight text-white">{siteStats.totalUsers}</p>
-                    <p className="mt-1 text-xs text-zinc-600">Registered readers</p>
-                  </div>
-                  <div className="col-span-2 bg-[#090909] p-5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-white">8 core engineering domains</p>
-                        <p className="mt-1 text-xs leading-5 text-zinc-600">Structured from foundations to production operations.</p>
-                      </div>
-                      <div className="flex -space-x-2">
-                        {[Boxes, GitBranch, Cloud, Gauge].map((Icon, index) => (
-                          <span key={index} className="grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-[#111]">
-                            <Icon className="h-3.5 w-3.5 text-zinc-400" />
-                          </span>
-                        ))}
-                      </div>
+                <div className="mt-10 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border border-white/[0.055] bg-white/[0.05]">
+                  {[
+                    ['Architecture', 'See dependencies'],
+                    ['Failure modes', 'Learn the edges'],
+                    ['Production', 'Think operationally'],
+                  ].map(([title, note]) => (
+                    <div key={title} className="bg-[#070809]/90 px-3 py-3.5">
+                      <p className="text-xs font-medium text-zinc-300">{title}</p>
+                      <p className="mt-1 text-[10px] text-zinc-700">{note}</p>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
+
+              <EngineeringAtlas totalPosts={siteStats.totalPosts} totalUsers={siteStats.totalUsers} />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-white/[0.05] py-6">
+      <section className="border-b border-white/[0.05] py-5">
         <div className="container mx-auto px-6">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-3 text-xs text-zinc-600">
-            <span>Architecture-first learning</span>
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-8 gap-y-3 font-mono text-[10px] uppercase tracking-[0.13em] text-zinc-700">
+            <span>Architecture-first</span>
             <span className="hidden h-1 w-1 rounded-full bg-zinc-800 sm:block" />
-            <span>Production-focused guides</span>
+            <span>Production-focused</span>
             <span className="hidden h-1 w-1 rounded-full bg-zinc-800 sm:block" />
-            <span>Vendor-neutral mental models</span>
+            <span>Vendor-neutral</span>
             <span className="hidden h-1 w-1 rounded-full bg-zinc-800 sm:block" />
-            <span>Continuously updated</span>
+            <span>Continuously evolving</span>
           </div>
         </div>
       </section>
 
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-6">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 grid gap-7 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+              <div>
+                <p className="premium-section-label">Your route through the system</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white md:text-5xl">Pick the engineer you are becoming.</h2>
+              </div>
+              <p className="max-w-xl text-sm leading-7 text-zinc-500 lg:justify-self-end">
+                The same technologies mean different things depending on the job you need to do. RapidReach reorganizes the knowledge around outcomes, dependencies, and the order that actually makes sense.
+              </p>
+            </div>
+            <RoleNavigator />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-white/[0.05] bg-white/[0.01] py-24 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
-                <p className="premium-section-label">Explore the field</p>
+                <p className="premium-section-label">The engineering graph</p>
                 <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.035em] text-white md:text-5xl">
-                  Learn by engineering domain, not by random tutorials.
+                  Topics are not folders. They are connected systems.
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-6 text-zinc-500">
-                Build durable mental models first, then learn the tools that implement them.
+                Move across the stack without losing the architecture that connects one domain to the next.
               </p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {domains.map((domain, index) => {
+              {domains.map((domain) => {
                 const Icon = domain.icon
-                const count = Object.values(siteStats.domainCounts)[index] || 0
+                const count = siteStats.domainCounts[domain.countKey] || 0
                 return (
                   <Link key={domain.title} href={domain.href} className="premium-domain-card group">
                     <div className="mb-9 flex items-start justify-between gap-4">
@@ -224,7 +223,7 @@ export default async function Home() {
                     <div className="mt-7 flex items-center justify-between border-t border-white/[0.05] pt-4">
                       <span className="text-xs text-zinc-700">{count} articles</span>
                       <span className="flex items-center gap-1.5 text-xs text-zinc-500 transition-colors group-hover:text-electric-cyan">
-                        Explore <ArrowRight className="h-3.5 w-3.5" />
+                        Open domain <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
                   </Link>
@@ -235,16 +234,16 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="border-y border-white/[0.05] bg-white/[0.012] py-24 md:py-28">
+      <section className="py-24 md:py-28">
         <div className="container mx-auto px-6">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-12 flex items-end justify-between gap-6">
               <div>
-                <p className="premium-section-label">Latest intelligence</p>
-                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.035em] text-white md:text-4xl">Fresh from the knowledge base.</h2>
+                <p className="premium-section-label">Latest signals</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.035em] text-white md:text-4xl">Fresh from the engineering graph.</h2>
               </div>
               <Link href="/blog" className="hidden items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white sm:flex">
-                View all articles <ArrowRight className="h-4 w-4" />
+                Open all signals <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
@@ -280,18 +279,18 @@ export default async function Home() {
             ) : (
               <div className="premium-panel p-10 text-center">
                 <Code2 className="mx-auto h-6 w-6 text-zinc-700" />
-                <p className="mt-4 text-sm text-zinc-500">The knowledge base is being prepared. Check back for new engineering content.</p>
+                <p className="mt-4 text-sm text-zinc-500">The knowledge graph is being prepared. New engineering signals will appear here.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      <section className="py-24 md:py-32">
+      <section className="border-y border-white/[0.05] bg-white/[0.01] py-24 md:py-32">
         <div className="container mx-auto px-6">
-          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <p className="premium-section-label">Why RapidReach</p>
+              <p className="premium-section-label">The RapidReach difference</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white md:text-5xl">
                 The internet has enough content. Engineers need better context.
               </h2>
@@ -320,25 +319,25 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="px-6 pb-24 md:pb-32">
-        <div className="premium-cta mx-auto max-w-6xl overflow-hidden p-8 md:p-12">
+      <section className="px-6 py-24 md:py-32">
+        <div className="premium-cta mx-auto max-w-7xl overflow-hidden p-8 md:p-12">
           <div className="relative z-10 grid items-end gap-10 lg:grid-cols-[1fr_auto]">
             <div>
-              <p className="premium-section-label">Stay current without doom-scrolling</p>
+              <p className="premium-section-label">Your next system starts here</p>
               <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white md:text-5xl">
-                Get the cloud-native signal worth keeping.
+                Stop browsing DevOps. Start building your engineering model.
               </h2>
               <p className="mt-5 max-w-2xl text-sm leading-6 text-zinc-400">
-                Follow new guides, learning paths, architecture breakdowns, and important ecosystem changes from one place.
+                Follow the relationships between architecture, delivery, reliability, security, and the decisions that make real systems survive production.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <Link href="/subscribe" className="premium-button-primary whitespace-nowrap">
-                Join RapidReach
+              <Link href="/auth/signup" className="premium-button-primary whitespace-nowrap">
+                Create my map
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/about" className="premium-button-secondary whitespace-nowrap text-center">
-                What we are building
+                Why RapidReach exists
               </Link>
             </div>
           </div>
