@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import { Search, TrendingUp, Clock, Zap, X } from 'lucide-react'
 import ArticleCard from '@/components/ArticleCard'
 import type { Post } from '@/lib/types/database'
@@ -12,151 +12,98 @@ interface BlogFilterClientProps {
 type SortOption = 'latest' | 'trending' | 'popular'
 
 const CATEGORIES = [
-  { label: 'All', value: '' },
-  { label: 'Kubernetes', value: 'kubernetes' },
-  { label: 'Terraform', value: 'terraform' },
-  { label: 'CI/CD', value: 'cicd' },
-  { label: 'Security', value: 'security' },
-  { label: 'Platform Eng.', value: 'platform-engineering' },
-  { label: 'Observability', value: 'observability' },
-  { label: 'Cloud', value: 'cloud' },
-  { label: 'Docker', value: 'docker' },
-  { label: 'Service Mesh', value: 'service-mesh' },
+  'All',
+  'Kubernetes',
+  'Platform Engineering',
+  'Terraform',
+  'CI/CD',
+  'GitOps',
+  'SRE',
+  'Observability',
+  'Security',
+  'Networking',
+  'AWS',
+  'Docker',
+  'Go',
+  'Distributed Systems',
+  'AI Infrastructure',
 ]
 
 export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('latest')
-  const [activeCategory, setActiveCategory] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const [activeCategory, setActiveCategory] = useState('All')
 
-  // Filter by category
-  const filterByCategory = useCallback((postsToFilter: Post[], category: string) => {
-    if (!category) return postsToFilter
-    return postsToFilter.filter(p =>
-      p.category?.toLowerCase().includes(category.toLowerCase())
-    )
-  }, [])
+  const posts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const category = activeCategory.toLowerCase()
 
-  // Sort posts based on selected option
-  const sortPosts = useCallback((postsToSort: Post[], sort: SortOption) => {
-    const sorted = [...postsToSort]
-    switch (sort) {
-      case 'trending':
-        return sorted.sort((a, b) => {
-          if (a.trending && !b.trending) return -1
-          if (!a.trending && b.trending) return 1
-          return (b.view_count || 0) - (a.view_count || 0)
-        })
-      case 'popular':
-        return sorted.sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
-      case 'latest':
-      default:
-        return sorted.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-    }
-  }, [])
+    const filtered = initialPosts.filter((post) => {
+      const postCategories = [post.category, ...(post.categories || [])].map((value) => value.toLowerCase())
+      const categoryMatches = activeCategory === 'All' || postCategories.some((value) => value === category)
+      if (!categoryMatches) return false
 
-  // Handle search with debounce
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setPosts(sortPosts(filterByCategory(initialPosts, activeCategory), sortBy))
-      setIsSearching(false)
-      return
-    }
+      if (!query) return true
+      const haystack = [post.title, post.excerpt, post.content, post.category, ...(post.categories || []), ...(post.tags || [])]
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(query)
+    })
 
-    if (searchTimerRef.current) {
-      clearTimeout(searchTimerRef.current)
-    }
-
-    setIsSearching(true)
-    searchTimerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=50`)
-        const results: Post[] = await res.json()
-        setPosts(sortPosts(filterByCategory(results, activeCategory), sortBy))
-      } catch (error) {
-        console.error('Search error:', error)
-        // Fall back to client-side filtering
-        const filtered = initialPosts.filter(
-          (post) =>
-            post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            post.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
-        setPosts(sortPosts(filterByCategory(filtered, activeCategory), sortBy))
-      } finally {
-        setIsSearching(false)
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'trending') {
+        if (a.trending && !b.trending) return -1
+        if (!a.trending && b.trending) return 1
+        return (b.view_count || 0) - (a.view_count || 0)
       }
-    }, 300)
-
-    return () => {
-      if (searchTimerRef.current) {
-        clearTimeout(searchTimerRef.current)
+      if (sortBy === 'popular') {
+        return (b.view_count || 0) - (a.view_count || 0) || (b.like_count || 0) - (a.like_count || 0)
       }
-    }
-  }, [searchQuery, initialPosts, sortBy, activeCategory, sortPosts, filterByCategory])
-
-  // Handle sort / category change
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setPosts(sortPosts(filterByCategory(initialPosts, activeCategory), sortBy))
-    }
-  }, [sortBy, activeCategory, initialPosts, searchQuery, sortPosts, filterByCategory])
-
-  const clearSearch = () => {
-    setSearchQuery('')
-  }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [initialPosts, searchQuery, sortBy, activeCategory])
 
   return (
     <>
-      {/* Search Bar */}
-      <div className="relative max-w-xl mx-auto mb-6">
+      <div className="relative max-w-2xl mx-auto mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
         <input
-          type="text"
+          type="search"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search articles by title, content, or tags..."
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search Kubernetes, Cilium, Terraform, SLOs, Go, MCP..."
           className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-electric-cyan/50 focus:border-electric-cyan/30 transition-all"
         />
         {searchQuery && (
           <button
-            onClick={clearSearch}
+            type="button"
+            onClick={() => setSearchQuery('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-white/[0.06] transition-colors"
+            aria-label="Clear search"
           >
             <X className="w-4 h-4 text-gray-500" />
           </button>
         )}
-        {isSearching && (
-          <div className="absolute right-10 top-1/2 -translate-y-1/2">
-            <div className="w-4 h-4 border-2 border-electric-cyan border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
-        {CATEGORIES.map((cat) => (
+      <div className="flex flex-wrap gap-1.5 mb-5 justify-center">
+        {CATEGORIES.map((category) => (
           <button
-            key={cat.value}
-            onClick={() => setActiveCategory(cat.value)}
+            key={category}
+            type="button"
+            onClick={() => setActiveCategory(category)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeCategory === cat.value
+              activeCategory === category
                 ? 'bg-electric-cyan/10 text-electric-cyan border border-electric-cyan/20'
                 : 'bg-white/[0.02] text-gray-500 border border-white/[0.04] hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            {cat.label}
+            {category}
           </button>
         ))}
       </div>
 
-      {/* Sort + Results */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-gray-600">Sort:</span>
           {[
@@ -166,6 +113,7 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
           ].map((sort) => (
             <button
               key={sort.value}
+              type="button"
               onClick={() => setSortBy(sort.value)}
               className={`px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs ${
                 sortBy === sort.value
@@ -178,15 +126,12 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
             </button>
           ))}
         </div>
-
-        {searchQuery && (
-          <div className="ml-auto text-xs text-gray-600">
-            {posts.length} result{posts.length !== 1 ? 's' : ''} for &ldquo;{searchQuery}&rdquo;
-          </div>
-        )}
+        <p className="text-xs text-gray-600">
+          {posts.length} article{posts.length === 1 ? '' : 's'}
+          {searchQuery ? ` matching “${searchQuery}”` : ''}
+        </p>
       </div>
 
-      {/* Articles Grid */}
       {posts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {posts.map((post) => (
@@ -195,11 +140,12 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
               title={post.title}
               excerpt={post.excerpt}
               author={{
-                name: post.author?.full_name || 'Anonymous',
+                name: post.author?.full_name || 'RapidReach Engineering',
                 avatar: post.author?.avatar_url || '',
-                role: post.author?.role || 'Contributor',
+                role: post.author?.role || 'Engineering',
               }}
               category={post.category}
+              categories={post.categories}
               readTime={`${post.estimated_read_time || 5} min`}
               date={new Date(post.created_at).toLocaleDateString('en-US', {
                 month: 'short',
@@ -209,26 +155,25 @@ export default function BlogFilterClient({ initialPosts }: BlogFilterClientProps
               image={post.cover_image_url || ''}
               slug={post.slug}
               trending={post.trending}
+              featured={post.featured}
             />
           ))}
         </div>
       ) : (
         <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-10 text-center">
           <Search className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-white mb-1">No Articles Found</h3>
-          <p className="text-sm text-gray-500">
-            {searchQuery
-              ? `No articles match "${searchQuery}". Try a different search term.`
-              : 'No articles available yet. Check back soon!'}
-          </p>
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="mt-3 text-xs text-electric-cyan font-medium hover:text-electric-cyan/80 transition-colors"
-            >
-              Clear Search
-            </button>
-          )}
+          <h3 className="text-base font-semibold text-white mb-1">No matching articles</h3>
+          <p className="text-sm text-gray-500">Try a broader search term or another engineering domain.</p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('')
+              setActiveCategory('All')
+            }}
+            className="mt-3 text-xs text-electric-cyan font-medium hover:text-electric-cyan/80 transition-colors"
+          >
+            Clear filters
+          </button>
         </div>
       )}
     </>
