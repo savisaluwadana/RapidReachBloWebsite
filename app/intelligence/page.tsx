@@ -3,8 +3,10 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import IntelligenceFeed from '@/components/IntelligenceFeed'
+import { getIntelligenceView } from '@/lib/rapidreach/read-model'
 
-export default function IntelligencePage() {
+export default async function IntelligencePage() {
+  const signals = await getIntelligenceView()
   return (
     <main className="min-h-screen bg-deep-charcoal text-white">
       <Navbar />
@@ -21,7 +23,7 @@ export default function IntelligencePage() {
           ].map(([Icon, title, description]) => { const I = Icon as typeof BrainCircuit; return <div key={String(title)} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5"><I className="h-4 w-4 text-electric-cyan" /><h2 className="mt-5 text-sm font-medium text-white">{String(title)}</h2><p className="mt-2 text-xs leading-5 text-zinc-600">{String(description)}</p></div> })}</div>
         </div></div>
       </section>
-      <section className="py-16 md:py-20"><div className="container mx-auto px-6"><div className="mx-auto max-w-6xl"><IntelligenceFeed /></div></div></section>
+      <section className="py-16 md:py-20"><div className="container mx-auto px-6"><div className="mx-auto max-w-6xl"><IntelligenceFeed signals={signals} /></div></div></section>
       <Footer />
     </main>
   )
