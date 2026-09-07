@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { PLAN_LIMITS, type OrganizationPlan } from '@/lib/rapidreach/platform-types'
 
+type UsageRow = { quantity?: unknown }
+
 export async function recordUsage(input: {
   organizationId: string
   userId?: string | null
@@ -34,7 +36,7 @@ export async function monthlyUsage(organizationId: string, meter: string) {
     .eq('meter', meter)
     .gte('occurred_at', start)
   if (error) throw error
-  return (data ?? []).reduce((sum, item) => sum + Number(item.quantity ?? 0), 0)
+  return ((data ?? []) as UsageRow[]).reduce((sum: number, item: UsageRow) => sum + Number(item.quantity ?? 0), 0)
 }
 
 export async function mcpQuota(organizationId: string, plan: OrganizationPlan) {
