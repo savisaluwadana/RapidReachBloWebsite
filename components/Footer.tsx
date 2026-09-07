@@ -8,9 +8,11 @@ const sections = [
     title: 'Product',
     links: [
       { label: 'Intelligence', href: '/intelligence' },
+      { label: 'Knowledge Graph', href: '/graph' },
       { label: 'Skills Graph', href: '/skills' },
       { label: 'Labs', href: '/labs' },
       { label: 'Stack Graph', href: '/stack' },
+      { label: 'Agent Evaluations', href: '/evaluations' },
       { label: 'MCP', href: '/mcp' },
       { label: 'Teams', href: '/teams' },
     ],
