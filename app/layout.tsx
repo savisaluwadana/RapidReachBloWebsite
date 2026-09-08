@@ -1,100 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import CommandPalette from "@/components/CommandPalette";
-import { Toaster } from "react-hot-toast";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev";
 
 export const metadata: Metadata = {
-  title: {
-    default: 'RapidReach — DevOps & Cloud Native Excellence',
-    template: '%s | RapidReach',
-  },
-  description:
-    'Master Kubernetes, Platform Engineering, GitOps, Terraform, and Cloud Native development. Free practitioner-written guides, learning paths, and real-time infrastructure news — built by Savi Saluwadana & team for the global DevOps community.',
-  keywords: [
-    'DevOps', 'Kubernetes', 'Platform Engineering', 'Cloud Native', 'Terraform',
-    'AWS', 'GCP', 'Azure', 'GitOps', 'ArgoCD', 'CI/CD', 'Docker', 'Istio',
-    'Observability', 'SRE', 'DevSecOps', 'Prometheus', 'Grafana', 'Helm',
-    'free DevOps tutorials', 'Savi Saluwadana', 'RapidReach',
-  ],
-  authors: [{ name: 'Savi Saluwadana', url: 'https://rapidreach.blog/about' }],
-  creator: 'Savi Saluwadana',
-  publisher: 'RapidReach',
-  metadataBase: new URL('https://rapidreach.blog'),
-  alternates: { canonical: 'https://rapidreach.blog' },
-  openGraph: {
-    title: 'RapidReach — DevOps & Cloud Native Excellence',
-    description:
-      'Free Kubernetes, Terraform, GitOps, and Platform Engineering content built by Savi Saluwadana & team for the global DevOps community.',
-    url: 'https://rapidreach.blog',
-    siteName: 'RapidReach',
-    type: 'website',
-    locale: 'en_US',
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'RapidReach — DevOps Knowledge Platform' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'RapidReach — DevOps & Cloud Native Excellence',
-    description: 'Free Kubernetes, Terraform, GitOps, and Cloud Native content for engineers worldwide.',
-    images: ['/og-default.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large', 'max-video-preview': -1 },
-  },
+  metadataBase: new URL(siteUrl),
+  title: { default: "RapidReach — Developer News Without the Noise", template: "%s | RapidReach" },
+  description: "Developer news and analysis across AI, cloud native, open source, web engineering, and developer tools.",
+  keywords: ["developer news", "software engineering", "AI", "cloud native", "open source", "developer tools"],
+  alternates: { canonical: "/", types: { "application/rss+xml": "/feed.xml" } },
+  openGraph: { type: "website", siteName: "RapidReach", title: "RapidReach — Developer News Without the Noise", description: "Clear reporting and useful analysis for people who build software.", url: siteUrl },
+  twitter: { card: "summary_large_image", title: "RapidReach", description: "Developer news without the noise." },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className="dark">
-      <head>
-        {/* Geo meta tags — signal global reach to search engines */}
-        <meta name="geo.region" content="LK" />
-        <meta name="geo.placename" content="Sri Lanka" />
-        <meta name="language" content="English" />
-        <meta name="revisit-after" content="3 days" />
-        <meta name="rating" content="general" />
-        <meta name="category" content="Technology, DevOps, Cloud Computing, Software Engineering" />
-        <link rel="alternate" hrefLang="en" href="https://rapidreach.blog" />
-        <link rel="alternate" hrefLang="x-default" href="https://rapidreach.blog" />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-deep-charcoal text-white`}
-      >
-        <CommandPalette />
-        {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: '#1A1A1A',
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            },
-            success: {
-              iconTheme: {
-                primary: '#00FF88',
-                secondary: '#1A1A1A',
-              },
-            },
-          }}
-        />
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const structuredData = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: "RapidReach", url: siteUrl, description: "Developer news and analysis for software builders." };
+  return <html lang="en"><body><a className="skip-link" href="#main">Skip to content</a><Header /><main id="main">{children}</main><Footer /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} /></body></html>;
 }

@@ -1,284 +1,103 @@
-# 🚀 RapidReach - DevOps & Cloud Native Excellence Platform
+# RapidReach
 
-> A world-class blog and news platform for DevOps, Platform Engineering, and Cloud Native ecosystems. Built with Next.js 14+, Supabase, and cutting-edge design principles.
+RapidReach is a focused developer-news publication built with Next.js and MongoDB. It intentionally avoids the product/dashboard complexity that previously lived in this repository.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Next.js](https://img.shields.io/badge/Next.js-15-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)
+## What it includes
 
-## ✨ Overview
+- Premium editorial homepage and responsive article layout
+- Topic/category archives and site search
+- MongoDB-backed posts, comments, and article likes
+- Share actions for native share, X, LinkedIn, Reddit, and Hacker News
+- Server-rendered semantic article HTML
+- Per-article NewsArticle JSON-LD
+- Canonical metadata, Open Graph, Twitter metadata, robots.txt, and dynamic sitemap
+- RSS feed at `/feed.xml`
+- Agent-readable publication index at `/llms.txt`
+- Structured JSON feed at `/api/posts`
+- Built-in starter content if MongoDB is not configured, so the UI never boots empty
 
-RapidReach is a premium, billion-dollar-look platform designed for DevOps professionals, Platform Engineers, and Cloud Native developers. It features real-time infrastructure news, interactive learning paths, and innovative tools that make it a category king in the DevOps space.
+## Stack
 
-## 🎨 Design Philosophy
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- MongoDB / MongoDB Atlas
+- Plain CSS for a smaller dependency surface and predictable performance
 
-### Visual Aesthetic
-- **Dark Mode First**: Premium look with Deep Charcoal (#0B0B0B) base
-- **Bento Grid 2.0**: Apple-style modular layout
-- **Color Palette**:
-  - Deep Charcoal (#0B0B0B) - Background
-  - Electric Cyan (#326CE5) - Kubernetes Blue
-  - Cyber Lime (#00FF88) - Accent highlights
-- **Glassmorphism**: Navigation overlays with backdrop blur
-- **Kinetic Typography**: Animated headers with subtle motion
+There is no separate Go service, Supabase dependency, client state framework, rich-text editor, or MCP server in this simplified version.
 
-## 🔥 Core Features
+## Local setup
 
-### 1. **Live Infrastructure Feed** 
-Real-time updates powered by Supabase Realtime subscriptions showing:
-- Kubernetes releases (K8s 1.30+)
-- Terraform provider updates
-- AWS/Azure/GCP announcements
-- Breaking news with severity indicators
-- Category-based filtering
-
-### 2. **Interactive Code Sandboxes**
-Live, syntax-highlighted code blocks featuring:
-- YAML, Go, Python, JavaScript support
-- One-click copy functionality
-- Simulated execution for demonstrations
-- Line numbering and language detection
-- Responsive, terminal-style UI
-
-### 3. **Personalized Learning Paths**
-Tag-based recommendation system offering:
-- Curated roadmaps for Platform Engineering
-- Progress tracking with visual indicators
-- Module-based curriculum structure
-- Difficulty-based filtering (Beginner to Expert)
-- Gamification with badges and reputation scores
-
-### 4. **Command Palette (CMD+K)**
-Power-user navigation with:
-- Instant search across articles, news, and learning paths
-- Keyboard-first interface
-- Category grouping
-- Glassmorphic design
-- Real-time filtering
-
-## 🏆 Category-Defining Unique Features
-
-### 1. **Infrastructure Topology Visualizer**
-Interactive infrastructure diagrams showing:
-- Multi-cloud architectures (AWS, GCP, Azure)
-- Kubernetes cluster topologies
-- Service mesh visualizations
-- Real-time node/edge relationships
-- Tool integrations (Terraform, Istio, etc.)
-
-**Implementation**: Stored as JSONB in `infrastructure_topologies` table with D3.js or React Flow for rendering.
-
-### 2. **AI DevOps Assistant** (Coming Soon)
-Context-aware chatbot powered by GPT-4 offering:
-- Infrastructure troubleshooting
-- Best practice recommendations
-- Code generation for IaC (Terraform, Pulumi)
-- Security vulnerability analysis
-- Performance optimization suggestions
-
-**Tech Stack**: OpenAI API + RAG (Retrieval-Augmented Generation) using Supabase pgvector for semantic search.
-
-### 3. **Collaborative Incident Timeline**
-Real-time incident response platform featuring:
-- Live event tracking during outages
-- Multi-contributor collaboration
-- Root cause analysis documentation
-- Lessons learned repository
-- Public/private incident sharing
-- Integration with monitoring tools
-
-**Schema**: `incident_timelines` table with JSONB events array and Supabase Realtime for live updates.
-
-## 🛠️ Tech Stack
-
-### Frontend & Backend
-- **Next.js 15** - App Router with Server Actions
-- **TypeScript** - Type-safe development
-- **React 19** - Latest features including React Compiler
-- **Framer Motion** - High-performance animations
-- **Tailwind CSS** - Utility-first styling
-
-### Database & Auth
-- **Supabase** - PostgreSQL with:
-  - Row Level Security (RLS)
-  - Realtime subscriptions
-  - Authentication & authorization
-  - Full-text search with `pg_trgm`
-
-### UI Components
-- **cmdk** - Command Palette
-- **react-syntax-highlighter** - Code blocks
-- **react-hot-toast** - Notifications
-- **lucide-react** - Icons
-- **zustand** - State management
-
-## 📁 Project Structure
-
-```
-rapidreach/
-├── app/                          # Next.js App Router
-│   ├── layout.tsx                # Root layout with providers
-│   ├── page.tsx                  # Homepage
-│   ├── globals.css               # Global styles
-│   └── (routes)/                 # Route groups
-│       ├── blog/                 # Blog posts
-│       ├── learning/             # Learning paths
-│       └── news/                 # News feed
-├── components/                   # React components
-│   ├── HeroBentoGrid.tsx         # Hero section
-│   ├── CommandPalette.tsx        # CMD+K interface
-│   ├── LiveInfrastructureFeed.tsx # Realtime news
-│   └── CodeSandbox.tsx           # Interactive code editor
-├── lib/                          # Utilities
-│   └── supabase/                 # Supabase clients
-│       ├── client.ts             # Browser client
-│       └── server.ts             # Server client
-├── supabase/                     # Database
-│   └── schema.sql                # Full database schema
-├── tailwind.config.ts            # Tailwind configuration
-└── package.json                  # Dependencies
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Supabase account
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/savisaluwadana/RapidReachBloWebsite.git
-cd RapidReachBloWebsite
-```
-
-2. **Install dependencies**
 ```bash
 npm install
-```
-
-3. **Set up environment variables**
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` with your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-4. **Set up Supabase database**
-- Create a new Supabase project
-- Run the SQL schema from `supabase/schema.sql` in the SQL Editor
-- Enable Realtime for `news_feed` and `incident_timelines` tables
-
-5. **Run development server**
-```bash
+cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the platform.
+Open http://localhost:3000.
 
-## 📊 Database Schema Highlights
+## MongoDB
 
-### Core Tables
-- **user_profiles**: Extended user data with gamification
-- **posts**: Blog articles with SEO and engagement metrics
-- **news_feed**: Live infrastructure updates (Realtime enabled)
-- **learning_paths**: Curated educational content
-- **learning_path_progress**: User progress tracking
-- **infrastructure_topologies**: Interactive diagrams
-- **incident_timelines**: Collaborative incident response
+Create a MongoDB Atlas database and configure:
 
-### Key Features
-- **Full-text search** using PostgreSQL `pg_trgm`
-- **Row Level Security (RLS)** for all tables
-- **Automatic triggers** for updated_at timestamps
-- **Real-time subscriptions** for live updates
-- **JSONB fields** for flexible data structures
-
-## 🎯 Usage Examples
-
-### Accessing Command Palette
-Press `CMD+K` (Mac) or `CTRL+K` (Windows/Linux) anywhere on the site.
-
-### Live News Feed
-The sidebar automatically updates when new infrastructure releases are added to the database.
-
-### Code Sandboxes
-Embed interactive code in blog posts:
-```tsx
-<CodeSandbox
-  code={yourYAMLCode}
-  language="yaml"
-  title="Kubernetes Deployment"
-  runnable={true}
-/>
+```env
+MONGODB_URI=mongodb+srv://...
+MONGODB_DB=rapidreach
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
-## 🔐 Security
+Seed the starter posts into MongoDB:
 
-- **Row Level Security (RLS)**: All database operations are secured
-- **Authentication**: Supabase Auth with social providers
-- **API Rate Limiting**: Protected Server Actions
-- **Content Security Policy**: XSS protection
-- **HTTPS Only**: Enforced in production
-
-## 🚢 Deployment
-
-### Vercel (Recommended)
 ```bash
-npm run build
-vercel --prod
+export MONGODB_URI='mongodb+srv://...'
+export MONGODB_DB='rapidreach'
+npm run seed
 ```
 
-### Environment Variables
-Ensure these are set in your deployment platform:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_APP_URL`
+### Collections
 
-## 📈 Performance
+`posts`
 
-- **ISR (Incremental Static Regeneration)**: Blog posts cached and revalidated
-- **Image Optimization**: Next.js automatic image optimization
-- **Code Splitting**: Automatic with Next.js App Router
-- **Lazy Loading**: Framer Motion components loaded on demand
-- **CDN**: Static assets served via Vercel Edge Network
+```js
+{
+  slug,
+  title,
+  summary,
+  content,
+  category,
+  author,
+  publishedAt,
+  updatedAt,
+  readingMinutes,
+  tags: [],
+  keyTakeaways: [],
+  likes,
+  status: 'published' | 'draft'
+}
+```
 
-## 🤝 Contributing
+`comments`
 
-We welcome contributions! Please follow these steps:
+```js
+{
+  postSlug,
+  name,
+  body,
+  createdAt,
+  status: 'visible' | 'hidden'
+}
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Publishing a story
 
-## 📝 License
+For now, publishing stays intentionally simple: add or update a document in the `posts` collection. The public site only selects documents with `status: "published"`.
 
-This project is licensed under the MIT License.
+A future lightweight editor can be added later without changing the public architecture. Keeping authoring separate from the reader experience prevents RapidReach from becoming another complex platform again.
 
-## 🙏 Acknowledgments
+## SEO / AEO / GEO / agent readability
 
-- **Next.js Team** - Amazing framework
-- **Supabase Team** - Postgres + Realtime magic
-- **Vercel** - Best deployment platform
-- **Tailwind CSS** - Utility-first CSS framework
-- **Framer Motion** - Smooth animations
+Every published story has a crawlable canonical URL under `/news/[slug]`, plain semantic article content, a concise summary, explicit key takeaways, topic tags, published dates, and NewsArticle structured data. The site also exposes `/sitemap.xml`, `/robots.txt`, `/feed.xml`, `/llms.txt`, and `/api/posts` so search engines, answer engines, feed readers, and agents do not need to reverse engineer the UI.
 
-## 📧 Contact
+## Production notes
 
-For questions or feedback:
-- **Email**: savisaluwadana@gmail.com
----
-
-**Built with ❤️ by the RapidReach Team**
-
-*Making DevOps and Cloud Native development accessible to everyone.*
-
+Before opening comments to large public traffic, add rate limiting and spam moderation at the edge or API layer. MongoDB indexes are created by the seed script. For Vercel, set the three environment variables in Project Settings and deploy the Next.js app normally.
