@@ -1,3 +1,4 @@
+import { getCategoriesByKind } from "@/lib/categories";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import type { Post } from "@/lib/types";
 
@@ -67,6 +68,13 @@ export async function getPosts(): Promise<Post[]> {
   }
 }
 
+export async function getAdminPosts(): Promise<Post[]> {
+  if (!hasDatabase()) return starterPosts;
+  const db = await getDb();
+  const docs = await db.collection("posts").find({}).sort({ updatedAt: -1, publishedAt: -1 }).toArray();
+  return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
+}
+
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   if (hasDatabase()) {
     try {
@@ -78,7 +86,18 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   return starterPosts.find((post) => post.slug === slug) || null;
 }
 
+export async function getAdminPostBySlug(slug: string): Promise<Post | null> {
+  if (hasDatabase()) {
+    const db = await getDb();
+    const doc = await db.collection("posts").findOne({ slug });
+    if (doc) return normalize(doc as unknown as Record<string, unknown>);
+  }
+  return starterPosts.find((post) => post.slug === slug) || null;
+}
+
 export async function getCategories() {
+  const managed = await getCategoriesByKind("post");
+  if (managed.length) return managed.map((category) => category.name);
   const posts = await getPosts();
   return [...new Set(posts.map((post) => post.category))].sort();
 }
