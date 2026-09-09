@@ -20,7 +20,7 @@ export async function getCategoriesByKind(kind: CategoryKind) {
   try {
     const db = await getDb();
     const docs = await db.collection("categories").find({ kind }).sort({ name: 1 }).toArray();
-    return docs.length ? docs.map((doc) => normalize(doc as unknown as Record<string, unknown>)) : fallback.filter((category) => category.kind === kind);
+    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
   } catch {
     return fallback.filter((category) => category.kind === kind);
   }
