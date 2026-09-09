@@ -27,13 +27,11 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
         <aside className="cms-panel submission-review-actions">
           <div className="cms-panel-head"><h2>Editorial decision</h2></div>
           {submission.convertedToolSlug && <div className="cms-success">Converted to draft: <Link href={`/admin/tools/${submission.convertedToolSlug}/edit`}>{submission.convertedToolSlug}</Link></div>}
-          {submission.adminNotes && <div className="submission-note"><strong>Current note</strong><p>{submission.adminNotes}</p></div>}
           {submission.status !== "approved" && <>
-            <form action={approveSubmission} className="cms-stack"><input type="hidden" name="id" value={submission.id} /><label>Editorial note<textarea name="adminNotes" rows={4} defaultValue={submission.adminNotes} placeholder="Optional internal/user-facing context" /></label><button className="cms-primary" type="submit">Approve → create tool draft</button></form>
-            <div className="cms-decision-grid">
-              {([ ["in_review", "Mark in review"], ["changes_requested", "Request changes"], ["rejected", "Reject"] ] as const).map(([status, label]) => <form action={reviewSubmission} key={status}><input type="hidden" name="id" value={submission.id} /><input type="hidden" name="status" value={status} /><input type="hidden" name="adminNotes" value={submission.adminNotes || ""} /><button className={status === "rejected" ? "cms-danger bordered" : "cms-secondary"} type="submit">{label}</button></form>)}
-            </div>
+            <form action={approveSubmission} className="cms-stack"><input type="hidden" name="id" value={submission.id} /><label>Approval note<textarea name="adminNotes" rows={3} defaultValue={submission.adminNotes} placeholder="Optional note recorded with the approval" /></label><button className="cms-primary" type="submit">Approve → create tool draft</button></form>
+            <form action={reviewSubmission} className="cms-stack cms-review-form"><input type="hidden" name="id" value={submission.id} /><label>Review note<textarea name="adminNotes" rows={4} defaultValue={submission.adminNotes} placeholder="Tell the submitter what is needed, or record why it was rejected." /></label><div className="cms-decision-grid"><button className="cms-secondary" name="status" value="in_review" type="submit">Mark in review</button><button className="cms-secondary" name="status" value="changes_requested" type="submit">Request changes</button><button className="cms-danger bordered" name="status" value="rejected" type="submit">Reject</button></div></form>
           </>}
+          {submission.status === "approved" && <p className="cms-warning">This request has already been converted into an editable tool draft. Publishing is controlled from the tool editor.</p>}
         </aside>
       </div>
     </section>
