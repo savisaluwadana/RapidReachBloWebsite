@@ -1,5 +1,6 @@
 import type { Category, Post } from "@/lib/types";
 import { savePost } from "@/app/admin/actions";
+import { MediaUploader } from "@/components/admin/MediaUploader";
 
 export function PostForm({ post, categories }: { post?: Post | null; categories: Category[] }) {
   return (
@@ -10,6 +11,9 @@ export function PostForm({ post, categories }: { post?: Post | null; categories:
         <label>Slug<input name="slug" defaultValue={post?.slug} placeholder="generated-from-title" /></label>
       </div>
       <label>Summary<textarea name="summary" required rows={3} defaultValue={post?.summary} placeholder="Clear answer-first summary for readers and search engines." /></label>
+
+      <MediaUploader inputName="featuredImageUrl" label="Featured image" kind="post-featured" initialUrls={post?.featuredImageUrl ? [post.featuredImageUrl] : []} help="Used on the article page, social metadata, and story cards when available." />
+
       <div className="cms-form-grid three">
         <label>Category<select name="category" required defaultValue={post?.category || categories[0]?.name}>{categories.map((category) => <option key={category.slug} value={category.name}>{category.name}</option>)}</select></label>
         <label>Author<input name="author" defaultValue={post?.author || "RapidReach Editorial"} /></label>
