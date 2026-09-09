@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-const coverage = ["AI", "Cloud", "DevTools"];
-
 export function Header() {
   return (
     <header className="site-header">
@@ -15,21 +13,19 @@ export function Header() {
         </Link>
 
         <nav className="main-nav" aria-label="Primary navigation">
-          <Link href="/#latest">Latest</Link>
-          {coverage.map((item) => (
-            <Link key={item} href={`/category/${item}`}>{item}</Link>
-          ))}
+          <Link href="/#latest">News</Link>
+          <Link className="nav-tools-link" href="/tools">Tools <span>New</span></Link>
+          <Link href="/#topics">Topics</Link>
           <Link className="nav-search" href="/search" aria-label="Search RapidReach">Search <span aria-hidden="true">⌕</span></Link>
         </nav>
 
         <Link href="/feed.xml" className="nav-pill">RSS <span aria-hidden="true">↗</span></Link>
       </div>
 
-      <nav className="mobile-nav shell" aria-label="Mobile coverage navigation">
-        <Link href="/#latest">Latest</Link>
-        {coverage.map((item) => (
-          <Link key={item} href={`/category/${item}`}>{item}</Link>
-        ))}
+      <nav className="mobile-nav shell" aria-label="Mobile navigation">
+        <Link href="/#latest">News</Link>
+        <Link href="/tools">Tools</Link>
+        <Link href="/#topics">Topics</Link>
         <Link href="/search">Search</Link>
       </nav>
     </header>
