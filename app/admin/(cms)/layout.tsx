@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { logoutAdmin } from "@/app/admin/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function CmsLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
   return (
