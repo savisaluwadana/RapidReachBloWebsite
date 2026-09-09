@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { adminIsConfigured, isAdmin } from "@/lib/admin-auth";
+import { isAdmin } from "@/lib/admin-auth";
 import { loginAdmin } from "@/app/admin/actions";
 
 export default async function AdminLogin({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -10,14 +10,14 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
       <section className="cms-login-card">
         <span className="section-kicker">RapidReach CMS</span>
         <h1>Editorial access.</h1>
-        <p>Manage developer news, categories, and the developer-tool directory.</p>
-        {!adminIsConfigured() ? <div className="cms-warning">Set <code>ADMIN_PASSWORD</code> before using the CMS.</div> : (
-          <form action={loginAdmin} className="cms-stack">
-            <label>Password<input type="password" name="password" required autoComplete="current-password" autoFocus /></label>
-            {error && <p className="cms-error">That password did not match.</p>}
-            <button className="cms-primary" type="submit">Enter CMS</button>
-          </form>
-        )}
+        <p>Admin accounts use the same secure account system as RapidReach members, with publishing permissions enforced by role.</p>
+        <form action={loginAdmin} className="cms-stack">
+          <label>Email<input type="email" name="email" required autoComplete="email" autoFocus /></label>
+          <label>Password<input type="password" name="password" required autoComplete="current-password" /></label>
+          {error && <p className="cms-error">{error}</p>}
+          <button className="cms-primary" type="submit">Enter CMS</button>
+        </form>
+        <p className="cms-login-help">On a fresh database, the first admin can be bootstrapped with <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code>.</p>
       </section>
     </main>
   );

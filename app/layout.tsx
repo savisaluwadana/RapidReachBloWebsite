@@ -3,6 +3,7 @@ import "./globals.css";
 import "./directory.css";
 import "./cms-category.css";
 import "./media.css";
+import "./account.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 

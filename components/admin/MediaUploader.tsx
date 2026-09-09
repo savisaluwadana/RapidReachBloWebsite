@@ -3,7 +3,7 @@
 import { upload } from "@vercel/blob/client";
 import { ChangeEvent, useState } from "react";
 
-type MediaKind = "tool-logo" | "tool-screenshot" | "post-featured";
+type MediaKind = "tool-logo" | "tool-screenshot" | "post-featured" | "submission-logo" | "submission-screenshot";
 
 export function MediaUploader({
   inputName,
@@ -12,6 +12,7 @@ export function MediaUploader({
   initialUrls = [],
   multiple = false,
   help,
+  handleUploadUrl = "/api/admin/media/upload",
 }: {
   inputName: string;
   label: string;
@@ -19,6 +20,7 @@ export function MediaUploader({
   initialUrls?: string[];
   multiple?: boolean;
   help?: string;
+  handleUploadUrl?: string;
 }) {
   const [urls, setUrls] = useState(initialUrls.filter(Boolean));
   const [externalUrl, setExternalUrl] = useState("");
@@ -55,7 +57,7 @@ export function MediaUploader({
           file,
           {
             access: "public",
-            handleUploadUrl: "/api/admin/media/upload",
+            handleUploadUrl,
             multipart: true,
             clientPayload: JSON.stringify({ kind }),
             onUploadProgress: ({ percentage }) => {

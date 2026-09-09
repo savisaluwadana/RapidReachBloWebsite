@@ -22,6 +22,7 @@ export default async function ToolsPage() {
         <span className="section-kicker">Developer tool discovery</span>
         <h1>Find the tools shaping how software gets built.</h1>
         <p>Curated developer products with practical explanations, pricing context, open-source signals, and direct links. No infinite feed.</p>
+        <div className="tools-hero-actions"><Link className="account-primary" href="/submit-tool">Submit a tool for review</Link><span>Community submissions are reviewed by RapidReach before publication.</span></div>
         <div className="tools-category-strip">{categories.map((category) => <Link key={category.slug} href={`/tools/category/${category.slug}`}>{category.name}</Link>)}</div>
       </header>
 
