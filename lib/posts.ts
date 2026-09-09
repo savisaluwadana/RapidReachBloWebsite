@@ -62,7 +62,7 @@ export async function getPosts(): Promise<Post[]> {
   try {
     const db = await getDb();
     const docs = await db.collection("posts").find({ status: "published" }).sort({ publishedAt: -1 }).toArray();
-    return docs.length ? docs.map((doc) => normalize(doc as unknown as Record<string, unknown>)) : starterPosts;
+    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
   } catch {
     return starterPosts;
   }
@@ -76,23 +76,21 @@ export async function getAdminPosts(): Promise<Post[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  if (hasDatabase()) {
-    try {
-      const db = await getDb();
-      const doc = await db.collection("posts").findOne({ slug, status: "published" });
-      if (doc) return normalize(doc as unknown as Record<string, unknown>);
-    } catch {}
+  if (!hasDatabase()) return starterPosts.find((post) => post.slug === slug) || null;
+  try {
+    const db = await getDb();
+    const doc = await db.collection("posts").findOne({ slug, status: "published" });
+    return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
+  } catch {
+    return starterPosts.find((post) => post.slug === slug) || null;
   }
-  return starterPosts.find((post) => post.slug === slug) || null;
 }
 
 export async function getAdminPostBySlug(slug: string): Promise<Post | null> {
-  if (hasDatabase()) {
-    const db = await getDb();
-    const doc = await db.collection("posts").findOne({ slug });
-    if (doc) return normalize(doc as unknown as Record<string, unknown>);
-  }
-  return starterPosts.find((post) => post.slug === slug) || null;
+  if (!hasDatabase()) return starterPosts.find((post) => post.slug === slug) || null;
+  const db = await getDb();
+  const doc = await db.collection("posts").findOne({ slug });
+  return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
 }
 
 export async function getCategories() {
