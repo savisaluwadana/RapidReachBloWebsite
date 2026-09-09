@@ -2,6 +2,8 @@ import { requireUser } from "@/lib/auth";
 import { getCategoriesByKind } from "@/lib/categories";
 import { SubmissionForm } from "@/components/SubmissionForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function SubmitToolPage() {
   await requireUser();
   const categories = await getCategoriesByKind("tool");
