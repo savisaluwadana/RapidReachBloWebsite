@@ -16,7 +16,6 @@ export function Header() {
           <Link className="nav-search" href="/search" aria-label="Search RapidReach">Search <span aria-hidden="true">⌕</span></Link>
         </nav>
         <div className="nav-account-wrap">
-          <Link href="/feed.xml" className="nav-rss">RSS</Link>
           <AccountNav />
         </div>
       </div>
