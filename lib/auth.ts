@@ -120,6 +120,15 @@ async function maybeBootstrapAdmin(email: string, password: string) {
   const existingAdmin = await db.collection("users").findOne({ role: "admin" });
   if (existingAdmin) return null;
   const now = new Date().toISOString();
+  const existingUser = await db.collection("users").findOne({ email });
+  if (existingUser) {
+    await db.collection("users").updateOne(
+      { _id: existingUser._id },
+      { $set: { role: "admin", status: "active", passwordHash: await hashPassword(password), updatedAt: now } },
+    );
+    return db.collection("users").findOne({ _id: existingUser._id });
+  }
+
   try {
     const result = await db.collection("users").insertOne({
       name: "RapidReach Admin",
@@ -143,7 +152,10 @@ export async function loginUser(input: { email: string; password: string; requir
   await ensureAccountIndexes();
   const db = await getDb();
   let doc = await db.collection("users").findOne({ email });
-  if (!doc) doc = await maybeBootstrapAdmin(email, input.password);
+  if (!doc || (input.requireRole === "admin" && doc.role !== "admin")) {
+    const bootstrapped = await maybeBootstrapAdmin(email, input.password);
+    if (bootstrapped) doc = bootstrapped;
+  }
   if (!doc || !(await verifyPassword(input.password, String(doc.passwordHash || "")))) return { ok: false as const, error: "Email or password is incorrect." };
   if (doc.status === "disabled") return { ok: false as const, error: "This account has been disabled." };
   const user = publicUser(doc as unknown as Record<string, unknown>);
