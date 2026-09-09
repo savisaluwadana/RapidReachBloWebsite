@@ -7,6 +7,7 @@ export type Post = {
   author: string;
   publishedAt: string;
   updatedAt?: string;
+  featuredImageUrl?: string;
   readingMinutes: number;
   tags: string[];
   keyTakeaways: string[];
@@ -40,6 +41,7 @@ export type Tool = {
   website: string;
   github?: string;
   logoUrl?: string;
+  screenshots: string[];
   maker?: string;
   pricing: "free" | "freemium" | "paid" | "open-source";
   openSource: boolean;
