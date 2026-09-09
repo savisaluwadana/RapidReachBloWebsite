@@ -11,12 +11,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) return {};
+  const images = [tool.logoUrl, ...tool.screenshots].filter(Boolean) as string[];
   return {
     title: `${tool.name} — Developer Tool`,
     description: tool.tagline,
     alternates: { canonical: `/tools/${tool.slug}` },
-    openGraph: { title: tool.name, description: tool.tagline, url: `/tools/${tool.slug}` },
-    twitter: { card: "summary_large_image", title: tool.name, description: tool.tagline },
+    openGraph: { title: tool.name, description: tool.tagline, url: `/tools/${tool.slug}`, images },
+    twitter: { card: "summary_large_image", title: tool.name, description: tool.tagline, images: images.slice(0, 1) },
   };
 }
 
@@ -31,6 +32,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
     name: tool.name,
     description: tool.description,
     url: tool.website,
+    image: [tool.logoUrl, ...tool.screenshots].filter(Boolean),
     applicationCategory: category?.name || tool.category,
     offers: { "@type": "Offer", price: tool.pricing === "free" || tool.pricing === "open-source" ? "0" : undefined, priceCurrency: "USD" },
     author: tool.maker ? { "@type": "Organization", name: tool.maker } : undefined,
@@ -48,6 +50,20 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
           <div className="tool-detail-actions"><a className="cms-primary" href={tool.website} target="_blank" rel="noreferrer">Visit website ↗</a>{tool.github && <a className="cms-secondary" href={tool.github} target="_blank" rel="noreferrer">GitHub ↗</a>}<ToolUpvote slug={tool.slug} initialUpvotes={tool.upvotes} large /></div>
         </div>
       </header>
+
+      {tool.screenshots.length > 0 && (
+        <section className="tool-gallery" aria-label={`${tool.name} screenshots`}>
+          <div className="tool-gallery-head"><span className="section-kicker">Product gallery</span><span>{tool.screenshots.length} screenshot{tool.screenshots.length === 1 ? "" : "s"}</span></div>
+          <div className="tool-gallery-track">
+            {tool.screenshots.map((screenshot, index) => (
+              <a href={screenshot} target="_blank" rel="noreferrer" key={`${screenshot}-${index}`}>
+                <img src={screenshot} alt={`${tool.name} product screenshot ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="tool-detail-grid">
         <section className="tool-explanation"><span className="section-kicker">What it does</span><h2>Why developers use {tool.name}</h2>{tool.description.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</section>
         <aside className="tool-facts"><div><span>Maker</span><strong>{tool.maker || "Not specified"}</strong></div><div><span>Pricing</span><strong>{tool.pricing}</strong></div><div><span>Open source</span><strong>{tool.openSource ? "Yes" : "No"}</strong></div><div><span>Launched</span><strong>{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(tool.launchedAt))}</strong></div><div><span>Tags</span><p>{tool.tags.join(" · ")}</p></div></aside>
