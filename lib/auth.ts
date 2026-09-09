@@ -1,6 +1,6 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { ObjectId } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb, hasDatabase } from "@/lib/mongodb";
@@ -9,6 +9,7 @@ import type { User, UserRole } from "@/lib/types";
 const scrypt = promisify(scryptCallback);
 const SESSION_COOKIE = "rapidreach_session";
 const SESSION_DAYS = 30;
+let indexesPromise: Promise<void> | null = null;
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -24,6 +25,25 @@ function publicUser(doc: Record<string, unknown>): User {
     createdAt: String(doc.createdAt || new Date().toISOString()),
     updatedAt: doc.updatedAt ? String(doc.updatedAt) : undefined,
   };
+}
+
+async function ensureAccountIndexes() {
+  if (!indexesPromise) {
+    indexesPromise = (async () => {
+      const db = await getDb();
+      await Promise.all([
+        db.collection("users").createIndex({ email: 1 }, { unique: true }),
+        db.collection("sessions").createIndex({ tokenHash: 1 }, { unique: true }),
+        db.collection("sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+        db.collection("tool_submissions").createIndex({ userId: 1, updatedAt: -1 }),
+        db.collection("tool_submissions").createIndex({ status: 1, updatedAt: -1 }),
+      ]);
+    })().catch((error) => {
+      indexesPromise = null;
+      throw error;
+    });
+  }
+  return indexesPromise;
 }
 
 export async function hashPassword(password: string) {
@@ -45,6 +65,7 @@ function tokenHash(token: string) {
 }
 
 async function setSession(userId: string) {
+  await ensureAccountIndexes();
   const db = await getDb();
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
@@ -67,20 +88,25 @@ export async function registerUser(input: { name: string; email: string; passwor
   if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false as const, error: "Enter a valid email address." };
   if (input.password.length < 10) return { ok: false as const, error: "Use at least 10 characters for your password." };
 
+  await ensureAccountIndexes();
   const db = await getDb();
-  if (await db.collection("users").findOne({ email })) return { ok: false as const, error: "An account already exists for that email." };
   const now = new Date().toISOString();
-  const result = await db.collection("users").insertOne({
-    name,
-    email,
-    passwordHash: await hashPassword(input.password),
-    role: "user",
-    status: "active",
-    createdAt: now,
-    updatedAt: now,
-  });
-  await setSession(result.insertedId.toString());
-  return { ok: true as const };
+  try {
+    const result = await db.collection("users").insertOne({
+      name,
+      email,
+      passwordHash: await hashPassword(input.password),
+      role: "user",
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await setSession(result.insertedId.toString());
+    return { ok: true as const };
+  } catch (error) {
+    if (error instanceof MongoServerError && error.code === 11000) return { ok: false as const, error: "An account already exists for that email." };
+    throw error;
+  }
 }
 
 async function maybeBootstrapAdmin(email: string, password: string) {
@@ -89,25 +115,32 @@ async function maybeBootstrapAdmin(email: string, password: string) {
   if (!configuredPassword || password !== configuredPassword) return null;
   if (configuredEmail && email !== configuredEmail) return null;
 
+  await ensureAccountIndexes();
   const db = await getDb();
   const existingAdmin = await db.collection("users").findOne({ role: "admin" });
   if (existingAdmin) return null;
   const now = new Date().toISOString();
-  const result = await db.collection("users").insertOne({
-    name: "RapidReach Admin",
-    email,
-    passwordHash: await hashPassword(password),
-    role: "admin",
-    status: "active",
-    createdAt: now,
-    updatedAt: now,
-  });
-  return db.collection("users").findOne({ _id: result.insertedId });
+  try {
+    const result = await db.collection("users").insertOne({
+      name: "RapidReach Admin",
+      email,
+      passwordHash: await hashPassword(password),
+      role: "admin",
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    return db.collection("users").findOne({ _id: result.insertedId });
+  } catch (error) {
+    if (error instanceof MongoServerError && error.code === 11000) return db.collection("users").findOne({ email });
+    throw error;
+  }
 }
 
 export async function loginUser(input: { email: string; password: string; requireRole?: UserRole }) {
   if (!hasDatabase()) return { ok: false as const, error: "MongoDB must be configured before signing in." };
   const email = normalizeEmail(input.email);
+  await ensureAccountIndexes();
   const db = await getDb();
   let doc = await db.collection("users").findOne({ email });
   if (!doc) doc = await maybeBootstrapAdmin(email, input.password);
