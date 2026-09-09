@@ -86,19 +86,19 @@ export async function getTools(options?: { category?: string; featured?: boolean
     if (options?.category) query.category = options.category;
     if (options?.featured !== undefined) query.featured = options.featured;
     const docs = await db.collection("tools").find(query).sort({ featured: -1, launchedAt: -1 }).toArray();
-    return docs.length ? docs.map((doc) => normalize(doc as unknown as Record<string, unknown>)) : starterTools.filter((tool) => !options?.category || tool.category === options.category);
+    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
   } catch {
-    return starterTools.filter((tool) => !options?.category || tool.category === options.category);
+    return starterTools.filter((tool) => (!options?.category || tool.category === options.category) && (options?.featured === undefined || tool.featured === options.featured));
   }
 }
 
 export async function getToolBySlug(slug: string, includeDrafts = false) {
-  if (hasDatabase()) {
-    try {
-      const db = await getDb();
-      const doc = await db.collection("tools").findOne(includeDrafts ? { slug } : { slug, status: "published" });
-      if (doc) return normalize(doc as unknown as Record<string, unknown>);
-    } catch {}
+  if (!hasDatabase()) return starterTools.find((tool) => tool.slug === slug) || null;
+  try {
+    const db = await getDb();
+    const doc = await db.collection("tools").findOne(includeDrafts ? { slug } : { slug, status: "published" });
+    return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
+  } catch {
+    return starterTools.find((tool) => tool.slug === slug) || null;
   }
-  return starterTools.find((tool) => tool.slug === slug) || null;
 }
