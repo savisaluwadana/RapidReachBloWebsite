@@ -51,7 +51,9 @@ function normalize(post: Record<string, unknown>): Post {
   return {
     slug: String(post.slug), title: String(post.title), summary: String(post.summary), content: String(post.content),
     category: String(post.category), author: String(post.author), publishedAt: String(post.publishedAt),
-    updatedAt: post.updatedAt ? String(post.updatedAt) : undefined, readingMinutes: Number(post.readingMinutes || 4),
+    updatedAt: post.updatedAt ? String(post.updatedAt) : undefined,
+    featuredImageUrl: post.featuredImageUrl ? String(post.featuredImageUrl) : undefined,
+    readingMinutes: Number(post.readingMinutes || 4),
     tags: Array.isArray(post.tags) ? post.tags.map(String) : [], keyTakeaways: Array.isArray(post.keyTakeaways) ? post.keyTakeaways.map(String) : [],
     likes: Number(post.likes || 0), status: post.status === "draft" ? "draft" : "published"
   };
