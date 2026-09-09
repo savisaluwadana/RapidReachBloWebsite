@@ -43,13 +43,20 @@ export async function saveCategory(form: FormData) {
   const database = await db();
   const name = text(form, "name");
   const kind = text(form, "kind") === "tool" ? "tool" : "post";
+  const originalSlug = text(form, "originalSlug");
   const slug = slugify(text(form, "slug") || name);
   if (!name || !slug) throw new Error("Category name is required.");
   await database.collection("categories").updateOne(
-    { slug, kind },
+    { slug: originalSlug || slug, kind },
     { $set: { name, slug, kind, description: text(form, "description"), updatedAt: new Date().toISOString() }, $setOnInsert: { createdAt: new Date().toISOString() } },
     { upsert: true },
   );
+  if (originalSlug && originalSlug !== slug) {
+    const contentCollection = kind === "tool" ? "tools" : "posts";
+    const fieldValue = kind === "tool" ? slug : name;
+    const previousValue = kind === "tool" ? originalSlug : text(form, "originalName");
+    if (previousValue) await database.collection(contentCollection).updateMany({ category: previousValue }, { $set: { category: fieldValue } });
+  }
   revalidatePath("/");
   revalidatePath("/tools");
   revalidatePath("/admin/categories");
