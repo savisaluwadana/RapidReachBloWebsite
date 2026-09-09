@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { clearAdminSession, requireAdmin, setAdminSession } from "@/lib/admin-auth";
+import { loginUser, logoutUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 
 function text(form: FormData, key: string) {
@@ -28,13 +29,13 @@ async function db() {
 }
 
 export async function loginAdmin(form: FormData) {
-  const ok = await setAdminSession(text(form, "password"));
-  if (!ok) redirect("/admin/login?error=1");
+  const result = await loginUser({ email: text(form, "email"), password: text(form, "password"), requireRole: "admin" });
+  if (!result.ok) redirect(`/admin/login?error=${encodeURIComponent(result.error)}`);
   redirect("/admin");
 }
 
 export async function logoutAdmin() {
-  await clearAdminSession();
+  await logoutUser();
   redirect("/admin/login");
 }
 

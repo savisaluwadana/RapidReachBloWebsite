@@ -11,7 +11,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) return {};
-  const images = [tool.logoUrl, ...tool.screenshots].filter(Boolean) as string[];
+  const screenshots = tool.screenshots || [];
+  const images = [tool.logoUrl, ...screenshots].filter(Boolean) as string[];
   return {
     title: `${tool.name} — Developer Tool`,
     description: tool.tagline,
@@ -26,13 +27,14 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const tool = await getToolBySlug(slug);
   if (!tool) notFound();
   const category = await getCategory("tool", tool.category);
+  const screenshots = tool.screenshots || [];
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: tool.name,
     description: tool.description,
     url: tool.website,
-    image: [tool.logoUrl, ...tool.screenshots].filter(Boolean),
+    image: [tool.logoUrl, ...screenshots].filter(Boolean),
     applicationCategory: category?.name || tool.category,
     offers: { "@type": "Offer", price: tool.pricing === "free" || tool.pricing === "open-source" ? "0" : undefined, priceCurrency: "USD" },
     author: tool.maker ? { "@type": "Organization", name: tool.maker } : undefined,
@@ -51,11 +53,11 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
         </div>
       </header>
 
-      {tool.screenshots.length > 0 && (
+      {screenshots.length > 0 && (
         <section className="tool-gallery" aria-label={`${tool.name} screenshots`}>
-          <div className="tool-gallery-head"><span className="section-kicker">Product gallery</span><span>{tool.screenshots.length} screenshot{tool.screenshots.length === 1 ? "" : "s"}</span></div>
+          <div className="tool-gallery-head"><span className="section-kicker">Product gallery</span><span>{screenshots.length} screenshot{screenshots.length === 1 ? "" : "s"}</span></div>
           <div className="tool-gallery-track">
-            {tool.screenshots.map((screenshot, index) => (
+            {screenshots.map((screenshot, index) => (
               <a href={screenshot} target="_blank" rel="noreferrer" key={`${screenshot}-${index}`}>
                 <img src={screenshot} alt={`${tool.name} product screenshot ${index + 1}`} loading={index === 0 ? "eager" : "lazy"} />
               </a>
