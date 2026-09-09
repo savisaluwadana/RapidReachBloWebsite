@@ -17,6 +17,7 @@ export const starterTools: Tool[] = [
     featured: true,
     status: "published",
     launchedAt: "2026-01-01T00:00:00.000Z",
+    screenshots: [],
     upvotes: 0,
   },
   {
@@ -34,6 +35,7 @@ export const starterTools: Tool[] = [
     featured: true,
     status: "published",
     launchedAt: "2026-01-02T00:00:00.000Z",
+    screenshots: [],
     upvotes: 0,
   },
   {
@@ -50,6 +52,7 @@ export const starterTools: Tool[] = [
     featured: false,
     status: "published",
     launchedAt: "2026-01-03T00:00:00.000Z",
+    screenshots: [],
     upvotes: 0,
   },
 ];
@@ -63,6 +66,7 @@ function normalize(doc: Record<string, unknown>): Tool {
     website: String(doc.website || ""),
     github: doc.github ? String(doc.github) : undefined,
     logoUrl: doc.logoUrl ? String(doc.logoUrl) : undefined,
+    screenshots: Array.isArray(doc.screenshots) ? doc.screenshots.map(String).slice(0, 8) : [],
     maker: doc.maker ? String(doc.maker) : undefined,
     pricing: ["free", "freemium", "paid", "open-source"].includes(String(doc.pricing)) ? doc.pricing as Tool["pricing"] : "free",
     openSource: Boolean(doc.openSource),
