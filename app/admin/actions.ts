@@ -44,6 +44,7 @@ export async function saveCategory(form: FormData) {
   const name = text(form, "name");
   const kind = text(form, "kind") === "tool" ? "tool" : "post";
   const originalSlug = text(form, "originalSlug");
+  const originalName = text(form, "originalName");
   const slug = slugify(text(form, "slug") || name);
   if (!name || !slug) throw new Error("Category name is required.");
   await database.collection("categories").updateOne(
@@ -51,11 +52,11 @@ export async function saveCategory(form: FormData) {
     { $set: { name, slug, kind, description: text(form, "description"), updatedAt: new Date().toISOString() }, $setOnInsert: { createdAt: new Date().toISOString() } },
     { upsert: true },
   );
-  if (originalSlug && originalSlug !== slug) {
-    const contentCollection = kind === "tool" ? "tools" : "posts";
-    const fieldValue = kind === "tool" ? slug : name;
-    const previousValue = kind === "tool" ? originalSlug : text(form, "originalName");
-    if (previousValue) await database.collection(contentCollection).updateMany({ category: previousValue }, { $set: { category: fieldValue } });
+  if (kind === "post" && originalName && originalName !== name) {
+    await database.collection("posts").updateMany({ category: originalName }, { $set: { category: name } });
+  }
+  if (kind === "tool" && originalSlug && originalSlug !== slug) {
+    await database.collection("tools").updateMany({ category: originalSlug }, { $set: { category: slug } });
   }
   revalidatePath("/");
   revalidatePath("/tools");
