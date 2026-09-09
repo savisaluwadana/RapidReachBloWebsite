@@ -1,6 +1,5 @@
 import Link from "next/link";
-
-const coverage = ["AI", "Cloud", "DevTools"];
+import { AccountNav } from "@/components/AccountNav";
 
 export function Header() {
   return (
@@ -8,29 +7,21 @@ export function Header() {
       <div className="shell nav-shell">
         <Link href="/" className="brand" aria-label="RapidReach home">
           <span className="brand-mark" aria-hidden="true">R</span>
-          <span className="brand-lockup">
-            <strong>RapidReach</strong>
-            <small>Developer briefing</small>
-          </span>
+          <span className="brand-lockup"><strong>RapidReach</strong><small>Developer briefing</small></span>
         </Link>
-
         <nav className="main-nav" aria-label="Primary navigation">
-          <Link href="/#latest">Latest</Link>
-          {coverage.map((item) => (
-            <Link key={item} href={`/category/${item}`}>{item}</Link>
-          ))}
+          <Link href="/#latest">News</Link>
+          <Link className="nav-tools-link" href="/tools">Tools <span>New</span></Link>
+          <Link href="/#topics">Topics</Link>
           <Link className="nav-search" href="/search" aria-label="Search RapidReach">Search <span aria-hidden="true">⌕</span></Link>
         </nav>
-
-        <Link href="/feed.xml" className="nav-pill">RSS <span aria-hidden="true">↗</span></Link>
+        <div className="nav-account-wrap">
+          <Link href="/feed.xml" className="nav-rss">RSS</Link>
+          <AccountNav />
+        </div>
       </div>
-
-      <nav className="mobile-nav shell" aria-label="Mobile coverage navigation">
-        <Link href="/#latest">Latest</Link>
-        {coverage.map((item) => (
-          <Link key={item} href={`/category/${item}`}>{item}</Link>
-        ))}
-        <Link href="/search">Search</Link>
+      <nav className="mobile-nav shell" aria-label="Mobile navigation">
+        <Link href="/#latest">News</Link><Link href="/tools">Tools</Link><Link href="/#topics">Topics</Link><Link href="/search">Search</Link><AccountNav mobile />
       </nav>
     </header>
   );

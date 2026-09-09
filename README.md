@@ -1,20 +1,30 @@
 # RapidReach
 
-RapidReach is a focused developer-news publication built with Next.js and MongoDB. It intentionally avoids the product/dashboard complexity that previously lived in this repository.
+RapidReach is a focused developer publication and developer-tool discovery site built with Next.js, MongoDB, and a deliberately small publishing CMS.
 
-## What it includes
+## Product surfaces
 
-- Premium editorial homepage and responsive article layout
-- Topic/category archives and site search
-- MongoDB-backed posts, comments, and article likes
-- Share actions for native share, X, LinkedIn, Reddit, and Hacker News
-- Server-rendered semantic article HTML
-- Per-article NewsArticle JSON-LD
-- Canonical metadata, Open Graph, Twitter metadata, robots.txt, and dynamic sitemap
-- RSS feed at `/feed.xml`
-- Agent-readable publication index at `/llms.txt`
-- Structured JSON feed at `/api/posts`
-- Built-in starter content if MongoDB is not configured, so the UI never boots empty
+### Developer news
+- Premium editorial homepage and responsive article pages
+- Managed news categories
+- Search, comments, likes, and social sharing
+- Featured article images
+- Draft / published workflow through `/admin/posts`
+
+### Developer tool discovery
+- Product Hunt-style `/tools` directory
+- Tool category pages and individual `/tools/[slug]` profiles
+- Tool upvotes, featured tools, pricing, open-source metadata, maker/company, website and GitHub links
+- Tool logo images and screenshot galleries
+- Tool CRUD through `/admin/tools`
+
+### CMS
+- `/admin/login` protected by `ADMIN_PASSWORD`
+- `/admin` overview
+- `/admin/categories` for separate news and tool taxonomies
+- `/admin/posts` for blog CRUD
+- `/admin/tools` for developer-tool CRUD
+- Category rename propagation to existing posts/tools
 
 ## Stack
 
@@ -22,9 +32,10 @@ RapidReach is a focused developer-news publication built with Next.js and MongoD
 - React 19
 - TypeScript
 - MongoDB / MongoDB Atlas
-- Plain CSS for a smaller dependency surface and predictable performance
+- Vercel Blob for public media
+- Plain CSS
 
-There is no separate Go service, Supabase dependency, client state framework, rich-text editor, or MCP server in this simplified version.
+There is no separate backend service. RapidReach stays one Next.js application plus MongoDB and Blob object storage.
 
 ## Local setup
 
@@ -36,17 +47,19 @@ npm run dev
 
 Open http://localhost:3000.
 
-## MongoDB
-
-Create a MongoDB Atlas database and configure:
+## Environment
 
 ```env
 MONGODB_URI=mongodb+srv://...
 MONGODB_DB=rapidreach
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
+ADMIN_PASSWORD=use-a-long-random-password
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 ```
 
-Seed the starter posts into MongoDB:
+`BLOB_READ_WRITE_TOKEN` is useful for local development and token-based Blob stores. New Vercel projects can use Blob OIDC authentication instead. Connect a **Public** Blob store because RapidReach logos, article images, and screenshots are public web assets.
+
+## Seed MongoDB
 
 ```bash
 export MONGODB_URI='mongodb+srv://...'
@@ -54,9 +67,11 @@ export MONGODB_DB='rapidreach'
 npm run seed
 ```
 
-### Collections
+The seed script creates the starter content and MongoDB indexes.
 
-`posts`
+## Collections
+
+### `posts`
 
 ```js
 {
@@ -68,6 +83,7 @@ npm run seed
   author,
   publishedAt,
   updatedAt,
+  featuredImageUrl,
   readingMinutes,
   tags: [],
   keyTakeaways: [],
@@ -76,28 +92,71 @@ npm run seed
 }
 ```
 
-`comments`
+### `tools`
+
+```js
+{
+  slug,
+  name,
+  tagline,
+  description,
+  website,
+  github,
+  logoUrl,
+  screenshots: [],
+  maker,
+  pricing: 'free' | 'freemium' | 'paid' | 'open-source',
+  openSource,
+  category,
+  tags: [],
+  featured,
+  status: 'published' | 'draft',
+  launchedAt,
+  updatedAt,
+  upvotes
+}
+```
+
+### `categories`
+
+News and tool categories share the collection but are separated by `kind: 'post' | 'tool'`.
+
+### `comments`
 
 ```js
 {
   postSlug,
   name,
   body,
-  createdAt,
-  status: 'visible' | 'hidden'
+  createdAt
 }
 ```
 
-## Publishing a story
+## Media uploads
 
-For now, publishing stays intentionally simple: add or update a document in the `posts` collection. The public site only selects documents with `status: "published"`.
+The CMS supports two media workflows:
 
-A future lightweight editor can be added later without changing the public architecture. Keeping authoring separate from the reader experience prevents RapidReach from becoming another complex platform again.
+1. Upload an image directly from the admin UI. The browser uploads straight to Vercel Blob and the returned public URL is saved in MongoDB when the editor form is saved.
+2. Paste an existing public image URL instead of uploading.
 
-## SEO / AEO / GEO / agent readability
+Supported uploads: JPEG, PNG, WebP, GIF, and AVIF. Each image is limited to 8 MB. Tool profiles support up to 8 screenshots.
 
-Every published story has a crawlable canonical URL under `/news/[slug]`, plain semantic article content, a concise summary, explicit key takeaways, topic tags, published dates, and NewsArticle structured data. The site also exposes `/sitemap.xml`, `/robots.txt`, `/feed.xml`, `/llms.txt`, and `/api/posts` so search engines, answer engines, feed readers, and agents do not need to reverse engineer the UI.
+Media fields:
+- Blog featured image
+- Tool logo
+- Tool screenshot gallery
+
+## SEO / AEO / GEO / agents
+
+Published stories expose `NewsArticle` JSON-LD and use featured images in social metadata when available. Tool pages expose `SoftwareApplication` JSON-LD and include logos/screenshots in metadata. RapidReach also exposes:
+
+- `/sitemap.xml`
+- `/robots.txt`
+- `/feed.xml`
+- `/llms.txt`
+- `/api/posts`
+- `/api/tools`
 
 ## Production notes
 
-Before opening comments to large public traffic, add rate limiting and spam moderation at the edge or API layer. MongoDB indexes are created by the seed script. For Vercel, set the three environment variables in Project Settings and deploy the Next.js app normally.
+Use a public Vercel Blob store for public media. Direct client uploads are used so large image uploads do not have to pass through the Next.js function request body. Set the MongoDB, site URL, admin password, and Blob configuration in Vercel before using the CMS.

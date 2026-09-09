@@ -4,6 +4,12 @@ import type { Post } from "@/lib/types";
 export function ArticleCard({ post, compact = false }: { post: Post; compact?: boolean }) {
   return (
     <article className={compact ? "article-card compact" : "article-card"}>
+      {post.featuredImageUrl && (
+        <Link className="article-card-media" href={`/news/${post.slug}`} aria-label={`Read ${post.title}`}>
+          <img src={post.featuredImageUrl} alt="" loading="lazy" />
+        </Link>
+      )}
+
       <div className="card-topline">
         <div className="eyebrow">
           <Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link>

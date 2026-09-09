@@ -17,6 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPostBySlug(slug);
   if (!post) return {};
 
+  const images = post.featuredImageUrl ? [post.featuredImageUrl] : undefined;
   return {
     title: post.title,
     description: post.summary,
@@ -30,8 +31,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       authors: [post.author],
       tags: post.tags,
       url: `/news/${post.slug}`,
+      images,
     },
-    twitter: { card: "summary_large_image", title: post.title, description: post.summary },
+    twitter: { card: "summary_large_image", title: post.title, description: post.summary, images },
   };
 }
 
@@ -48,6 +50,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     "@type": "NewsArticle",
     headline: post.title,
     description: post.summary,
+    image: post.featuredImageUrl ? [post.featuredImageUrl] : undefined,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt || post.publishedAt,
     author: { "@type": "Organization", name: post.author },
@@ -77,6 +80,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <div><span>Filed under</span><strong>{post.category}</strong></div>
         </div>
       </header>
+
+      {post.featuredImageUrl && (
+        <figure className="article-featured-media shell">
+          <img src={post.featuredImageUrl} alt={`Featured image for ${post.title}`} />
+        </figure>
+      )}
 
       <div className="article-rule" />
 
