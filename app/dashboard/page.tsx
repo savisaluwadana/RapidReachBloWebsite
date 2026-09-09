@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { getUserSubmissions } from "@/lib/submissions";
 import { logoutAccount, updateProfile } from "@/app/account-actions";
 
+export const dynamic = "force-dynamic";
+
 const statusLabel: Record<string, string> = {
   pending: "Pending review",
   in_review: "In review",
