@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { AccountNav } from "@/components/AccountNav";
 
-export async function Header() {
-  const user = await getCurrentUser();
+export function Header() {
   return (
     <header className="site-header">
       <div className="shell nav-shell">
@@ -18,11 +17,11 @@ export async function Header() {
         </nav>
         <div className="nav-account-wrap">
           <Link href="/feed.xml" className="nav-rss">RSS</Link>
-          {user ? <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className="nav-pill">{user.role === "admin" ? "Admin" : "Dashboard"} <span aria-hidden="true">↗</span></Link> : <Link href="/login" className="nav-pill">Sign in <span aria-hidden="true">↗</span></Link>}
+          <AccountNav />
         </div>
       </div>
       <nav className="mobile-nav shell" aria-label="Mobile navigation">
-        <Link href="/#latest">News</Link><Link href="/tools">Tools</Link><Link href="/#topics">Topics</Link><Link href="/search">Search</Link><Link href={user ? "/dashboard" : "/login"}>{user ? "Dashboard" : "Sign in"}</Link>
+        <Link href="/#latest">News</Link><Link href="/tools">Tools</Link><Link href="/#topics">Topics</Link><Link href="/search">Search</Link><AccountNav mobile />
       </nav>
     </header>
   );
