@@ -21,7 +21,7 @@ export function Footer() {
           </div>
           <div>
             <span className="footer-label">Machine access</span>
-            <div className="footer-links"><Link href="/feed.xml">RSS</Link><Link href="/llms.txt">llms.txt</Link><Link href="/api/posts">Posts API</Link><Link href="/api/tools">Tools API</Link><Link href="/sitemap.xml">Sitemap</Link></div>
+            <div className="footer-links"><Link href="/llms.txt">llms.txt</Link><Link href="/api/posts">Posts API</Link><Link href="/api/tools">Tools API</Link><Link href="/sitemap.xml">Sitemap</Link></div>
           </div>
         </div>
       </div>
