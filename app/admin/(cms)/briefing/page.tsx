@@ -1,0 +1,14 @@
+import { sendWeeklyBriefing } from "@/app/admin/intelligence-actions";
+import { getDb, hasDatabase } from "@/lib/mongodb";
+import { getPosts } from "@/lib/posts";
+import { getTools } from "@/lib/tools";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminBriefingPage({ searchParams }: { searchParams: Promise<{ sent?: string; error?: string }> }) {
+  const [posts, tools] = await Promise.all([getPosts(), getTools()]);
+  const { sent, error } = await searchParams;
+  let subscriberCount = 0; let sends: Array<{ subject?: string; recipients?: number; sentAt?: string }> = [];
+  if (hasDatabase()) { try { const db = await getDb(); subscriberCount = await db.collection("newsletter_subscribers").countDocuments({ status: "active" }); sends = await db.collection("briefing_sends").find({}).sort({ sentAt: -1 }).limit(5).toArray() as typeof sends; } catch {} }
+  return <><header className="cms-page-head"><div><span className="cms-kicker">Retention</span><h1>Weekly briefing</h1><p>Send one curated email with up to five stories and five tools. Delivery uses Resend only when the API key is configured.</p></div><div className="cms-head-stat"><strong>{subscriberCount}</strong><span>active subscribers</span></div></header>{sent && <div className="cms-success">Briefing sent to {sent} subscribers.</div>}{error === "config" && <div className="cms-warning">Add RESEND_API_KEY and BRIEFING_FROM_EMAIL before sending.</div>}{error === "no-subscribers" && <div className="cms-warning">There are no active subscribers yet.</div>}<form action={sendWeeklyBriefing} className="cms-editor"><label>Subject<input name="subject" required defaultValue="RapidReach Weekly Developer Briefing"/></label><label>Opening note<textarea name="intro" rows={5} placeholder="A short editorial intro for this week."/></label><label>Post slugs<input name="postSlugs" defaultValue={posts.slice(0,5).map((item) => item.slug).join(", ")}/><small>Up to five. Defaulted to the latest published stories.</small></label><label>Tool slugs<input name="toolSlugs" defaultValue={tools.slice(0,5).map((item) => item.slug).join(", ")}/><small>Up to five. Defaulted to the latest directory tools.</small></label><div className="cms-editor-actions"><button className="cms-primary" type="submit">Send weekly briefing</button><a className="cms-secondary" href="/briefing" target="_blank">View signup page ↗</a></div></form>{sends.length > 0 && <section className="cms-history"><span className="cms-kicker">Recent sends</span>{sends.map((item, index) => <div key={`${item.sentAt}-${index}`}><strong>{item.subject || "Weekly briefing"}</strong><span>{item.recipients || 0} recipients · {item.sentAt ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.sentAt)) : ""}</span></div>)}</section>}</>;
+}

@@ -11,6 +11,7 @@ export type Post = {
   readingMinutes: number;
   tags: string[];
   keyTakeaways: string[];
+  relatedToolSlugs?: string[];
   likes: number;
   status: "published" | "draft";
 };
@@ -52,6 +53,27 @@ export type Tool = {
   launchedAt: string;
   updatedAt?: string;
   upvotes: number;
+  bestFor?: string[];
+  notIdealFor?: string[];
+  strengths?: string[];
+  tradeoffs?: string[];
+  verdict?: string;
+  alternatives?: string[];
+  relatedPostSlugs?: string[];
+  launchBoard?: boolean;
+  launchNote?: string;
+};
+
+export type EditorialCollection = {
+  slug: string;
+  title: string;
+  description: string;
+  toolSlugs: string[];
+  postSlugs: string[];
+  featured: boolean;
+  status: "published" | "draft";
+  createdAt: string;
+  updatedAt?: string;
 };
 
 export type UserRole = "user" | "admin";
@@ -65,6 +87,12 @@ export type User = {
   status: AccountStatus;
   createdAt: string;
   updatedAt?: string;
+};
+
+export type UserPreferences = {
+  savedTools: string[];
+  savedPosts: string[];
+  followedTopics: string[];
 };
 
 export type ToolSubmissionStatus = "pending" | "in_review" | "changes_requested" | "approved" | "rejected";

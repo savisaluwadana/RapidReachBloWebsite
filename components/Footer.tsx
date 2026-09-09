@@ -1,33 +1,6 @@
 import Link from "next/link";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
 
 export function Footer() {
-  return (
-    <footer className="site-footer">
-      <div className="shell footer-topline">
-        <span>RapidReach / Developer briefing</span>
-        <span>Signal over volume</span>
-      </div>
-
-      <div className="shell footer-grid">
-        <div className="footer-intro">
-          <div className="brand footer-brand"><span className="brand-mark">R</span><span>RapidReach</span></div>
-          <p>Developer news, useful analysis, and curated tools for people who build software.</p>
-        </div>
-
-        <div className="footer-columns">
-          <div>
-            <span className="footer-label">Explore</span>
-            <div className="footer-links"><Link href="/#latest">Latest news</Link><Link href="/tools">Developer tools</Link><Link href="/#topics">Topics</Link><Link href="/search">Search</Link></div>
-          </div>
-          <div>
-            <span className="footer-label">Machine access</span>
-            <div className="footer-links"><Link href="/llms.txt">llms.txt</Link><Link href="/api/posts">Posts API</Link><Link href="/api/tools">Tools API</Link><Link href="/sitemap.xml">Sitemap</Link></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="shell footer-wordmark" aria-hidden="true">RapidReach.</div>
-      <div className="shell footer-bottom"><span>© {new Date().getFullYear()} RapidReach</span><span>Built for humans, search engines, and agents.</span></div>
-    </footer>
-  );
+  return <footer className="site-footer"><div className="shell footer-topline"><span>RapidReach / Developer intelligence</span><span>Signal over volume</span></div><div className="shell footer-grid"><div className="footer-intro"><div className="brand footer-brand"><span className="brand-mark">R</span><span>RapidReach</span></div><p>Developer news, practical analysis, and curated tools for people who build software.</p><NewsletterSignup compact /></div><div className="footer-columns"><div><span className="footer-label">Explore</span><div className="footer-links"><Link href="/#latest">Latest news</Link><Link href="/tools">Developer tools</Link><Link href="/launches">Launch board</Link><Link href="/collections">Collections</Link><Link href="/briefing">Weekly briefing</Link><Link href="/search">Search</Link></div></div><div><span className="footer-label">Machine access</span><div className="footer-links"><Link href="/llms.txt">llms.txt</Link><Link href="/api/posts">Posts API</Link><Link href="/api/tools">Tools API</Link><Link href="/sitemap.xml">Sitemap</Link></div></div></div></div><div className="shell footer-wordmark" aria-hidden="true">RapidReach.</div><div className="shell footer-bottom"><span>© {new Date().getFullYear()} RapidReach</span><span>Built for humans, search engines, and agents.</span></div></footer>;
 }
