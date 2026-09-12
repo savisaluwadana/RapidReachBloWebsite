@@ -5,10 +5,14 @@ import { getCategoriesByKind } from "@/lib/categories";
 import { getTools } from "@/lib/tools";
 import { getCollections } from "@/lib/collections";
 
+const description = "Discover and compare developer tools across AI, platform engineering, observability, CI/CD, databases, security, and modern software delivery.";
+
 export const metadata: Metadata = {
   title: "Developer Tools Directory",
-  description: "Discover and compare developer tools across AI, platform engineering, observability, CI/CD, databases, security, and modern software delivery.",
+  description,
   alternates: { canonical: "/tools" },
+  openGraph: { title: "Developer Tools Directory | RapidReach", description, url: "/tools", type: "website" },
+  twitter: { card: "summary_large_image", title: "Developer Tools Directory | RapidReach", description },
 };
 
 export const revalidate = 60;
