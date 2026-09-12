@@ -2,7 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
 
-const mediaKinds = new Set(["tool-logo", "tool-screenshot", "post-featured"]);
+const mediaKinds = new Set(["tool-logo", "tool-screenshot", "post-featured", "post-body"]);
 const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
 export async function POST(request: Request): Promise<NextResponse> {
