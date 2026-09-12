@@ -40,6 +40,14 @@ function validHttpUrl(value: string) {
   }
 }
 
+function validHttpsUrl(value: string) {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function registerAccount(form: FormData) {
   const result = await registerUser({ name: text(form, "name"), email: text(form, "email"), password: raw(form, "password") });
   if (!result.ok) redirect(`/register?error=${encodeURIComponent(result.error)}`);
@@ -92,8 +100,8 @@ export async function saveToolSubmission(form: FormData) {
   const category = text(form, "category");
   if (!name || !tagline || !description || !website || !category) throw new Error("Complete the required submission fields.");
   if (!validHttpUrl(website) || (github && !validHttpUrl(github))) throw new Error("Use valid http/https URLs for the website and GitHub fields.");
-  if (logoUrl && !validHttpUrl(logoUrl)) throw new Error("Use a valid http/https URL for the logo.");
-  if (screenshots.some((url) => !validHttpUrl(url))) throw new Error("Use valid http/https URLs for screenshots.");
+  if (logoUrl && !validHttpsUrl(logoUrl)) throw new Error("Tool logos must use HTTPS URLs.");
+  if (screenshots.some((url) => !validHttpsUrl(url))) throw new Error("Screenshots must use HTTPS URLs.");
   if (!(await db.collection("categories").findOne({ slug: category, kind: "tool" }))) throw new Error("Choose a valid tool category.");
 
   const now = new Date().toISOString();
