@@ -6,9 +6,8 @@ const mediaKinds = new Set(["tool-logo", "tool-screenshot", "post-featured"]);
 const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody;
-
   try {
+    const body = (await request.json()) as HandleUploadBody;
     const response = await handleUpload({
       body,
       request,

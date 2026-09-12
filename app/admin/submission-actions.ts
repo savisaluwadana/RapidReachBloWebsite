@@ -1,6 +1,6 @@
 "use server";
 
-import { ObjectId } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -22,10 +22,11 @@ export async function reviewSubmission(form: FormData) {
   if (!ObjectId.isValid(id) || !allowed.has(requested)) throw new Error("Invalid review action.");
   const db = await getDb();
   const now = new Date().toISOString();
-  await db.collection("tool_submissions").updateOne(
+  const result = await db.collection("tool_submissions").updateOne(
     { _id: new ObjectId(id), status: { $ne: "approved" } },
     { $set: { status: requested, adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, updatedAt: now } },
   );
+  if (!result.matchedCount) throw new Error("This submission has already been approved or no longer exists.");
   revalidatePath("/admin/submissions");
   revalidatePath(`/admin/submissions/${id}`);
   redirect("/admin/submissions");
@@ -35,16 +36,38 @@ export async function approveSubmission(form: FormData) {
   const admin = await requireAdmin();
   const id = text(form, "id");
   if (!ObjectId.isValid(id)) throw new Error("Invalid submission.");
-  const db = await getDb();
-  const submission = await db.collection("tool_submissions").findOne({ _id: new ObjectId(id) });
-  if (!submission) throw new Error("Submission not found.");
-  if (submission.status === "approved" && submission.convertedToolSlug) redirect(`/admin/tools/${submission.convertedToolSlug}/edit`);
 
-  let slug = slugify(String(submission.name || "tool"));
-  if (await db.collection("tools").findOne({ slug })) slug = `${slug}-${id.slice(-6).toLowerCase()}`;
+  const db = await getDb();
+  const tools = db.collection("tools");
+  const submissions = db.collection("tool_submissions");
+
+  // A unique sparse source ID makes approval idempotent even when two admins
+  // submit the approval action at nearly the same time.
+  await tools.createIndex({ sourceSubmissionId: 1 }, { unique: true, sparse: true });
+
+  const submission = await submissions.findOne({ _id: new ObjectId(id) });
+  if (!submission) throw new Error("Submission not found.");
+
+  const existingConvertedTool = await tools.findOne({ sourceSubmissionId: id });
+  if (existingConvertedTool?.slug) {
+    const convertedSlug = String(existingConvertedTool.slug);
+    if (submission.status !== "approved" || submission.convertedToolSlug !== convertedSlug) {
+      const now = new Date().toISOString();
+      await submissions.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: convertedSlug, updatedAt: now } },
+      );
+    }
+    redirect(`/admin/tools/${convertedSlug}/edit`);
+  }
+
+  if (submission.status === "approved" && submission.convertedToolSlug) {
+    redirect(`/admin/tools/${submission.convertedToolSlug}/edit`);
+  }
+
+  const baseSlug = slugify(String(submission.name || "tool"));
   const now = new Date().toISOString();
-  await db.collection("tools").insertOne({
-    slug,
+  const toolDocument = {
     name: String(submission.name || ""),
     tagline: String(submission.tagline || ""),
     description: String(submission.description || ""),
@@ -63,15 +86,43 @@ export async function approveSubmission(form: FormData) {
     updatedAt: now,
     upvotes: 0,
     sourceSubmissionId: id,
-  });
-  await db.collection("tool_submissions").updateOne(
+  };
+
+  let slug = baseSlug;
+  if (await tools.findOne({ slug })) slug = `${baseSlug}-${id.slice(-6).toLowerCase()}`;
+
+  try {
+    await tools.updateOne(
+      { sourceSubmissionId: id },
+      { $setOnInsert: { ...toolDocument, slug } },
+      { upsert: true },
+    );
+  } catch (error) {
+    // A different submission with the same name can win the base-slug race.
+    // Retry with a deterministic submission-specific slug while retaining the
+    // sourceSubmissionId upsert guard.
+    if (!(error instanceof MongoServerError) || error.code !== 11000) throw error;
+    slug = `${baseSlug}-${id.slice(-6).toLowerCase()}`;
+    await tools.updateOne(
+      { sourceSubmissionId: id },
+      { $setOnInsert: { ...toolDocument, slug } },
+      { upsert: true },
+    );
+  }
+
+  const convertedTool = await tools.findOne({ sourceSubmissionId: id }, { projection: { slug: 1 } });
+  if (!convertedTool?.slug) throw new Error("Could not convert the approved submission into a tool.");
+  const convertedSlug = String(convertedTool.slug);
+
+  await submissions.updateOne(
     { _id: new ObjectId(id) },
-    { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: slug, updatedAt: now } },
+    { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: convertedSlug, updatedAt: now } },
   );
+
   revalidatePath("/admin");
   revalidatePath("/admin/submissions");
   revalidatePath("/admin/tools");
-  redirect(`/admin/tools/${slug}/edit`);
+  redirect(`/admin/tools/${convertedSlug}/edit`);
 }
 
 export async function updateUserAccount(form: FormData) {

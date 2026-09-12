@@ -6,6 +6,7 @@ import { ToolCard } from "@/components/ToolCard";
 import { ArticleCard } from "@/components/ArticleCard";
 import { PreferenceButton } from "@/components/PreferenceButton";
 import { getCategory } from "@/lib/categories";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { getToolBySlug, getTools } from "@/lib/tools";
 import { getPosts } from "@/lib/posts";
 
@@ -79,7 +80,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
       {alternativeTools.length > 0 && <section className="tool-related-section"><div className="section-heading"><div><span className="section-kicker">Alternatives</span><h2>Compare before you commit</h2></div></div><div className="tool-list">{alternativeTools.map((item) => <ToolCard key={item.slug} tool={item} />)}</div><div className="comparison-links">{alternativeTools.slice(0,3).map((item) => <Link key={item.slug} href={`/compare/${tool.slug}-vs-${item.slug}`}>{tool.name} vs {item.name} ↗</Link>)}</div></section>}
 
       {relatedPosts.length > 0 && <section className="related-section"><div className="section-heading"><div><span className="section-kicker">Related intelligence</span><h2>Read the context around {tool.name}</h2></div></div><div className="related-grid">{relatedPosts.map((post) => <ArticleCard key={post.slug} post={post} compact />)}</div></section>}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }} />
     </article>
   );
 }
