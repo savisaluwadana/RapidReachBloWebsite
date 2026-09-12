@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const description = "How RapidReach covers developer technology, evaluates tools, separates editorial judgment from promotion, and corrects mistakes.";
+
 export const metadata: Metadata = {
   title: "About & Editorial Standards",
-  description: "How RapidReach covers developer technology, evaluates tools, separates editorial judgment from promotion, and corrects mistakes.",
+  description,
+  alternates: { canonical: "/about" },
+  openGraph: { title: "About & Editorial Standards | RapidReach", description, url: "/about", type: "website" },
+  twitter: { card: "summary_large_image", title: "About & Editorial Standards | RapidReach", description },
 };
 
 const standards = [
