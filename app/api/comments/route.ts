@@ -5,6 +5,8 @@ import { getDb, hasDatabase } from "@/lib/mongodb";
 
 const MAX_SLUG_LENGTH = 180;
 const COMMENT_DEDUPE_WINDOW_MS = 60_000;
+const COMMENT_RATE_WINDOW_MS = 10 * 60_000;
+const COMMENT_RATE_LIMIT = 5;
 let commentIndexesPromise: Promise<void> | null = null;
 
 function noStoreJson(body: unknown, init?: { status?: number }) {
@@ -21,6 +23,7 @@ async function ensureCommentIndexes() {
       await Promise.all([
         db.collection("comments").createIndex({ postSlug: 1, createdAt: -1 }),
         db.collection("comments").createIndex({ dedupeKey: 1 }, { unique: true, sparse: true }),
+        db.collection("comments").createIndex({ rateKey: 1, createdAt: -1 }, { sparse: true }),
       ]);
     })().catch((error) => {
       commentIndexesPromise = null;
@@ -35,6 +38,15 @@ function commentDedupeKey(slug: string, name: string, body: string, now: number)
   return createHash("sha256")
     .update(`${slug}\n${name.toLowerCase()}\n${body}\n${bucket}`)
     .digest("hex");
+}
+
+function requestRateKey(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ip = forwarded || request.headers.get("x-real-ip")?.trim();
+  if (!ip) return null;
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  const salt = process.env.COMMENT_RATE_LIMIT_SALT || "rapidreach-comment-rate-limit";
+  return createHash("sha256").update(`${salt}\n${ip}\n${userAgent}`).digest("hex");
 }
 
 export async function GET(request: NextRequest) {
@@ -87,6 +99,17 @@ export async function POST(request: NextRequest) {
   const now = Date.now();
   const createdAt = new Date(now).toISOString();
   const dedupeKey = commentDedupeKey(slug, name, body, now);
+  const rateKey = requestRateKey(request);
+
+  if (rateKey) {
+    const recentComments = await db.collection("comments").countDocuments({
+      rateKey,
+      createdAt: { $gte: new Date(now - COMMENT_RATE_WINDOW_MS).toISOString() },
+    });
+    if (recentComments >= COMMENT_RATE_LIMIT) {
+      return noStoreJson({ error: "Too many comments submitted. Try again in a few minutes." }, { status: 429 });
+    }
+  }
 
   try {
     const result = await db.collection("comments").insertOne({
@@ -96,6 +119,7 @@ export async function POST(request: NextRequest) {
       createdAt,
       status: "visible",
       dedupeKey,
+      ...(rateKey ? { rateKey } : {}),
     });
     return noStoreJson({ comment: { _id: String(result.insertedId), name, body, createdAt } }, { status: 201 });
   } catch (error) {
