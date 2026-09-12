@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { MongoServerError } from "mongodb";
+import { createHash, randomBytes } from "node:crypto";
+import { MongoServerError, ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 
@@ -24,6 +24,7 @@ async function ensureCommentIndexes() {
         db.collection("comments").createIndex({ postSlug: 1, createdAt: -1 }),
         db.collection("comments").createIndex({ dedupeKey: 1 }, { unique: true, sparse: true }),
         db.collection("comments").createIndex({ rateKey: 1, createdAt: -1 }, { sparse: true }),
+        db.collection("comments").createIndex({ editTokenHash: 1 }, { sparse: true }),
       ]);
     })().catch((error) => {
       commentIndexesPromise = null;
@@ -31,6 +32,10 @@ async function ensureCommentIndexes() {
     });
   }
   return commentIndexesPromise;
+}
+
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 function commentDedupeKey(slug: string, name: string, body: string, now: number) {
@@ -47,6 +52,10 @@ function requestRateKey(request: NextRequest) {
   const userAgent = request.headers.get("user-agent") || "unknown";
   const salt = process.env.COMMENT_RATE_LIMIT_SALT || "rapidreach-comment-rate-limit";
   return createHash("sha256").update(`${salt}\n${ip}\n${userAgent}`).digest("hex");
+}
+
+function cleanBody(value: unknown) {
+  return String(value || "").trim().slice(0, 1200);
 }
 
 export async function GET(request: NextRequest) {
@@ -73,6 +82,7 @@ export async function GET(request: NextRequest) {
       name: String(doc.name),
       body: String(doc.body),
       createdAt: String(doc.createdAt),
+      editedAt: doc.editedAt ? String(doc.editedAt) : undefined,
     })),
   });
 }
@@ -83,7 +93,7 @@ export async function POST(request: NextRequest) {
   const input = await request.json().catch(() => ({}));
   const slug = String(input.slug || "").trim().slice(0, MAX_SLUG_LENGTH);
   const name = String(input.name || "").trim().slice(0, 60);
-  const body = String(input.body || "").trim().slice(0, 1200);
+  const body = cleanBody(input.body);
   if (!slug || name.length < 1 || body.length < 2) {
     return noStoreJson({ error: "Name and comment are required." }, { status: 400 });
   }
@@ -111,6 +121,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const editToken = randomBytes(32).toString("base64url");
+
   try {
     const result = await db.collection("comments").insertOne({
       postSlug: slug,
@@ -119,13 +131,68 @@ export async function POST(request: NextRequest) {
       createdAt,
       status: "visible",
       dedupeKey,
+      editTokenHash: hashToken(editToken),
       ...(rateKey ? { rateKey } : {}),
     });
-    return noStoreJson({ comment: { _id: String(result.insertedId), name, body, createdAt } }, { status: 201 });
+    return noStoreJson({
+      comment: { _id: String(result.insertedId), name, body, createdAt },
+      editToken,
+    }, { status: 201 });
   } catch (error) {
     if (error instanceof MongoServerError && error.code === 11000) {
       return noStoreJson({ error: "That comment was already submitted." }, { status: 409 });
     }
     throw error;
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  if (!hasDatabase()) return noStoreJson({ error: "Comments require MongoDB configuration." }, { status: 503 });
+
+  const input = await request.json().catch(() => ({}));
+  const id = String(input.id || "").trim();
+  const slug = String(input.slug || "").trim().slice(0, MAX_SLUG_LENGTH);
+  const token = String(input.token || "").trim();
+  const body = cleanBody(input.body);
+  if (!ObjectId.isValid(id) || !slug || !token || body.length < 2) {
+    return noStoreJson({ error: "A valid comment and comment text are required." }, { status: 400 });
+  }
+
+  const db = await getDb();
+  const editedAt = new Date().toISOString();
+  const result = await db.collection("comments").updateOne(
+    { _id: new ObjectId(id), postSlug: slug, editTokenHash: hashToken(token), status: { $ne: "hidden" } },
+    { $set: { body, editedAt } },
+  );
+
+  if (!result.matchedCount) {
+    return noStoreJson({ error: "This comment can no longer be edited from this browser." }, { status: 403 });
+  }
+
+  return noStoreJson({ comment: { _id: id, body, editedAt } });
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!hasDatabase()) return noStoreJson({ error: "Comments require MongoDB configuration." }, { status: 503 });
+
+  const input = await request.json().catch(() => ({}));
+  const id = String(input.id || "").trim();
+  const slug = String(input.slug || "").trim().slice(0, MAX_SLUG_LENGTH);
+  const token = String(input.token || "").trim();
+  if (!ObjectId.isValid(id) || !slug || !token) {
+    return noStoreJson({ error: "A valid comment is required." }, { status: 400 });
+  }
+
+  const db = await getDb();
+  const result = await db.collection("comments").deleteOne({
+    _id: new ObjectId(id),
+    postSlug: slug,
+    editTokenHash: hashToken(token),
+  });
+
+  if (!result.deletedCount) {
+    return noStoreJson({ error: "This comment can no longer be deleted from this browser." }, { status: 403 });
+  }
+
+  return noStoreJson({ ok: true });
 }
