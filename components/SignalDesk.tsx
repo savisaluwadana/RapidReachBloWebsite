@@ -8,14 +8,15 @@ function timeLabel(value: string) {
   return new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(date) + " UTC";
 }
 
-export function SignalDesk({ posts }: { posts: Post[] }) {
+export function SignalDesk({ posts, fullPage = false }: { posts: Post[]; fullPage?: boolean }) {
   if (!posts.length) return null;
 
   const [lead, ...stream] = posts.slice(0, 7);
   const leadIso = isoDate(lead.publishedAt);
+  const leadTags = new Set(lead.tags.map((tag) => tag.toLowerCase()));
   const related = posts
     .filter((post) => post.slug !== lead.slug)
-    .filter((post) => post.category === lead.category || post.tags.some((tag) => lead.tags.includes(tag)))
+    .filter((post) => post.category === lead.category || post.tags.some((tag) => leadTags.has(tag.toLowerCase())))
     .slice(0, 3);
 
   return (
@@ -62,7 +63,10 @@ export function SignalDesk({ posts }: { posts: Post[] }) {
               </div>
             </article>
           ))}
-          <div className="signal-stream-footer"><Link href="/#latest">Open the full briefing →</Link><Link href="/search">Search the archive ↗</Link></div>
+          <div className="signal-stream-footer">
+            <Link href={fullPage ? "/briefing" : "/signals"}>{fullPage ? "Read the RapidReach Brief →" : "Open the full Signal Desk →"}</Link>
+            <Link href="/search">Search the archive ↗</Link>
+          </div>
         </div>
       </div>
     </section>
