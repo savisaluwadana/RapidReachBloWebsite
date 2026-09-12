@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
-import { getPosts } from "@/lib/posts";
+import { getAdminPosts, getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
 
 function text(form: FormData, key: string) { return String(form.get(key) || "").trim(); }
@@ -26,6 +26,29 @@ async function requireExistingSlugs(
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
   if (missing.length) throw new Error(`${label} not found: ${missing.join(", ")}`);
+}
+
+export async function getCollectionOptions() {
+  await requireAdmin();
+  const [tools, posts] = await Promise.all([
+    getTools({ includeDrafts: true }),
+    getAdminPosts(),
+  ]);
+
+  return {
+    tools: tools.map((tool) => ({
+      slug: tool.slug,
+      label: tool.name,
+      description: tool.tagline,
+      status: tool.status,
+    })),
+    posts: posts.map((post) => ({
+      slug: post.slug,
+      label: post.title,
+      description: post.summary,
+      status: post.status,
+    })),
+  };
 }
 
 export async function saveCollection(form: FormData) {
