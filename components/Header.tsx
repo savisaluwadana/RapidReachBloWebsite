@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { AccountNav } from "@/components/AccountNav";
 
@@ -6,8 +7,14 @@ export function Header() {
     <header className="site-header">
       <div className="shell nav-shell">
         <Link href="/" className="brand" aria-label="RapidReach home">
-          <span className="brand-mark" aria-hidden="true">R</span>
-          <span className="brand-lockup"><strong>RapidReach</strong><small>Developer intelligence</small></span>
+          <Image
+            src="/brand/rapidreach-logo.png"
+            alt="RapidReach"
+            width={220}
+            height={66}
+            priority
+            style={{ width: "158px", height: "auto", display: "block" }}
+          />
         </Link>
         <nav className="main-nav" aria-label="Primary navigation">
           <Link href="/signals">Signal Desk</Link>
