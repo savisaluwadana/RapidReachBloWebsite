@@ -1,9 +1,23 @@
 import { Db, MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "rapidreach";
+const uri = process.env.MONGODB_URI?.trim();
+const dbName = process.env.MONGODB_DB?.trim() || "rapidreach";
 
-let clientPromise: Promise<MongoClient> | null = null;
+const globalForMongo = globalThis as typeof globalThis & {
+  rapidReachMongoClientPromise?: Promise<MongoClient>;
+};
+
+function createClientPromise() {
+  if (!uri) throw new Error("MONGODB_URI is not configured");
+
+  const client = new MongoClient(uri, {
+    maxPoolSize: 10,
+    minPoolSize: 0,
+    serverSelectionTimeoutMS: 5000,
+  });
+
+  return client.connect();
+}
 
 export function hasDatabase() {
   return Boolean(uri);
@@ -12,11 +26,13 @@ export function hasDatabase() {
 export async function getDb(): Promise<Db> {
   if (!uri) throw new Error("MONGODB_URI is not configured");
 
-  if (!clientPromise) {
-    const client = new MongoClient(uri, { maxPoolSize: 10 });
-    clientPromise = client.connect();
+  if (!globalForMongo.rapidReachMongoClientPromise) {
+    globalForMongo.rapidReachMongoClientPromise = createClientPromise().catch((error) => {
+      globalForMongo.rapidReachMongoClientPromise = undefined;
+      throw error;
+    });
   }
 
-  const client = await clientPromise;
+  const client = await globalForMongo.rapidReachMongoClientPromise;
   return client.db(dbName);
 }
