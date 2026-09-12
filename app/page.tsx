@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { SignalDesk } from "@/components/SignalDesk";
@@ -7,6 +8,21 @@ import { formatDate, isoDate } from "@/lib/public-format";
 import { getTools } from "@/lib/tools";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Developer Intelligence for AI, Cloud Native & Developer Tools",
+  description: "Independent developer intelligence covering AI engineering, developer tools, cloud-native infrastructure, open source, platform engineering, and the workflows changing how software gets built.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "RapidReach — Developer Intelligence",
+    description: "Know what changed. Know what matters across AI engineering, developer tools, cloud native, open source, and software building.",
+    url: "/",
+  },
+  twitter: {
+    title: "RapidReach — Developer Intelligence",
+    description: "Know what changed. Know what matters across the developer ecosystem.",
+  },
+};
 
 export default async function Home() {
   const [posts, categories, tools] = await Promise.all([getPosts(), getCategories(), getTools()]);
