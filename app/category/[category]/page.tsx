@@ -13,10 +13,14 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const { category } = await params;
   const label = await resolveCategory(category);
   if (!label) return { title: "Topic not found", robots: { index: false, follow: false } };
+  const description = `Reporting and analysis from RapidReach’s ${label} desk.`;
+  const url = `/category/${encodeURIComponent(label)}`;
   return {
     title: `${label} News & Analysis`,
-    description: `Reporting and analysis from RapidReach’s ${label} desk.`,
-    alternates: { canonical: `/category/${encodeURIComponent(label)}` },
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${label} News & Analysis | RapidReach`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title: `${label} News & Analysis | RapidReach`, description },
   };
 }
 
