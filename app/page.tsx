@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ToolCard } from "@/components/ToolCard";
 import { getCategories, getPosts } from "@/lib/posts";
+import { formatDate, isoDate } from "@/lib/public-format";
 import { getTools } from "@/lib/tools";
 
 export const revalidate = 60;
@@ -9,6 +10,7 @@ export const revalidate = 60;
 export default async function Home() {
   const [posts, categories, tools] = await Promise.all([getPosts(), getCategories(), getTools()]);
   const [featured, ...rest] = posts;
+  const featuredPublishedIso = featured ? isoDate(featured.publishedAt) : undefined;
 
   return (
     <>
@@ -23,7 +25,7 @@ export default async function Home() {
 
       <section className="topic-strip" id="topics"><div className="shell topic-row"><span>News topics</span>{categories.map((category) => <Link key={category} href={`/category/${encodeURIComponent(category)}`}>{category}</Link>)}<Link className="topic-search" href="/tools">Browse developer tools ↗</Link></div></section>
 
-      {featured && <section className="shell featured-section"><div className="section-heading"><div><span className="section-kicker">Lead story</span><h2>Worth your attention</h2></div><span className="issue-line">Editor’s pick / Latest edition</span></div><article className="featured-story"><div className="featured-rail"><span className="featured-number">01</span><span className="featured-label">Lead</span></div><div className="featured-content"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(featured.category)}`}>{featured.category}</Link><span>•</span><time dateTime={featured.publishedAt}>{new Intl.DateTimeFormat("en", { month: "long", day: "numeric", year: "numeric" }).format(new Date(featured.publishedAt))}</time></div><h2><Link href={`/news/${featured.slug}`}>{featured.title}</Link></h2><p>{featured.summary}</p><div className="featured-footer"><span>{featured.readingMinutes} min read · By {featured.author}</span><Link className="text-link" href={`/news/${featured.slug}`}>Open story <span aria-hidden="true">↗</span></Link></div></div></article></section>}
+      {featured && <section className="shell featured-section"><div className="section-heading"><div><span className="section-kicker">Lead story</span><h2>Worth your attention</h2></div><span className="issue-line">Editor’s pick / Latest edition</span></div><article className="featured-story"><div className="featured-rail"><span className="featured-number">01</span><span className="featured-label">Lead</span></div><div className="featured-content"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(featured.category)}`}>{featured.category}</Link><span>•</span><time dateTime={featuredPublishedIso}>{formatDate(featured.publishedAt, { month: "long", day: "numeric", year: "numeric" })}</time></div><h2><Link href={`/news/${featured.slug}`}>{featured.title}</Link></h2><p>{featured.summary}</p><div className="featured-footer"><span>{featured.readingMinutes} min read · By {featured.author}</span><Link className="text-link" href={`/news/${featured.slug}`}>Open story <span aria-hidden="true">↗</span></Link></div></div></article></section>}
 
       <section className="shell latest-section" id="latest"><div className="section-heading"><div><span className="section-kicker">The latest</span><h2>What developers should know</h2></div><form action="/search" className="search-inline"><input type="search" name="q" placeholder="Search RapidReach" aria-label="Search RapidReach"/><button type="submit">Search ↗</button></form></div><div className="article-grid">{rest.map((post) => <ArticleCard key={post.slug} post={post} />)}</div></section>
 
