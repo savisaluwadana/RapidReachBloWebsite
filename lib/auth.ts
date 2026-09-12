@@ -1,7 +1,7 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { MongoServerError, ObjectId } from "mongodb";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import type { User, UserRole } from "@/lib/types";
@@ -13,6 +13,11 @@ const MAX_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 320;
 const MIN_PASSWORD_LENGTH = 10;
 const MAX_PASSWORD_LENGTH = 1024;
+const AUTH_RATE_COLLECTION = "auth_rate_events";
+const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT = 10;
+const REGISTER_RATE_WINDOW_MS = 30 * 60 * 1000;
+const REGISTER_RATE_LIMIT = 5;
 let indexesPromise: Promise<void> | null = null;
 
 function normalizeEmail(email: string) {
@@ -55,6 +60,8 @@ async function ensureAccountIndexes() {
         db.collection("sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
         db.collection("tool_submissions").createIndex({ userId: 1, updatedAt: -1 }),
         db.collection("tool_submissions").createIndex({ status: 1, updatedAt: -1 }),
+        db.collection(AUTH_RATE_COLLECTION).createIndex({ key: 1, createdAt: -1 }),
+        db.collection(AUTH_RATE_COLLECTION).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
       ]);
     })().catch((error) => {
       indexesPromise = null;
@@ -62,6 +69,33 @@ async function ensureAccountIndexes() {
     });
   }
   return indexesPromise;
+}
+
+async function requestFingerprint() {
+  const requestHeaders = await headers();
+  const forwarded = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ip = forwarded || requestHeaders.get("x-real-ip")?.trim() || "unknown";
+  const userAgent = requestHeaders.get("user-agent") || "unknown";
+  return createHash("sha256").update(`${ip}\n${userAgent}`).digest("hex");
+}
+
+async function rateState(kind: "login" | "register", subject: string, limit: number, windowMs: number) {
+  await ensureAccountIndexes();
+  const db = await getDb();
+  const fingerprint = await requestFingerprint();
+  const key = createHash("sha256").update(`${kind}\n${subject}\n${fingerprint}`).digest("hex");
+  const since = new Date(Date.now() - windowMs);
+  const count = await db.collection(AUTH_RATE_COLLECTION).countDocuments({ key, createdAt: { $gte: since } });
+  return { db, key, limited: count >= limit };
+}
+
+async function recordRateEvent(db: Awaited<ReturnType<typeof getDb>>, key: string, windowMs: number) {
+  const now = new Date();
+  await db.collection(AUTH_RATE_COLLECTION).insertOne({
+    key,
+    createdAt: now,
+    expiresAt: new Date(now.getTime() + windowMs),
+  });
 }
 
 export async function hashPassword(password: string) {
@@ -106,8 +140,11 @@ export async function registerUser(input: { name: string; email: string; passwor
   if (!validEmail(email)) return { ok: false as const, error: "Enter a valid email address." };
   if (!validPasswordLength(input.password)) return { ok: false as const, error: `Use between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters for your password.` };
 
-  await ensureAccountIndexes();
-  const db = await getDb();
+  const rate = await rateState("register", "account-creation", REGISTER_RATE_LIMIT, REGISTER_RATE_WINDOW_MS);
+  if (rate.limited) return { ok: false as const, error: "Too many account creation attempts. Try again later." };
+  await recordRateEvent(rate.db, rate.key, REGISTER_RATE_WINDOW_MS);
+
+  const db = rate.db;
   const now = new Date().toISOString();
   try {
     const result = await db.collection("users").insertOne({
@@ -171,17 +208,31 @@ export async function loginUser(input: { email: string; password: string; requir
   const email = normalizeEmail(input.email);
   if (!validEmail(email) || !validPasswordLength(input.password)) return { ok: false as const, error: "Email or password is incorrect." };
 
-  await ensureAccountIndexes();
-  const db = await getDb();
+  const rate = await rateState("login", email, LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW_MS);
+  if (rate.limited) return { ok: false as const, error: "Too many sign-in attempts. Try again in a few minutes." };
+
+  const db = rate.db;
   let doc = await db.collection("users").findOne({ email });
   if (!doc || (input.requireRole === "admin" && doc.role !== "admin")) {
     const bootstrapped = await maybeBootstrapAdmin(email, input.password);
     if (bootstrapped) doc = bootstrapped;
   }
-  if (!doc || !(await verifyPassword(input.password, String(doc.passwordHash || "")))) return { ok: false as const, error: "Email or password is incorrect." };
-  if (doc.status === "disabled") return { ok: false as const, error: "This account has been disabled." };
+
+  if (!doc || !(await verifyPassword(input.password, String(doc.passwordHash || "")))) {
+    await recordRateEvent(db, rate.key, LOGIN_RATE_WINDOW_MS);
+    return { ok: false as const, error: "Email or password is incorrect." };
+  }
+  if (doc.status === "disabled") {
+    await recordRateEvent(db, rate.key, LOGIN_RATE_WINDOW_MS);
+    return { ok: false as const, error: "This account has been disabled." };
+  }
   const user = publicUser(doc as unknown as Record<string, unknown>);
-  if (input.requireRole && user.role !== input.requireRole) return { ok: false as const, error: "This account does not have admin access." };
+  if (input.requireRole && user.role !== input.requireRole) {
+    await recordRateEvent(db, rate.key, LOGIN_RATE_WINDOW_MS);
+    return { ok: false as const, error: "This account does not have admin access." };
+  }
+
+  await db.collection(AUTH_RATE_COLLECTION).deleteMany({ key: rate.key });
   await setSession(user.id);
   return { ok: true as const, user };
 }
