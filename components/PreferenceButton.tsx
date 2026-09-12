@@ -29,21 +29,27 @@ export function PreferenceButton({ kind, value, label, savedLabel, className = "
       router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
+
     setBusy(true);
-    const response = await fetch("/api/me/preferences", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind, value }),
-    });
-    if (response.status === 401) {
-      router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
-      return;
+    try {
+      const response = await fetch("/api/me/preferences", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind, value }),
+      });
+      if (response.status === 401) {
+        router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+      if (response.ok) {
+        const data = await response.json();
+        setSaved(Boolean(data.saved));
+      }
+    } catch {
+      // Keep the previous state and re-enable the control so the user can retry.
+    } finally {
+      setBusy(false);
     }
-    if (response.ok) {
-      const data = await response.json();
-      setSaved(Boolean(data.saved));
-    }
-    setBusy(false);
   }
 
   return <button type="button" className={className} onClick={toggle} disabled={busy} aria-pressed={saved}>{busy ? "Saving…" : saved ? savedLabel : label}</button>;

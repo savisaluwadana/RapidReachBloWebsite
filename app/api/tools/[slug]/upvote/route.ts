@@ -1,29 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import {
   applyReactionCookie,
   claimReaction,
   getReactionIdentity,
+  hasReaction,
   releaseReaction,
 } from "@/lib/reactions";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  if (!hasDatabase()) {
-    return NextResponse.json({ error: "Upvotes require MongoDB configuration." }, { status: 503 });
-  }
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, { ...init, headers: { "cache-control": "private, no-store" } });
+}
 
-  const { slug } = await params;
+async function findPublishedTool(slug: string) {
   const db = await getDb();
   const tool = await db.collection("tools").findOne(
     { slug, status: "published" },
     { projection: { upvotes: 1 } },
   );
-  if (!tool) return NextResponse.json({ error: "Tool not found." }, { status: 404 });
+  return { db, tool };
+}
 
-  const identity = getReactionIdentity(request);
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  if (!hasDatabase()) return noStoreJson({ error: "Upvotes require MongoDB configuration." }, { status: 503 });
+
+  const { slug } = await params;
+  const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
+  if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
+
+  const identity = getReactionIdentity(request, user?.id);
+  const reacted = await hasReaction(db, {
+    kind: "tool-upvote",
+    target: slug,
+    actorHash: identity.actorHash,
+  });
+  const response = noStoreJson({ upvotes: Number(tool.upvotes || 0), reacted });
+  applyReactionCookie(response, identity.newCookieToken);
+  return response;
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  if (!hasDatabase()) return noStoreJson({ error: "Upvotes require MongoDB configuration." }, { status: 503 });
+
+  const { slug } = await params;
+  const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
+  if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
+
+  const identity = getReactionIdentity(request, user?.id);
   const reaction = {
     kind: "tool-upvote" as const,
     target: slug,
@@ -41,12 +71,12 @@ export async function POST(
 
     if (!updated) {
       await releaseReaction(db, reaction);
-      return NextResponse.json({ error: "Tool not found." }, { status: 404 });
+      return noStoreJson({ error: "Tool not found." }, { status: 404 });
     }
     upvotes = Number(updated.upvotes || 0);
   }
 
-  const response = NextResponse.json({ upvotes, reacted: true });
+  const response = noStoreJson({ upvotes, reacted: true, added: claimed });
   applyReactionCookie(response, identity.newCookieToken);
   return response;
 }

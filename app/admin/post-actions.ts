@@ -28,10 +28,9 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function validHttpUrl(value: string) {
+function validHttpsUrl(value: string) {
   try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    return new URL(value).protocol === "https:";
   } catch {
     return false;
   }
@@ -93,8 +92,8 @@ export async function savePostWithFeedback(
     if (!content) throw new Error("Article body is required.");
 
     const featuredImageUrl = text(form, "featuredImageUrl");
-    if (featuredImageUrl && !validHttpUrl(featuredImageUrl)) {
-      throw new Error("Featured image must use a valid http/https URL.");
+    if (featuredImageUrl && !validHttpsUrl(featuredImageUrl)) {
+      throw new Error("Featured image must use a valid HTTPS URL.");
     }
 
     const category = text(form, "category");

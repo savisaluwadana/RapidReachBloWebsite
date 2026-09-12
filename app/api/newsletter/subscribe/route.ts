@@ -22,11 +22,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null) as { email?: string } | null;
   const email = String(body?.email || "").trim().toLowerCase();
-  if (
-    !email ||
-    email.length > MAX_EMAIL_LENGTH ||
-    !/^\S+@\S+\.\S+$/.test(email)
-  ) {
+  if (!email || email.length > MAX_EMAIL_LENGTH || !/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
@@ -40,33 +36,48 @@ export async function POST(request: NextRequest) {
   );
   const now = new Date().toISOString();
   const sourcePath = signupSourcePath(request);
-  const unsubscribeToken =
-    existing?.status === "unsubscribed" || !existing?.unsubscribeToken
-      ? randomBytes(24).toString("hex")
-      : String(existing.unsubscribeToken);
 
-  const updateFields: Record<string, unknown> = {
+  if (existing?.status === "unsubscribed") {
+    await subscribers.updateOne(
+      { email },
+      {
+        $set: {
+          lastSignupAttemptAt: now,
+          ...(sourcePath ? { lastSourcePath: sourcePath } : {}),
+        },
+      },
+    );
+    return NextResponse.json(
+      { error: "This address is currently unsubscribed. Use the subscription-management link from a previous RapidReach email to resubscribe." },
+      { status: 409 },
+    );
+  }
+
+  if (existing?.status === "active") {
+    await subscribers.updateOne(
+      { email },
+      {
+        $set: {
+          updatedAt: now,
+          lastSignupAt: now,
+          ...(sourcePath ? { lastSourcePath: sourcePath } : {}),
+        },
+      },
+    );
+    return NextResponse.json({ ok: true, alreadySubscribed: true });
+  }
+
+  const unsubscribeToken = randomBytes(24).toString("hex");
+  await subscribers.insertOne({
+    email,
     status: "active",
+    createdAt: now,
+    subscribedAt: now,
     updatedAt: now,
     lastSignupAt: now,
     unsubscribeToken,
-  };
-  if (sourcePath) updateFields.lastSourcePath = sourcePath;
-  if (existing?.status === "unsubscribed") updateFields.resubscribedAt = now;
+    ...(sourcePath ? { sourcePath, lastSourcePath: sourcePath } : {}),
+  });
 
-  await subscribers.updateOne(
-    { email },
-    {
-      $set: updateFields,
-      $setOnInsert: {
-        email,
-        createdAt: now,
-        subscribedAt: now,
-        ...(sourcePath ? { sourcePath } : {}),
-      },
-    },
-    { upsert: true },
-  );
-
-  return NextResponse.json({ ok: true, alreadySubscribed: existing?.status === "active" });
+  return NextResponse.json({ ok: true, alreadySubscribed: false }, { status: 201 });
 }

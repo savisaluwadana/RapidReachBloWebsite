@@ -83,12 +83,16 @@ export function MediaUploader({
     const candidate = externalUrl.trim();
     if (!candidate) return;
     try {
-      new URL(candidate);
+      const parsed = new URL(candidate);
+      if (parsed.protocol !== "https:") {
+        setError("External images must use HTTPS.");
+        return;
+      }
       setUrls((current) => multiple ? [...current, candidate].slice(0, 8) : [candidate]);
       setExternalUrl("");
       setError("");
     } catch {
-      setError("Enter a valid image URL.");
+      setError("Enter a valid HTTPS image URL.");
     }
   }
 
@@ -122,7 +126,7 @@ export function MediaUploader({
           {uploading ? `Uploading ${progress}%` : multiple ? "Upload screenshots" : "Upload image"}
         </label>
         <div className="cms-url-add">
-          <input type="url" value={externalUrl} onChange={(event) => setExternalUrl(event.target.value)} placeholder="Or paste an image URL" />
+          <input type="url" value={externalUrl} onChange={(event) => setExternalUrl(event.target.value)} placeholder="Or paste an HTTPS image URL" />
           <button type="button" onClick={addExternalUrl}>Add URL</button>
         </div>
       </div>

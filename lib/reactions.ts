@@ -18,14 +18,21 @@ function hashReactionToken(token: string) {
   return createHash("sha256").update(`rapidreach:v1:${token}`).digest("hex");
 }
 
-export function getReactionIdentity(request: NextRequest) {
+export function getReactionIdentity(request: NextRequest, userId?: string | null) {
+  if (userId) {
+    return {
+      actorHash: hashReactionToken(`user:${userId}`),
+      newCookieToken: null,
+    };
+  }
+
   const existingToken = request.cookies.get(REACTION_COOKIE)?.value;
   const token = isValidReactionToken(existingToken)
     ? existingToken as string
     : randomBytes(24).toString("base64url");
 
   return {
-    actorHash: hashReactionToken(token),
+    actorHash: hashReactionToken(`anonymous:${token}`),
     newCookieToken: token === existingToken ? null : token,
   };
 }

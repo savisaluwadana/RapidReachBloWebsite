@@ -17,13 +17,9 @@ function normalize(doc: Record<string, unknown>): Category {
 
 export async function getCategoriesByKind(kind: CategoryKind) {
   if (!hasDatabase()) return fallback.filter((category) => category.kind === kind);
-  try {
-    const db = await getDb();
-    const docs = await db.collection("categories").find({ kind }).sort({ name: 1 }).toArray();
-    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
-  } catch {
-    return fallback.filter((category) => category.kind === kind);
-  }
+  const db = await getDb();
+  const docs = await db.collection("categories").find({ kind }).sort({ name: 1 }).toArray();
+  return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
 }
 
 export async function getCategory(kind: CategoryKind, slug: string) {
