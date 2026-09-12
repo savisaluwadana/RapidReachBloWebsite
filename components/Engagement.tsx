@@ -20,6 +20,7 @@ function formatCommentDate(value: string) {
 export function Engagement({ slug, title, initialLikes }: { slug: string; title: string; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
+  const [likeKnown, setLikeKnown] = useState(false);
   const [liking, setLiking] = useState(false);
   const [comments, setComments] = useState<ClientComment[]>([]);
   const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
@@ -53,6 +54,25 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
 
   useEffect(() => {
     let cancelled = false;
+    setLikeKnown(false);
+    setLiked(false);
+    fetch(`/api/posts/${encodeURIComponent(slug)}/like`, { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (cancelled || !data) return;
+        setLikes((current) => Number(data.likes ?? current));
+        setLiked(Boolean(data.reacted));
+      })
+      .finally(() => {
+        if (!cancelled) setLikeKnown(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  useEffect(() => {
+    let cancelled = false;
     fetch(`/api/comments?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : { comments: [] })
       .then((data) => {
@@ -71,14 +91,14 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   }, [slug]);
 
   async function like() {
-    if (liked || liking) return;
+    if (!likeKnown || liked || liking) return;
     setLiking(true);
     try {
       const response = await fetch(`/api/posts/${encodeURIComponent(slug)}/like`, { method: "POST" });
       if (!response.ok) return;
       const data = await response.json();
       setLikes((current) => Number(data.likes ?? current));
-      setLiked(true);
+      setLiked(Boolean(data.reacted));
     } finally {
       setLiking(false);
     }
@@ -242,7 +262,7 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
           <p>If this was useful, save the signal or send it to someone building the same thing.</p>
         </div>
         <div className="engagement-actions">
-          <button className={liked ? "action-button active" : "action-button"} onClick={like} aria-pressed={liked} disabled={liking}>♥ {likes}</button>
+          <button className={liked ? "action-button active" : "action-button"} onClick={like} aria-pressed={liked} disabled={!likeKnown || liking || liked} title={liked ? "You already liked this article" : "Like this article"}>♥ {likes}</button>
           <button className="action-button" onClick={nativeShare}>Share ↗</button>
           <button className="action-button ghost" onClick={() => share("x")}>X</button>
           <button className="action-button ghost" onClick={() => share("linkedin")}>LinkedIn</button>

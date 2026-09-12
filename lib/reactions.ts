@@ -57,6 +57,14 @@ async function ensureReactionIndexes(db: Db) {
   await reactionIndexesPromise;
 }
 
+export async function hasReaction(
+  db: Db,
+  input: { kind: ReactionKind; target: string; actorHash: string },
+) {
+  await ensureReactionIndexes(db);
+  return Boolean(await db.collection(REACTION_COLLECTION).findOne(input, { projection: { _id: 1 } }));
+}
+
 export async function claimReaction(
   db: Db,
   input: { kind: ReactionKind; target: string; actorHash: string },
