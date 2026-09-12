@@ -20,6 +20,14 @@ function datedEntry(
   };
 }
 
+function latestIso(values: Array<string | undefined>) {
+  const latest = values
+    .map((value) => validDate(value))
+    .filter((value): value is Date => Boolean(value))
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+  return latest?.toISOString();
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = normalizedSiteUrl();
   const [posts, tools, toolCategories, collections] = await Promise.all([
@@ -29,35 +37,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getCollections(),
   ]);
   const postCategories = [...new Set(posts.map((post) => post.category).filter(Boolean))];
-  const now = new Date();
+  const latestPostDate = latestIso(posts.map((post) => post.updatedAt || post.publishedAt));
+  const latestToolDate = latestIso(tools.map((tool) => tool.updatedAt || tool.launchedAt));
+  const latestCollectionDate = latestIso(collections.map((item) => item.updatedAt || item.createdAt));
+  const latestSiteDate = latestIso([latestPostDate, latestToolDate, latestCollectionDate]);
 
   return [
-    { url: siteUrl, lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: `${siteUrl}/signals`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
-    { url: `${siteUrl}/search`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
-    { url: `${siteUrl}/tools`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${siteUrl}/collections`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${siteUrl}/briefing`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${siteUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
-    { url: `${siteUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    datedEntry(siteUrl, latestSiteDate, "daily", 1),
+    datedEntry(`${siteUrl}/signals`, latestPostDate, "daily", 0.95),
+    datedEntry(`${siteUrl}/tools`, latestToolDate, "daily", 0.9),
+    datedEntry(`${siteUrl}/collections`, latestCollectionDate, "weekly", 0.8),
+    datedEntry(`${siteUrl}/briefing`, latestSiteDate, "weekly", 0.7),
+    datedEntry(`${siteUrl}/compare`, latestToolDate, "weekly", 0.6),
+    { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
     ...collections.map((item) => datedEntry(
       `${siteUrl}/collections/${encodedPathSegment(item.slug)}`,
       item.updatedAt || item.createdAt,
       "weekly",
       0.8,
     )),
-    ...postCategories.map((category) => ({
-      url: `${siteUrl}/category/${encodedPathSegment(category)}`,
-      lastModified: now,
-      changeFrequency: "daily" as const,
-      priority: 0.7,
-    })),
-    ...toolCategories.map((category) => ({
-      url: `${siteUrl}/tools/category/${encodedPathSegment(category.slug)}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })),
+    ...postCategories.map((category) => datedEntry(
+      `${siteUrl}/category/${encodedPathSegment(category)}`,
+      latestIso(posts.filter((post) => post.category === category).map((post) => post.updatedAt || post.publishedAt)),
+      "daily",
+      0.7,
+    )),
+    ...toolCategories.map((category) => datedEntry(
+      `${siteUrl}/tools/category/${encodedPathSegment(category.slug)}`,
+      latestIso(tools.filter((tool) => tool.category === category.slug).map((tool) => tool.updatedAt || tool.launchedAt)),
+      "weekly",
+      0.7,
+    )),
     ...posts.map((post) => datedEntry(
       `${siteUrl}/news/${encodedPathSegment(post.slug)}`,
       post.updatedAt || post.publishedAt,
