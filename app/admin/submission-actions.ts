@@ -29,6 +29,7 @@ export async function reviewSubmission(form: FormData) {
   if (!result.matchedCount) throw new Error("This submission has already been approved or no longer exists.");
   revalidatePath("/admin/submissions");
   revalidatePath(`/admin/submissions/${id}`);
+  revalidatePath("/dashboard");
   redirect("/admin/submissions");
 }
 
@@ -45,7 +46,8 @@ export async function approveSubmission(form: FormData) {
   // submit the approval action at nearly the same time.
   await tools.createIndex({ sourceSubmissionId: 1 }, { unique: true, sparse: true });
 
-  const submission = await submissions.findOne({ _id: new ObjectId(id) });
+  const submissionId = new ObjectId(id);
+  const submission = await submissions.findOne({ _id: submissionId });
   if (!submission) throw new Error("Submission not found.");
 
   const existingConvertedTool = await tools.findOne({ sourceSubmissionId: id });
@@ -54,15 +56,27 @@ export async function approveSubmission(form: FormData) {
     if (submission.status !== "approved" || submission.convertedToolSlug !== convertedSlug) {
       const now = new Date().toISOString();
       await submissions.updateOne(
-        { _id: new ObjectId(id) },
+        { _id: submissionId },
         { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: convertedSlug, updatedAt: now } },
       );
     }
+    revalidatePath("/dashboard");
     redirect(`/admin/tools/${convertedSlug}/edit`);
   }
 
   if (submission.status === "approved" && submission.convertedToolSlug) {
-    redirect(`/admin/tools/${submission.convertedToolSlug}/edit`);
+    const referencedTool = await tools.findOne(
+      { slug: String(submission.convertedToolSlug) },
+      { projection: { slug: 1 } },
+    );
+    if (referencedTool?.slug) redirect(`/admin/tools/${String(referencedTool.slug)}/edit`);
+
+    // The draft was deleted after approval. Clear the stale pointer and continue
+    // through the normal idempotent conversion path to recreate it.
+    await submissions.updateOne(
+      { _id: submissionId },
+      { $unset: { convertedToolSlug: "" }, $set: { updatedAt: new Date().toISOString() } },
+    );
   }
 
   const baseSlug = slugify(String(submission.name || "tool"));
@@ -115,13 +129,15 @@ export async function approveSubmission(form: FormData) {
   const convertedSlug = String(convertedTool.slug);
 
   await submissions.updateOne(
-    { _id: new ObjectId(id) },
+    { _id: submissionId },
     { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: convertedSlug, updatedAt: now } },
   );
 
   revalidatePath("/admin");
   revalidatePath("/admin/submissions");
+  revalidatePath(`/admin/submissions/${id}`);
   revalidatePath("/admin/tools");
+  revalidatePath("/dashboard");
   redirect(`/admin/tools/${convertedSlug}/edit`);
 }
 
