@@ -9,8 +9,7 @@ import { getCategory } from "@/lib/categories";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { getToolBySlug, getTools } from "@/lib/tools";
 import { getPosts } from "@/lib/posts";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev";
+import { encodedPathSegment, formatDate, normalizedSiteUrl } from "@/lib/public-format";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -36,6 +35,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const alternativeTools = (tool.alternatives || []).map((item) => allTools.find((candidate) => candidate.slug === item)).filter(Boolean) as typeof allTools;
   const explicitPosts = (tool.relatedPostSlugs || []).map((item) => posts.find((post) => post.slug === item)).filter(Boolean) as typeof posts;
   const relatedPosts = (explicitPosts.length ? explicitPosts : posts.filter((post) => post.tags.some((tag) => tool.tags.some((toolTag) => toolTag.toLowerCase().includes(tag.toLowerCase()) || tag.toLowerCase().includes(toolTag.toLowerCase()))))).slice(0, 3);
+  const siteUrl = normalizedSiteUrl();
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -47,7 +47,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
     offers: { "@type": "Offer", price: tool.pricing === "free" || tool.pricing === "open-source" ? "0" : undefined, priceCurrency: "USD" },
     author: tool.maker ? { "@type": "Organization", name: tool.maker } : undefined,
     sameAs: tool.github ? [tool.github] : undefined,
-    mainEntityOfPage: `${siteUrl}/tools/${tool.slug}`,
+    mainEntityOfPage: `${siteUrl}/tools/${encodedPathSegment(tool.slug)}`,
   };
   return (
     <article className="tool-detail-page shell">
@@ -67,7 +67,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
 
       <div className="tool-detail-grid">
         <section className="tool-explanation"><span className="section-kicker">What it does</span><h2>Why developers use {tool.name}</h2>{tool.description.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</section>
-        <aside className="tool-facts"><div><span>Maker</span><strong>{tool.maker || "Not specified"}</strong></div><div><span>Pricing</span><strong>{tool.pricing}</strong></div><div><span>Open source</span><strong>{tool.openSource ? "Yes" : "No"}</strong></div><div><span>Launched</span><strong>{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(tool.launchedAt))}</strong></div><div><span>Tags</span><p>{tool.tags.join(" · ")}</p></div></aside>
+        <aside className="tool-facts"><div><span>Maker</span><strong>{tool.maker || "Not specified"}</strong></div><div><span>Pricing</span><strong>{tool.pricing}</strong></div><div><span>Open source</span><strong>{tool.openSource ? "Yes" : "No"}</strong></div><div><span>Launched</span><strong>{formatDate(tool.launchedAt, { dateStyle: "medium" })}</strong></div><div><span>Tags</span><p>{tool.tags.join(" · ")}</p></div></aside>
       </div>
 
       <section className="decision-grid">
