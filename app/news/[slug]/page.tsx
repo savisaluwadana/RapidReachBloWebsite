@@ -21,12 +21,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return {};
-  const images = post.featuredImageUrl ? [post.featuredImageUrl] : undefined;
+  const images = post.featuredImageUrl ? [post.featuredImageUrl] : ["/opengraph-image"];
   const publishedTime = isoDate(post.publishedAt);
   const modifiedTime = isoDate(post.updatedAt) || publishedTime;
   return {
     title: post.title,
     description: post.summary,
+    keywords: post.tags,
+    authors: [{ name: post.author }],
+    category: post.category,
     alternates: { canonical: `/news/${post.slug}` },
     openGraph: {
       type: "article",
@@ -35,6 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime,
       modifiedTime,
       authors: [post.author],
+      section: post.category,
       tags: post.tags,
       url: `/news/${post.slug}`,
       images,
@@ -52,21 +56,42 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const explicitTools = (post.relatedToolSlugs || []).map((item) => tools.find((tool) => tool.slug === item)).filter(Boolean) as typeof tools;
   const relatedTools = (explicitTools.length ? explicitTools : tools.filter((tool) => tool.tags.some((tag) => post.tags.some((postTag) => tag.toLowerCase().includes(postTag.toLowerCase()) || postTag.toLowerCase().includes(tag.toLowerCase()))))).slice(0, 3);
   const siteUrl = normalizedSiteUrl();
+  const articleUrl = `${siteUrl}/news/${encodedPathSegment(post.slug)}`;
+  const organizationId = `${siteUrl}/#organization`;
+  const websiteId = `${siteUrl}/#website`;
   const publishedIso = isoDate(post.publishedAt);
   const modifiedIso = isoDate(post.updatedAt) || publishedIso;
   const articleSchema = {
-    "@context": "https://schema.org",
     "@type": "NewsArticle",
+    "@id": `${articleUrl}#article`,
     headline: post.title,
     description: post.summary,
-    image: post.featuredImageUrl ? [post.featuredImageUrl] : undefined,
+    image: post.featuredImageUrl ? [post.featuredImageUrl] : [`${siteUrl}/opengraph-image`],
     datePublished: publishedIso,
     dateModified: modifiedIso,
-    author: { "@type": "Organization", name: post.author },
-    publisher: { "@type": "NewsMediaOrganization", name: "RapidReach", url: siteUrl },
-    mainEntityOfPage: `${siteUrl}/news/${encodedPathSegment(post.slug)}`,
+    author: post.author.toLowerCase().includes("rapidreach")
+      ? { "@id": organizationId }
+      : { "@type": "Person", name: post.author },
+    publisher: { "@id": organizationId },
+    isPartOf: { "@id": websiteId },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    url: articleUrl,
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    articleSection: post.category,
     keywords: post.tags.join(", "),
+    about: post.tags.map((tag) => ({ "@type": "Thing", name: tag })),
   };
+  const breadcrumbSchema = {
+    "@type": "BreadcrumbList",
+    "@id": `${articleUrl}#breadcrumbs`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "RapidReach", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: post.category, item: `${siteUrl}/category/${encodedPathSegment(post.category)}` },
+      { "@type": "ListItem", position: 3, name: post.title, item: articleUrl },
+    ],
+  };
+  const structuredData = { "@context": "https://schema.org", "@graph": [articleSchema, breadcrumbSchema] };
 
   return (
     <article className="article-page">
@@ -85,7 +110,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       {relatedTools.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Tools behind the story</span><h2>Explore the software in this context</h2></div><Link className="quiet-link" href="/tools">All tools ↗</Link></div><div className="tool-list">{relatedTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}</div></section>}
       {related.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Keep reading</span><h2>More from the signal desk</h2></div><Link className="quiet-link" href="/#latest">All stories ↗</Link></div><div className="related-grid">{related.map((item) => <ArticleCard key={item.slug} post={item} compact />)}</div></section>}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
     </article>
   );
 }
