@@ -4,10 +4,14 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { SignalDesk } from "@/components/SignalDesk";
 import { getCategories, getPosts } from "@/lib/posts";
 
+const description = "The RapidReach Signal Desk: fast-moving developer intelligence across AI engineering, developer tools, cloud-native infrastructure, open source, and software delivery.";
+
 export const metadata: Metadata = {
   title: "Signal Desk",
-  description: "The RapidReach Signal Desk: fast-moving developer intelligence across AI engineering, developer tools, cloud-native infrastructure, open source, and software delivery.",
+  description,
   alternates: { canonical: "/signals" },
+  openGraph: { title: "Signal Desk | RapidReach", description, url: "/signals", type: "website" },
+  twitter: { card: "summary_large_image", title: "Signal Desk | RapidReach", description },
 };
 
 export const revalidate = 60;
