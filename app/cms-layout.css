@@ -1,0 +1,145 @@
+/* Shared CMS layout rhythm and spacing */
+.cms-page-frame {
+  width: min(calc(100% - 96px), 1280px);
+  margin-inline: auto;
+  padding: 64px 0 112px;
+}
+
+.cms-page-frame > .cms-page {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.cms-page-head {
+  align-items: end;
+  gap: 48px;
+  padding-bottom: 30px;
+  margin-bottom: 40px;
+}
+
+.cms-page-head > div:first-child {
+  min-width: 0;
+  max-width: 780px;
+}
+
+.cms-page-head h1 {
+  font-size: clamp(52px, 5vw, 72px);
+  line-height: .94;
+  margin: 10px 0 8px;
+}
+
+.cms-page-head p {
+  max-width: 720px;
+  line-height: 1.7;
+}
+
+.cms-kicker {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: #777168;
+}
+
+.cms-editor,
+.cms-stack {
+  gap: 22px;
+}
+
+.cms-editor label,
+.cms-stack label {
+  gap: 9px;
+}
+
+.cms-editor input,
+.cms-editor select,
+.cms-stack input,
+.cms-stack select {
+  min-height: 46px;
+}
+
+.cms-editor textarea,
+.cms-stack textarea {
+  min-height: 140px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.cms-editor label > small,
+.cms-stack label > small {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  line-height: 1.55;
+  letter-spacing: .04em;
+  color: #777168;
+}
+
+.cms-editor-actions {
+  gap: 12px;
+  padding-top: 14px;
+  flex-wrap: wrap;
+}
+
+.cms-history {
+  margin-top: 58px;
+}
+
+.cms-table,
+.cms-stat-grid,
+.cms-quick-grid,
+.cms-split,
+.cms-inline-create {
+  scroll-margin-top: 32px;
+}
+
+@media (max-width: 1200px) {
+  .cms-page-frame {
+    width: min(calc(100% - 64px), 1180px);
+    padding: 54px 0 96px;
+  }
+
+  .cms-page-head {
+    gap: 32px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cms-page-frame {
+    width: min(calc(100% - 48px), 1180px);
+    padding: 46px 0 84px;
+  }
+
+  .cms-page-head {
+    align-items: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .cms-page-frame {
+    width: min(calc(100% - 28px), 1180px);
+    padding: 34px 0 72px;
+  }
+
+  .cms-page-frame > .cms-page {
+    width: 100%;
+    padding: 0;
+  }
+
+  .cms-page-head {
+    gap: 18px;
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+  }
+
+  .cms-page-head h1 {
+    font-size: 48px;
+  }
+
+  .cms-editor,
+  .cms-stack {
+    gap: 18px;
+  }
+}
