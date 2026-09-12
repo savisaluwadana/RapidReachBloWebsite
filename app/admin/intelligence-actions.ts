@@ -1,10 +1,12 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import { getAdminPosts, getPosts } from "@/lib/posts";
+import { normalizedSiteUrl } from "@/lib/public-format";
 import { getTools } from "@/lib/tools";
 
 function text(form: FormData, key: string) { return String(form.get(key) || "").trim(); }
@@ -120,7 +122,7 @@ export async function sendWeeklyBriefing(form: FormData) {
   const from = process.env.BRIEFING_FROM_EMAIL;
   if (!apiKey || !from) redirect("/admin/briefing?error=config");
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev").replace(/\/$/, "");
+  const siteUrl = normalizedSiteUrl();
   const subject = text(form, "subject").slice(0, 200) || "RapidReach Weekly Developer Briefing";
   const intro = text(form, "intro").slice(0, 4000);
   const postSlugs = uniqueList(form, "postSlugs", 5);
@@ -133,33 +135,95 @@ export async function sendWeeklyBriefing(form: FormData) {
 
   const subscribers = await database.collection("newsletter_subscribers")
     .find({ status: "active", email: { $type: "string" }, unsubscribeToken: { $type: "string" } })
+    .sort({ email: 1 })
     .toArray();
   if (!subscribers.length) redirect("/admin/briefing?error=no-subscribers");
 
+  const finalPostSlugs = selectedPosts.map((item) => item.slug);
+  const finalToolSlugs = selectedTools.map((item) => item.slug);
+  const sendKey = createHash("sha256").update(JSON.stringify({ subject, intro, postSlugs: finalPostSlugs, toolSlugs: finalToolSlugs })).digest("hex");
+  const jobs = database.collection("briefing_send_jobs");
+  await jobs.createIndex({ sendKey: 1 }, { unique: true, name: "unique_briefing_send" });
+
+  const existingJob = await jobs.findOne({ sendKey });
+  if (existingJob?.status === "complete") {
+    redirect(`/admin/briefing?sent=${Number(existingJob.recipients || subscribers.length)}&duplicate=1`);
+  }
+
+  const recipientSnapshot = existingJob?.recipientSnapshot && Array.isArray(existingJob.recipientSnapshot)
+    ? existingJob.recipientSnapshot
+    : subscribers.map((subscriber) => ({
+        email: String(subscriber.email),
+        unsubscribeToken: String(subscriber.unsubscribeToken),
+      }));
+
+  if (!existingJob) {
+    await jobs.insertOne({
+      sendKey,
+      subject,
+      intro,
+      postSlugs: finalPostSlugs,
+      toolSlugs: finalToolSlugs,
+      recipientSnapshot,
+      recipients: recipientSnapshot.length,
+      completedBatches: [],
+      status: "sending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
   const content = `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;color:#111"><p style="font-size:12px;text-transform:uppercase;letter-spacing:.08em">RapidReach / Weekly Developer Briefing</p><h1>${esc(subject)}</h1><p>${esc(intro || "The developer stories and tools worth your attention this week.")}</p><h2>Stories</h2>${selectedPosts.map((post) => `<p><a href="${siteUrl}/news/${encodeURIComponent(post.slug)}"><strong>${esc(post.title)}</strong></a><br/>${esc(post.summary)}</p>`).join("")}<h2>Tools</h2>${selectedTools.map((tool) => `<p><a href="${siteUrl}/tools/${encodeURIComponent(tool.slug)}"><strong>${esc(tool.name)}</strong></a><br/>${esc(tool.verdict || tool.tagline)}</p>`).join("")}<p style="margin-top:40px;color:#666">Signal over volume. RapidReach.</p></div>`;
 
-  for (let start = 0; start < subscribers.length; start += 100) {
-    const batch = subscribers.slice(start, start + 100).map((subscriber) => ({
+  const latestJob = await jobs.findOne({ sendKey }, { projection: { completedBatches: 1 } });
+  const completedBatches = new Set(Array.isArray(latestJob?.completedBatches) ? latestJob.completedBatches.map(Number) : []);
+
+  for (let start = 0; start < recipientSnapshot.length; start += 100) {
+    const batchIndex = Math.floor(start / 100);
+    if (completedBatches.has(batchIndex)) continue;
+
+    const batch = recipientSnapshot.slice(start, start + 100).map((subscriber) => ({
       from,
       to: [String(subscriber.email)],
       subject,
-      html: content.replace("</div>", `<p style="font-size:11px"><a href="${siteUrl}/api/newsletter/unsubscribe?token=${encodeURIComponent(String(subscriber.unsubscribeToken))}">Unsubscribe</a></p></div>`),
+      html: content.replace("</div>", `<p style="font-size:11px"><a href="${siteUrl}/unsubscribe?token=${encodeURIComponent(String(subscriber.unsubscribeToken))}">Manage subscription</a></p></div>`),
     }));
     const response = await fetch("https://api.resend.com/emails/batch", {
       method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json", "user-agent": "RapidReach/1.0" },
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        "user-agent": "RapidReach/1.0",
+        "Idempotency-Key": `rapidreach-briefing/${sendKey.slice(0, 48)}/${batchIndex}`,
+      },
       body: JSON.stringify(batch),
     });
-    if (!response.ok) throw new Error(`Briefing delivery failed: ${response.status}`);
+    if (!response.ok) {
+      await jobs.updateOne({ sendKey }, { $set: { status: "failed", lastErrorStatus: response.status, updatedAt: new Date().toISOString() } });
+      throw new Error(`Briefing delivery failed: ${response.status}`);
+    }
+    await jobs.updateOne(
+      { sendKey },
+      { $addToSet: { completedBatches: batchIndex }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
+    );
   }
 
-  await database.collection("briefing_sends").insertOne({
-    subject,
-    intro,
-    postSlugs: selectedPosts.map((item) => item.slug),
-    toolSlugs: selectedTools.map((item) => item.slug),
-    recipients: subscribers.length,
-    sentAt: new Date().toISOString(),
-  });
-  redirect(`/admin/briefing?sent=${subscribers.length}`);
+  const sentAt = new Date().toISOString();
+  await jobs.updateOne({ sendKey }, { $set: { status: "complete", sentAt, recipients: recipientSnapshot.length, updatedAt: sentAt } });
+  await database.collection("briefing_sends").updateOne(
+    { sendKey },
+    {
+      $setOnInsert: {
+        sendKey,
+        subject,
+        intro,
+        postSlugs: finalPostSlugs,
+        toolSlugs: finalToolSlugs,
+        recipients: recipientSnapshot.length,
+        sentAt,
+      },
+    },
+    { upsert: true },
+  );
+  redirect(`/admin/briefing?sent=${recipientSnapshot.length}`);
 }
