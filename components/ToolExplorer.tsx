@@ -5,6 +5,11 @@ import Link from "next/link";
 import { ToolCard } from "@/components/ToolCard";
 import type { Category, Tool } from "@/lib/types";
 
+function launchTimestamp(value: string) {
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 export function ToolExplorer({ tools, categories }: { tools: Tool[]; categories: Category[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -20,7 +25,7 @@ export function ToolExplorer({ tools, categories }: { tools: Tool[]; categories:
       .filter((tool) => category === "all" || tool.category === category)
       .filter((tool) => pricing === "all" || tool.pricing === pricing)
       .filter((tool) => !openSource || tool.openSource)
-      .sort((a, b) => sort === "upvotes" ? b.upvotes - a.upvotes : sort === "newest" ? +new Date(b.launchedAt) - +new Date(a.launchedAt) : Number(b.featured) - Number(a.featured) || b.upvotes - a.upvotes);
+      .sort((a, b) => sort === "upvotes" ? b.upvotes - a.upvotes : sort === "newest" ? launchTimestamp(b.launchedAt) - launchTimestamp(a.launchedAt) : Number(b.featured) - Number(a.featured) || b.upvotes - a.upvotes);
   }, [tools, query, category, pricing, openSource, sort]);
 
   function toggle(slug: string) {
