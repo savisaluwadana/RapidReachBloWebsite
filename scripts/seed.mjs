@@ -36,6 +36,7 @@ await db.collection("posts").createIndex({ status:1, publishedAt:-1 });
 await db.collection("comments").createIndex({ postSlug:1, createdAt:-1 });
 await db.collection("categories").createIndex({ kind:1, slug:1 }, { unique:true });
 await db.collection("tools").createIndex({ slug:1 }, { unique:true });
+await db.collection("tools").createIndex({ sourceSubmissionId:1 }, { unique:true, sparse:true });
 await db.collection("tools").createIndex({ status:1, featured:-1, launchedAt:-1 });
 await db.collection("tools").createIndex({ category:1, status:1, launchedAt:-1 });
 for (const post of posts) await db.collection("posts").updateOne({ slug:post.slug }, { $setOnInsert:post }, { upsert:true });
