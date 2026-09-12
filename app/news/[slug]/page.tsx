@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/ArticleCard";
+import { ArticleContent } from "@/components/ArticleContent";
+import layoutStyles from "@/components/ArticlePageLayout.module.css";
 import { ToolCard } from "@/components/ToolCard";
 import { Engagement } from "@/components/Engagement";
 import { PreferenceButton } from "@/components/PreferenceButton";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { getPostBySlug, getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev";
+import { encodedPathSegment, formatDate, isoDate, normalizedSiteUrl } from "@/lib/public-format";
 
 export async function generateStaticParams() {
   const posts = await getPosts();
@@ -21,7 +22,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPostBySlug(slug);
   if (!post) return {};
   const images = post.featuredImageUrl ? [post.featuredImageUrl] : undefined;
-  return { title: post.title, description: post.summary, alternates: { canonical: `/news/${post.slug}` }, openGraph: { type: "article", title: post.title, description: post.summary, publishedTime: post.publishedAt, modifiedTime: post.updatedAt || post.publishedAt, authors: [post.author], tags: post.tags, url: `/news/${post.slug}`, images }, twitter: { card: "summary_large_image", title: post.title, description: post.summary, images } };
+  const publishedTime = isoDate(post.publishedAt);
+  const modifiedTime = isoDate(post.updatedAt) || publishedTime;
+  return {
+    title: post.title,
+    description: post.summary,
+    alternates: { canonical: `/news/${post.slug}` },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.summary,
+      publishedTime,
+      modifiedTime,
+      authors: [post.author],
+      tags: post.tags,
+      url: `/news/${post.slug}`,
+      images,
+    },
+    twitter: { card: "summary_large_image", title: post.title, description: post.summary, images },
+  };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,12 +51,27 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const related = allPosts.filter((item) => item.slug !== post.slug && (item.category === post.category || item.tags.some((tag) => post.tags.includes(tag)))).slice(0, 2);
   const explicitTools = (post.relatedToolSlugs || []).map((item) => tools.find((tool) => tool.slug === item)).filter(Boolean) as typeof tools;
   const relatedTools = (explicitTools.length ? explicitTools : tools.filter((tool) => tool.tags.some((tag) => post.tags.some((postTag) => tag.toLowerCase().includes(postTag.toLowerCase()) || postTag.toLowerCase().includes(tag.toLowerCase()))))).slice(0, 3);
-  const articleSchema = { "@context": "https://schema.org", "@type": "NewsArticle", headline: post.title, description: post.summary, image: post.featuredImageUrl ? [post.featuredImageUrl] : undefined, datePublished: post.publishedAt, dateModified: post.updatedAt || post.publishedAt, author: { "@type": "Organization", name: post.author }, publisher: { "@type": "NewsMediaOrganization", name: "RapidReach", url: siteUrl }, mainEntityOfPage: `${siteUrl}/news/${post.slug}`, keywords: post.tags.join(", ") };
+  const siteUrl = normalizedSiteUrl();
+  const publishedIso = isoDate(post.publishedAt);
+  const modifiedIso = isoDate(post.updatedAt) || publishedIso;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: post.title,
+    description: post.summary,
+    image: post.featuredImageUrl ? [post.featuredImageUrl] : undefined,
+    datePublished: publishedIso,
+    dateModified: modifiedIso,
+    author: { "@type": "Organization", name: post.author },
+    publisher: { "@type": "NewsMediaOrganization", name: "RapidReach", url: siteUrl },
+    mainEntityOfPage: `${siteUrl}/news/${encodedPathSegment(post.slug)}`,
+    keywords: post.tags.join(", "),
+  };
 
   return (
     <article className="article-page">
       <header className="article-hero shell article-shell">
-        <div className="article-hero-top"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link><span>•</span><time dateTime={post.publishedAt}>{new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(new Date(post.publishedAt))}</time></div><span className="article-type">RapidReach Analysis / 001</span></div>
+        <div className="article-hero-top"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link><span>•</span><time dateTime={publishedIso}>{formatDate(post.publishedAt, { dateStyle: "long" })}</time></div><span className="article-type">RapidReach Analysis / 001</span></div>
         <h1>{post.title}</h1><p className="dek">{post.summary}</p>
         <div className="article-ledger"><div><span>Written by</span><strong>{post.author}</strong></div><div><span>Reading time</span><strong>{post.readingMinutes} minutes</strong></div><div><span>Filed under</span><strong>{post.category}</strong></div></div>
         <div className="article-personal-actions"><PreferenceButton kind="post" value={post.slug} label="Save story" savedLabel="Saved ✓" /><PreferenceButton kind="topic" value={post.category} label={`Follow ${post.category}`} savedLabel={`Following ${post.category} ✓`} /></div>
@@ -45,7 +79,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       {post.featuredImageUrl && <figure className="article-featured-media shell"><img src={post.featuredImageUrl} alt={`Featured image for ${post.title}`} /></figure>}
       <div className="article-rule" />
-      <div className="shell article-shell article-body-wrap"><aside className="quick-take"><div className="quick-take-head"><span className="section-kicker">Quick take</span><span aria-hidden="true">↓</span></div><p>{post.summary}</p><ul>{post.keyTakeaways.map((item) => <li key={item}>{item}</li>)}</ul></aside><div className="article-body">{post.content.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}<div className="article-end-mark"><span>RR</span><i /></div><div className="tag-row">{post.tags.map((tag) => <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`}>#{tag}</Link>)}</div></div></div>
+      <div className={`shell article-shell article-body-wrap ${layoutStyles.bodyWrap}`}><aside className="quick-take"><div className="quick-take-head"><span className="section-kicker">Quick take</span><span aria-hidden="true">↓</span></div><p>{post.summary}</p><ul>{post.keyTakeaways.map((item) => <li key={item}>{item}</li>)}</ul></aside><div className="article-body"><ArticleContent content={post.content} /><div className="article-end-mark"><span>RR</span><i /></div><div className="tag-row">{post.tags.map((tag) => <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`}>#{tag}</Link>)}</div></div></div>
 
       <div className="shell article-shell"><Engagement slug={post.slug} title={post.title} initialLikes={post.likes}/></div>
 

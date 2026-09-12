@@ -10,12 +10,25 @@ function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
 }
 
+function raw(form: FormData, key: string) {
+  return String(form.get(key) || "");
+}
+
 function list(form: FormData, key: string) {
   return text(form, key).split(",").map((item) => item.trim()).filter(Boolean);
 }
 
 function safeNext(value: string) {
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
+  const fallback = "/dashboard";
+  if (!value) return fallback;
+  try {
+    const origin = "https://rapidreach.invalid";
+    const target = new URL(value, origin);
+    if (target.origin !== origin) return fallback;
+    return `${target.pathname}${target.search}${target.hash}` || fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function validHttpUrl(value: string) {
@@ -28,14 +41,14 @@ function validHttpUrl(value: string) {
 }
 
 export async function registerAccount(form: FormData) {
-  const result = await registerUser({ name: text(form, "name"), email: text(form, "email"), password: text(form, "password") });
+  const result = await registerUser({ name: text(form, "name"), email: text(form, "email"), password: raw(form, "password") });
   if (!result.ok) redirect(`/register?error=${encodeURIComponent(result.error)}`);
   redirect("/dashboard");
 }
 
 export async function loginAccount(form: FormData) {
   const next = safeNext(text(form, "next") || "/dashboard");
-  const result = await loginUser({ email: text(form, "email"), password: text(form, "password") });
+  const result = await loginUser({ email: text(form, "email"), password: raw(form, "password") });
   if (!result.ok) redirect(`/login?error=${encodeURIComponent(result.error)}&next=${encodeURIComponent(next)}`);
   redirect(result.user.role === "admin" && next === "/dashboard" ? "/admin" : next);
 }

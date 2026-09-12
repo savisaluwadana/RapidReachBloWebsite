@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { formatDate, isoDate } from "@/lib/public-format";
 import type { Post } from "@/lib/types";
 
 export function ArticleCard({ post, compact = false }: { post: Post; compact?: boolean }) {
+  const publishedIso = isoDate(post.publishedAt);
   return (
     <article className={compact ? "article-card compact" : "article-card"}>
       {post.featuredImageUrl && (
@@ -14,8 +16,8 @@ export function ArticleCard({ post, compact = false }: { post: Post; compact?: b
         <div className="eyebrow">
           <Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link>
           <span>•</span>
-          <time dateTime={post.publishedAt}>
-            {new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(post.publishedAt))}
+          <time dateTime={publishedIso}>
+            {formatDate(post.publishedAt, { month: "short", day: "numeric", year: "numeric" })}
           </time>
         </div>
         <span className="card-arrow" aria-hidden="true">↗</span>
