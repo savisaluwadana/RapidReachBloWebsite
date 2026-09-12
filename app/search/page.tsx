@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { ArticleCard } from "@/components/ArticleCard";
 import { searchPosts } from "@/lib/posts";
 
 const MAX_QUERY_LENGTH = 200;
+
+export const metadata: Metadata = {
+  title: "Search",
+  description: "Search RapidReach developer intelligence, analysis, and reporting.",
+  alternates: { canonical: "/search" },
+  robots: { index: false, follow: true },
+};
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
   const { q } = await searchParams;
