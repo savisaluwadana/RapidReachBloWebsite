@@ -21,9 +21,19 @@ export async function generateMetadata({ params }: { params: Promise<{ pair: str
   const { pair } = await params;
   const tools = await getTools();
   const resolved = resolvePair(pair, tools);
-  if (!resolved) return {};
+  if (!resolved) return { title: "Comparison not found", robots: { index: false, follow: false } };
   const [a, b] = resolved;
-  return { title: `${a.name} vs ${b.name}`, description: `Compare ${a.name} and ${b.name}: pricing, open-source status, strengths, trade-offs, best-fit teams, and RapidReach verdicts.`, alternates: { canonical: `/compare/${pair}` } };
+  const title = `${a.name} vs ${b.name}`;
+  const description = `Compare ${a.name} and ${b.name}: pricing, open-source status, strengths, trade-offs, best-fit teams, and RapidReach verdicts.`;
+  const url = `/compare/${pair}`;
+  return {
+    title,
+    description,
+    keywords: [a.name, b.name, `${a.name} vs ${b.name}`, "developer tool comparison"],
+    alternates: { canonical: url },
+    openGraph: { title: `${title} | RapidReach`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title: `${title} | RapidReach`, description },
+  };
 }
 
 export default async function PairComparePage({ params }: { params: Promise<{ pair: string }> }) {
