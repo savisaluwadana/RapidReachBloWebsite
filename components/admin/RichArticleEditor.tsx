@@ -114,7 +114,7 @@ export function RichArticleEditor({ initialContent = "" }: { initialContent?: st
     const label = selected || window.prompt("Link text", "Read more") || "Read more";
     const href = window.prompt("Link URL", "https://");
     if (!href) return;
-    replaceSelection(`[${label.replace(/[\[\]]/g, "")} ](${href.trim()})`.replace("] (", "]("));
+    replaceSelection(`[${label.replace(/[\[\]]/g, "")}](${href.trim()})`);
   }
 
   async function uploadImages(files: File[]) {
@@ -195,6 +195,7 @@ export function RichArticleEditor({ initialContent = "" }: { initialContent?: st
 
   return (
     <section className="cms-rich-editor">
+      <input type="hidden" name="content" value={content} />
       <div className="cms-rich-editor-head">
         <div>
           <span className="cms-media-label">Article body</span>
@@ -237,7 +238,6 @@ export function RichArticleEditor({ initialContent = "" }: { initialContent?: st
         <textarea
           ref={textareaRef}
           className="cms-content-editor cms-rich-textarea"
-          name="content"
           required
           rows={24}
           value={content}
