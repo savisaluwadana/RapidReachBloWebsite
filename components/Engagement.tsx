@@ -20,7 +20,7 @@ function formatCommentDate(value: string) {
 export function Engagement({ slug, title, initialLikes }: { slug: string; title: string; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
-  const [likeKnown, setLikeKnown] = useState(false);
+  const [likeLoadedSlug, setLikeLoadedSlug] = useState<string | null>(null);
   const [liking, setLiking] = useState(false);
   const [comments, setComments] = useState<ClientComment[]>([]);
   const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
@@ -32,6 +32,8 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   const [editingBody, setEditingBody] = useState("");
   const [message, setMessage] = useState("");
   const loading = loadedSlug !== slug;
+  const likeKnown = likeLoadedSlug === slug;
+  const effectiveLiked = likeKnown && liked;
   const loginHref = `/login?next=${encodeURIComponent(`/news/${slug}`)}`;
 
   useEffect(() => {
@@ -54,17 +56,22 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
 
   useEffect(() => {
     let cancelled = false;
-    setLikeKnown(false);
-    setLiked(false);
     fetch(`/api/posts/${encodeURIComponent(slug)}/like`, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
+        if (!data) {
+          setLiked(false);
+          return;
+        }
         setLikes((current) => Number(data.likes ?? current));
         setLiked(Boolean(data.reacted));
       })
+      .catch(() => {
+        if (!cancelled) setLiked(false);
+      })
       .finally(() => {
-        if (!cancelled) setLikeKnown(true);
+        if (!cancelled) setLikeLoadedSlug(slug);
       });
     return () => {
       cancelled = true;
@@ -262,7 +269,7 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
           <p>If this was useful, save the signal or send it to someone building the same thing.</p>
         </div>
         <div className="engagement-actions">
-          <button className={liked ? "action-button active" : "action-button"} onClick={like} aria-pressed={liked} disabled={!likeKnown || liking || liked} title={liked ? "You already liked this article" : "Like this article"}>♥ {likes}</button>
+          <button className={effectiveLiked ? "action-button active" : "action-button"} onClick={like} aria-pressed={effectiveLiked} disabled={!likeKnown || liking || effectiveLiked} title={effectiveLiked ? "You already liked this article" : "Like this article"}>♥ {likes}</button>
           <button className="action-button" onClick={nativeShare}>Share ↗</button>
           <button className="action-button ghost" onClick={() => share("x")}>X</button>
           <button className="action-button ghost" onClick={() => share("linkedin")}>LinkedIn</button>
