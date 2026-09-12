@@ -5,8 +5,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { loginUser, logoutUser, registerUser, requireUser } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
-import { canUserEditSubmission } from "@/lib/submissions";
-import type { ToolSubmissionStatus } from "@/lib/types";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -66,9 +64,13 @@ export async function saveToolSubmission(form: FormData) {
   const description = text(form, "description").slice(0, 8000);
   const website = text(form, "website");
   const github = text(form, "github");
+  const logoUrl = text(form, "logoUrl");
+  const screenshots = list(form, "screenshots").slice(0, 8);
   const category = text(form, "category");
   if (!name || !tagline || !description || !website || !category) throw new Error("Complete the required submission fields.");
   if (!validHttpUrl(website) || (github && !validHttpUrl(github))) throw new Error("Use valid http/https URLs for the website and GitHub fields.");
+  if (logoUrl && !validHttpUrl(logoUrl)) throw new Error("Use a valid http/https URL for the logo.");
+  if (screenshots.some((url) => !validHttpUrl(url))) throw new Error("Use valid http/https URLs for screenshots.");
   if (!(await db.collection("categories").findOne({ slug: category, kind: "tool" }))) throw new Error("Choose a valid tool category.");
 
   const now = new Date().toISOString();
@@ -79,8 +81,8 @@ export async function saveToolSubmission(form: FormData) {
     description,
     website,
     github: github || undefined,
-    logoUrl: text(form, "logoUrl") || undefined,
-    screenshots: list(form, "screenshots").slice(0, 8),
+    logoUrl: logoUrl || undefined,
+    screenshots,
     category,
     pricing: ["free", "freemium", "paid", "open-source"].includes(text(form, "pricing")) ? text(form, "pricing") : "free",
     openSource: form.get("openSource") === "on",
@@ -90,13 +92,13 @@ export async function saveToolSubmission(form: FormData) {
     updatedAt: now,
   };
 
-  if (id && ObjectId.isValid(id)) {
-    const existing = await db.collection("tool_submissions").findOne({ _id: new ObjectId(id), userId: user.id });
-    if (!existing || !canUserEditSubmission(String(existing.status) as ToolSubmissionStatus)) throw new Error("This submission can no longer be edited.");
-    await db.collection("tool_submissions").updateOne(
-      { _id: new ObjectId(id), userId: user.id },
+  if (id) {
+    if (!ObjectId.isValid(id)) throw new Error("Invalid submission identifier.");
+    const result = await db.collection("tool_submissions").updateOne(
+      { _id: new ObjectId(id), userId: user.id, status: { $in: ["pending", "changes_requested"] } },
       { $set: { ...payload, status: "pending" }, $unset: { adminNotes: "", reviewedAt: "", reviewedBy: "" } },
     );
+    if (!result.matchedCount) throw new Error("This submission can no longer be edited.");
   } else {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const recentCount = await db.collection("tool_submissions").countDocuments({ userId: user.id, submittedAt: { $gte: since } });
