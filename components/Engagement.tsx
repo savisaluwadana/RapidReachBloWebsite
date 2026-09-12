@@ -17,39 +17,47 @@ function formatCommentDate(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date);
 }
 
-function tokenKey(id: string) {
-  return `rapidreach:comment-edit-token:${id}`;
-}
-
-function commentToken(id?: string) {
-  if (!id || typeof window === "undefined") return "";
-  return window.localStorage.getItem(tokenKey(id)) || "";
-}
-
 export function Engagement({ slug, title, initialLikes }: { slug: string; title: string; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);
   const [comments, setComments] = useState<ClientComment[]>([]);
   const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
+  const [viewerKnown, setViewerKnown] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [busyCommentId, setBusyCommentId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [message, setMessage] = useState("");
   const loading = loadedSlug !== slug;
+  const loginHref = `/login?next=${encodeURIComponent(`/news/${slug}`)}`;
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/comments?slug=${encodeURIComponent(slug)}`)
+    fetch("/api/me", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : { user: null })
+      .then((data) => {
+        if (!cancelled) setSignedIn(Boolean(data.user));
+      })
+      .catch(() => {
+        if (!cancelled) setSignedIn(false);
+      })
+      .finally(() => {
+        if (!cancelled) setViewerKnown(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/comments?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : { comments: [] })
       .then((data) => {
         if (cancelled) return;
-        const nextComments = (Array.isArray(data.comments) ? data.comments : []).map((comment: ClientComment) => ({
-          ...comment,
-          editable: Boolean(comment._id && commentToken(comment._id)),
-        }));
-        setComments(nextComments);
+        setComments(Array.isArray(data.comments) ? data.comments : []);
       })
       .catch(() => {
         if (!cancelled) setComments([]);
@@ -78,7 +86,7 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
 
   async function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submittingComment) return;
+    if (submittingComment || !signedIn) return;
 
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
@@ -89,22 +97,24 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
       const response = await fetch("/api/comments", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ slug, name: form.get("name"), body: form.get("body") }),
+        body: JSON.stringify({ slug, body: form.get("body") }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        setSignedIn(false);
+        setMessage("Sign in to publish a comment.");
+        return;
+      }
       if (!response.ok) {
         setMessage(typeof data.error === "string" ? data.error : "Could not publish that comment.");
         return;
       }
 
       const created = data.comment as ClientComment;
-      if (created?._id && typeof data.editToken === "string") {
-        window.localStorage.setItem(tokenKey(created._id), data.editToken);
-        created.editable = true;
-      }
+      if (created) created.editable = true;
       setComments((current) => [created, ...current]);
       formElement.reset();
-      setMessage("Comment published. You can edit or delete it from this browser.");
+      setMessage("Comment published.");
     } catch {
       setMessage("Could not publish that comment. Check your connection and try again.");
     } finally {
@@ -120,18 +130,18 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   }
 
   async function saveCommentEdit(id: string) {
-    const token = commentToken(id);
     const body = editingBody.trim();
-    if (!token || body.length < 2 || busyCommentId) return;
+    if (!signedIn || body.length < 2 || busyCommentId) return;
     setBusyCommentId(id);
     setMessage("");
     try {
       const response = await fetch("/api/comments", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, slug, token, body }),
+        body: JSON.stringify({ id, slug, body }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) setSignedIn(false);
       if (!response.ok) {
         setMessage(typeof data.error === "string" ? data.error : "Could not edit that comment.");
         return;
@@ -150,22 +160,21 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   }
 
   async function deleteComment(id: string) {
-    const token = commentToken(id);
-    if (!token || busyCommentId || !window.confirm("Delete this comment permanently?")) return;
+    if (!signedIn || busyCommentId || !window.confirm("Delete this comment permanently?")) return;
     setBusyCommentId(id);
     setMessage("");
     try {
       const response = await fetch("/api/comments", {
         method: "DELETE",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, slug, token }),
+        body: JSON.stringify({ id, slug }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) setSignedIn(false);
       if (!response.ok) {
         setMessage(typeof data.error === "string" ? data.error : "Could not delete that comment.");
         return;
       }
-      window.localStorage.removeItem(tokenKey(id));
       setComments((current) => current.filter((comment) => comment._id !== id));
       if (editingCommentId === id) {
         setEditingCommentId(null);
@@ -183,14 +192,32 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
     const url = window.location.href;
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
+    const encodedBlueskyText = encodeURIComponent(`${title}\n${url}`);
     const targets: Record<string, string> = {
       x: `https://x.com/intent/post?text=${encodedTitle}&url=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
       hn: `https://news.ycombinator.com/submitlink?u=${encodedUrl}&t=${encodedTitle}`,
+      bluesky: `https://bsky.app/intent/compose?text=${encodedBlueskyText}`,
     };
     const target = targets[network];
     if (target) window.open(target, "_blank", "noopener,noreferrer,width=720,height=640");
+  }
+
+  async function instagramShare() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(`${title}\n${url}`);
+      window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+      setMessage("Link copied. Paste it into your Instagram post, story, or message.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setMessage("Could not share to Instagram from this browser.");
+    }
   }
 
   async function nativeShare() {
@@ -219,6 +246,8 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
           <button className="action-button" onClick={nativeShare}>Share ↗</button>
           <button className="action-button ghost" onClick={() => share("x")}>X</button>
           <button className="action-button ghost" onClick={() => share("linkedin")}>LinkedIn</button>
+          <button className="action-button ghost" onClick={() => share("bluesky")}>Bluesky</button>
+          <button className="action-button ghost" onClick={instagramShare}>Instagram</button>
           <button className="action-button ghost" onClick={() => share("reddit")}>Reddit</button>
           <button className="action-button ghost" onClick={() => share("hn")}>Hacker News</button>
         </div>
@@ -230,12 +259,21 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
           <p>Add context, corrections, or a useful counterpoint.</p>
         </div>
 
-        <form className="comment-form" onSubmit={submitComment}>
-          <label>Name<input name="name" required maxLength={60} placeholder="Your name" /></label>
-          <label>Comment<textarea name="body" required minLength={2} maxLength={1200} rows={4} placeholder="What should other builders know?" /></label>
-          <button className="primary-button" type="submit" disabled={submittingComment}>{submittingComment ? "Publishing…" : "Publish comment ↗"}</button>
-          {message && <span className="form-message" role="status">{message}</span>}
-        </form>
+        {!viewerKnown ? (
+          <div className="comment-form"><p className="muted">Checking your sign-in status…</p></div>
+        ) : signedIn ? (
+          <form className="comment-form" onSubmit={submitComment}>
+            <label>Comment<textarea name="body" required minLength={2} maxLength={1200} rows={4} placeholder="What should other builders know?" /></label>
+            <button className="primary-button" type="submit" disabled={submittingComment}>{submittingComment ? "Publishing…" : "Publish comment ↗"}</button>
+            {message && <span className="form-message" role="status">{message}</span>}
+          </form>
+        ) : (
+          <div className="comment-form">
+            <p>Sign in to join the discussion. Your account name will be used automatically.</p>
+            <a className="primary-button" href={loginHref}>Sign in to comment ↗</a>
+            {message && <span className="form-message" role="status">{message}</span>}
+          </div>
+        )}
 
         <div className="comments">
           {loading ? <p className="muted">Loading discussion…</p> : comments.length === 0 ? <p className="muted empty-discussion">No comments yet. Start the useful part of the internet.</p> : comments.map((comment, index) => (
