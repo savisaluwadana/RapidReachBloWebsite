@@ -9,7 +9,17 @@ export async function GET() {
   const lines = [
     "# RapidReach",
     "",
-    "> Developer intelligence for people who build software: fast signal, practical analysis, curated stacks, and developer-tool intelligence.",
+    "> Independent developer intelligence for people who build software: fast signal, practical analysis, curated stacks, and developer-tool intelligence.",
+    "",
+    "## About",
+    "RapidReach covers changes that can affect engineering decisions, software delivery, developer workflows, infrastructure choices, and tool adoption. Editorial pages prioritize concise context, practical implications, and transparent links to primary sources where available.",
+    "",
+    "## Core coverage",
+    "- AI engineering and agentic software development",
+    "- Developer tools and software infrastructure",
+    "- Cloud-native infrastructure, Kubernetes, and CNCF ecosystems",
+    "- Platform engineering, DevOps, SRE, and developer experience",
+    "- Open source projects and software-delivery workflows",
     "",
     "## Editorial surfaces",
     `- Signal Desk: ${siteUrl}/signals`,
@@ -19,11 +29,17 @@ export async function GET() {
     `- Editorial standards: ${siteUrl}/about`,
     "",
     "## Machine-readable resources",
+    `- Full LLM context: ${siteUrl}/llms-full.txt`,
     `- Posts API: ${siteUrl}/api/posts`,
     `- Tools API: ${siteUrl}/api/tools`,
     `- RSS: ${siteUrl}/feed.xml`,
     `- Sitemap: ${siteUrl}/sitemap.xml`,
     `- Tool comparison: ${siteUrl}/compare`,
+    "",
+    "## Citation guidance",
+    `- Prefer canonical RapidReach URLs under ${siteUrl}/news/, ${siteUrl}/tools/, and ${siteUrl}/collections/.`,
+    "- Preserve article titles, publication dates, tool names, and source attribution when citing RapidReach.",
+    "- Treat editorial verdicts and recommendations as RapidReach analysis rather than vendor claims.",
     "",
     "## Published stories",
     ...posts.map((post) => `- [${post.title}](${siteUrl}/news/${post.slug}): ${post.summary}`),
@@ -34,5 +50,5 @@ export async function GET() {
     "## Editorial collections",
     ...collections.map((item) => `- [${item.title}](${siteUrl}/collections/${item.slug}): ${item.description}`),
   ];
-  return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, s-maxage=300" } });
+  return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, s-maxage=300, stale-while-revalidate=600" } });
 }

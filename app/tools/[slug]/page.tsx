@@ -17,12 +17,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!tool) return {};
   const screenshots = tool.screenshots || [];
   const images = [tool.logoUrl, ...screenshots].filter(Boolean) as string[];
+  const socialImages = images.length ? images : ["/opengraph-image"];
   return {
     title: `${tool.name} — Developer Tool Review`,
     description: tool.verdict || tool.tagline,
+    keywords: [...tool.tags, tool.category, "developer tools"],
     alternates: { canonical: `/tools/${tool.slug}` },
-    openGraph: { title: tool.name, description: tool.tagline, url: `/tools/${tool.slug}`, images },
-    twitter: { card: "summary_large_image", title: tool.name, description: tool.tagline, images: images.slice(0, 1) },
+    openGraph: { title: `${tool.name} — Developer Tool Review`, description: tool.verdict || tool.tagline, url: `/tools/${tool.slug}`, images: socialImages },
+    twitter: { card: "summary_large_image", title: `${tool.name} — Developer Tool Review`, description: tool.verdict || tool.tagline, images: socialImages.slice(0, 1) },
   };
 }
 
@@ -36,19 +38,38 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const explicitPosts = (tool.relatedPostSlugs || []).map((item) => posts.find((post) => post.slug === item)).filter(Boolean) as typeof posts;
   const relatedPosts = (explicitPosts.length ? explicitPosts : posts.filter((post) => post.tags.some((tag) => tool.tags.some((toolTag) => toolTag.toLowerCase().includes(tag.toLowerCase()) || tag.toLowerCase().includes(toolTag.toLowerCase()))))).slice(0, 3);
   const siteUrl = normalizedSiteUrl();
+  const toolPageUrl = `${siteUrl}/tools/${encodedPathSegment(tool.slug)}`;
+  const externalUrls = [tool.website, tool.github].filter(Boolean) as string[];
+  const free = tool.pricing === "free" || tool.pricing === "open-source";
   const schema = {
-    "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": `${toolPageUrl}#software`,
     name: tool.name,
     description: tool.description,
-    url: tool.website,
+    url: toolPageUrl,
     image: [tool.logoUrl, ...screenshots].filter(Boolean),
     applicationCategory: category?.name || tool.category,
-    offers: { "@type": "Offer", price: tool.pricing === "free" || tool.pricing === "open-source" ? "0" : undefined, priceCurrency: "USD" },
+    isAccessibleForFree: free,
+    offers: free
+      ? { "@type": "Offer", price: "0", priceCurrency: "USD", url: tool.website, availability: "https://schema.org/InStock" }
+      : { "@type": "Offer", url: tool.website, availability: "https://schema.org/InStock" },
     author: tool.maker ? { "@type": "Organization", name: tool.maker } : undefined,
-    sameAs: tool.github ? [tool.github] : undefined,
-    mainEntityOfPage: `${siteUrl}/tools/${encodedPathSegment(tool.slug)}`,
+    sameAs: externalUrls,
+    mainEntityOfPage: { "@type": "WebPage", "@id": toolPageUrl },
+    inLanguage: "en",
+    keywords: tool.tags.join(", "),
   };
+  const breadcrumbSchema = {
+    "@type": "BreadcrumbList",
+    "@id": `${toolPageUrl}#breadcrumbs`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "RapidReach", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Developer Tools", item: `${siteUrl}/tools` },
+      ...(category ? [{ "@type": "ListItem", position: 3, name: category.name, item: `${siteUrl}/tools/category/${encodedPathSegment(category.slug)}` }] : []),
+      { "@type": "ListItem", position: category ? 4 : 3, name: tool.name, item: toolPageUrl },
+    ],
+  };
+  const structuredData = { "@context": "https://schema.org", "@graph": [schema, breadcrumbSchema] };
   return (
     <article className="tool-detail-page shell">
       <header className="tool-detail-hero">
@@ -80,7 +101,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
       {alternativeTools.length > 0 && <section className="tool-related-section"><div className="section-heading"><div><span className="section-kicker">Alternatives</span><h2>Compare before you commit</h2></div></div><div className="tool-list">{alternativeTools.map((item) => <ToolCard key={item.slug} tool={item} />)}</div><div className="comparison-links">{alternativeTools.slice(0,3).map((item) => <Link key={item.slug} href={`/compare/${tool.slug}-vs-${item.slug}`}>{tool.name} vs {item.name} ↗</Link>)}</div></section>}
 
       {relatedPosts.length > 0 && <section className="related-section"><div className="section-heading"><div><span className="section-kicker">Related intelligence</span><h2>Read the context around {tool.name}</h2></div></div><div className="related-grid">{relatedPosts.map((post) => <ArticleCard key={post.slug} post={post} compact />)}</div></section>}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
     </article>
   );
 }

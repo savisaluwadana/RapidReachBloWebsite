@@ -8,8 +8,16 @@ import { getTools } from "@/lib/tools";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategory("tool", slug);
-  if (!category) return {};
-  return { title: `${category.name} Developer Tools`, description: category.description || `Discover ${category.name} developer tools.`, alternates: { canonical: `/tools/category/${category.slug}` } };
+  if (!category) return { title: "Tool category not found", robots: { index: false, follow: false } };
+  const description = category.description || `Discover ${category.name} developer tools.`;
+  const url = `/tools/category/${category.slug}`;
+  return {
+    title: `${category.name} Developer Tools`,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${category.name} Developer Tools | RapidReach`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title: `${category.name} Developer Tools | RapidReach`, description },
+  };
 }
 
 export default async function ToolCategoryPage({ params }: { params: Promise<{ slug: string }> }) {

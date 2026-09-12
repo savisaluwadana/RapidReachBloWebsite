@@ -3,7 +3,15 @@ import Link from "next/link";
 import { ToolComparison } from "@/components/ToolComparison";
 import { getTools } from "@/lib/tools";
 
-export const metadata: Metadata = { title: "Compare Developer Tools", description: "Compare developer tools across pricing, open-source status, strengths, trade-offs, and RapidReach editorial verdicts." };
+const description = "Compare developer tools across pricing, open-source status, strengths, trade-offs, and RapidReach editorial verdicts.";
+
+export const metadata: Metadata = {
+  title: "Compare Developer Tools",
+  description,
+  alternates: { canonical: "/compare" },
+  openGraph: { title: "Compare Developer Tools | RapidReach", description, url: "/compare", type: "website" },
+  twitter: { card: "summary_large_image", title: "Compare Developer Tools | RapidReach", description },
+};
 export const revalidate = 60;
 
 const MAX_TOOL_SLUG_LENGTH = 120;
