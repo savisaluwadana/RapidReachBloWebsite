@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { deleteTool } from "@/app/admin/actions";
+import { deleteTool } from "@/app/admin/tool-actions";
 import { getTools } from "@/lib/tools";
 
 export default async function ToolsAdmin() {
