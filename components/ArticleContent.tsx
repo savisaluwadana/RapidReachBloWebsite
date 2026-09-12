@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import styles from "./ArticleContent.module.css";
 
 function isSafeHref(href: string) {
   return href.startsWith("https://") || href.startsWith("http://") || href.startsWith("/");
@@ -139,5 +140,5 @@ export function ArticleContent({ content }: { content: string }) {
     blocks.push(<p key={`block-${blockKey++}`}>{renderInline(paragraph.join(" "))}</p>);
   }
 
-  return <>{blocks}</>;
+  return <div className={styles.content}>{blocks}</div>;
 }
