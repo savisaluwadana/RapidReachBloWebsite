@@ -1,0 +1,6 @@
+.comment-owner-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.comment-owner-actions .action-button { min-height: 32px; padding: 7px 11px; font-size: 8px; }
+.comment-edit-form { display: grid; gap: 10px; margin-top: 12px; }
+.comment-edit-form textarea { width: 100%; resize: vertical; min-height: 96px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 12px 14px; font: inherit; line-height: 1.6; }
+.comment-edit-form textarea:focus { outline: 1px solid var(--ink); outline-offset: 2px; }
+.comment-meta > span:last-child:not(.comment-avatar) { font-family: 'DM Mono'; font-size: 7px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
