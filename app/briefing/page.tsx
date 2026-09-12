@@ -3,7 +3,15 @@ import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
 
-export const metadata: Metadata = { title: "Weekly Developer Briefing", description: "Five developer stories and five tools worth knowing each week. No infinite feed, no daily spam.", alternates: { canonical: "/briefing" } };
+const description = "Five developer stories and five tools worth knowing each week. No infinite feed, no daily spam.";
+
+export const metadata: Metadata = {
+  title: "Weekly Developer Briefing",
+  description,
+  alternates: { canonical: "/briefing" },
+  openGraph: { title: "Weekly Developer Briefing | RapidReach", description, url: "/briefing", type: "website" },
+  twitter: { card: "summary_large_image", title: "Weekly Developer Briefing | RapidReach", description },
+};
 export const revalidate = 60;
 
 export default async function BriefingPage({ searchParams }: { searchParams: Promise<{ unsubscribed?: string; resubscribed?: string; subscription?: string }> }) {
