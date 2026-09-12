@@ -6,6 +6,7 @@ import "./media.css";
 import "./account.css";
 import "./nav-auth.css";
 import "./intelligence.css";
+import "./cms-layout.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { serializeJsonLd } from "@/lib/json-ld";
