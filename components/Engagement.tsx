@@ -15,20 +15,23 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);
   const [comments, setComments] = useState<ClientComment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [message, setMessage] = useState("");
+  const loading = loadedSlug !== slug;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetch(`/api/comments?slug=${encodeURIComponent(slug)}`)
       .then((response) => response.ok ? response.json() : { comments: [] })
       .then((data) => {
         if (!cancelled) setComments(data.comments || []);
       })
+      .catch(() => {
+        if (!cancelled) setComments([]);
+      })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedSlug(slug);
       });
     return () => {
       cancelled = true;
@@ -42,7 +45,7 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
       const response = await fetch(`/api/posts/${encodeURIComponent(slug)}/like`, { method: "POST" });
       if (!response.ok) return;
       const data = await response.json();
-      setLikes(Number(data.likes ?? likes));
+      setLikes((current) => Number(data.likes ?? current));
       setLiked(true);
     } finally {
       setLiking(false);
