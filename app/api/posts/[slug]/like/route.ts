@@ -4,8 +4,42 @@ import {
   applyReactionCookie,
   claimReaction,
   getReactionIdentity,
+  hasReaction,
   releaseReaction,
 } from "@/lib/reactions";
+
+async function findPublishedPost(slug: string) {
+  const db = await getDb();
+  const post = await db.collection("posts").findOne(
+    { slug, status: "published" },
+    { projection: { likes: 1 } },
+  );
+  return { db, post };
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  if (!hasDatabase()) {
+    return NextResponse.json({ error: "Likes require MongoDB configuration." }, { status: 503 });
+  }
+
+  const { slug } = await params;
+  const { db, post } = await findPublishedPost(slug);
+  if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
+
+  const identity = getReactionIdentity(request);
+  const reacted = await hasReaction(db, {
+    kind: "post-like",
+    target: slug,
+    actorHash: identity.actorHash,
+  });
+
+  const response = NextResponse.json({ likes: Number(post.likes || 0), reacted });
+  applyReactionCookie(response, identity.newCookieToken);
+  return response;
+}
 
 export async function POST(
   request: NextRequest,
@@ -16,11 +50,7 @@ export async function POST(
   }
 
   const { slug } = await params;
-  const db = await getDb();
-  const post = await db.collection("posts").findOne(
-    { slug, status: "published" },
-    { projection: { likes: 1 } },
-  );
+  const { db, post } = await findPublishedPost(slug);
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
 
   const identity = getReactionIdentity(request);
@@ -46,7 +76,7 @@ export async function POST(
     likes = Number(updated.likes || 0);
   }
 
-  const response = NextResponse.json({ likes, reacted: true });
+  const response = NextResponse.json({ likes, reacted: true, added: claimed });
   applyReactionCookie(response, identity.newCookieToken);
   return response;
 }
