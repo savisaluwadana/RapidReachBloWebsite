@@ -33,12 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: siteUrl, lastModified: now, changeFrequency: "daily", priority: 1 },
+    { url: `${siteUrl}/signals`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
     { url: `${siteUrl}/search`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${siteUrl}/tools`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${siteUrl}/launches`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/collections`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${siteUrl}/briefing`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${siteUrl}/briefing`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${siteUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     ...collections.map((item) => datedEntry(
       `${siteUrl}/collections/${encodedPathSegment(item.slug)}`,
       item.updatedAt || item.createdAt,
