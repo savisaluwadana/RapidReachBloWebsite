@@ -3,8 +3,17 @@ import { notFound } from "next/navigation";
 import { ToolComparison } from "@/components/ToolComparison";
 import { getTools } from "@/lib/tools";
 
+const MAX_PAIR_LENGTH = 300;
+
 function resolvePair(pair: string, tools: Awaited<ReturnType<typeof getTools>>) {
-  for (const first of tools) for (const second of tools) if (first.slug !== second.slug && `${first.slug}-vs-${second.slug}` === pair) return [first, second] as const;
+  if (!pair || pair.length > MAX_PAIR_LENGTH) return null;
+  const bySlug = new Map(tools.map((tool) => [tool.slug, tool]));
+  for (const first of tools) {
+    const prefix = `${first.slug}-vs-`;
+    if (!pair.startsWith(prefix)) continue;
+    const second = bySlug.get(pair.slice(prefix.length));
+    if (second && second.slug !== first.slug) return [first, second] as const;
+  }
   return null;
 }
 
