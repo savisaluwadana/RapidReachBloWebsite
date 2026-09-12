@@ -5,6 +5,7 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { ToolCard } from "@/components/ToolCard";
 import { Engagement } from "@/components/Engagement";
 import { PreferenceButton } from "@/components/PreferenceButton";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { getPostBySlug, getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
 
@@ -50,7 +51,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       {relatedTools.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Tools behind the story</span><h2>Explore the software in this context</h2></div><Link className="quiet-link" href="/tools">All tools ↗</Link></div><div className="tool-list">{relatedTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}</div></section>}
       {related.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Keep reading</span><h2>More from the signal desk</h2></div><Link className="quiet-link" href="/#latest">All stories ↗</Link></div><div className="related-grid">{related.map((item) => <ArticleCard key={item.slug} post={item} compact />)}</div></section>}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleSchema) }} />
     </article>
   );
 }
