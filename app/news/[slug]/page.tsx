@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ArticleContent } from "@/components/ArticleContent";
+import layoutStyles from "@/components/ArticlePageLayout.module.css";
 import { ToolCard } from "@/components/ToolCard";
 import { Engagement } from "@/components/Engagement";
 import { PreferenceButton } from "@/components/PreferenceButton";
@@ -46,7 +47,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       {post.featuredImageUrl && <figure className="article-featured-media shell"><img src={post.featuredImageUrl} alt={`Featured image for ${post.title}`} /></figure>}
       <div className="article-rule" />
-      <div className="shell article-shell article-body-wrap"><aside className="quick-take"><div className="quick-take-head"><span className="section-kicker">Quick take</span><span aria-hidden="true">↓</span></div><p>{post.summary}</p><ul>{post.keyTakeaways.map((item) => <li key={item}>{item}</li>)}</ul></aside><div className="article-body"><ArticleContent content={post.content} /><div className="article-end-mark"><span>RR</span><i /></div><div className="tag-row">{post.tags.map((tag) => <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`}>#{tag}</Link>)}</div></div></div>
+      <div className={`shell article-shell article-body-wrap ${layoutStyles.bodyWrap}`}><aside className="quick-take"><div className="quick-take-head"><span className="section-kicker">Quick take</span><span aria-hidden="true">↓</span></div><p>{post.summary}</p><ul>{post.keyTakeaways.map((item) => <li key={item}>{item}</li>)}</ul></aside><div className="article-body"><ArticleContent content={post.content} /><div className="article-end-mark"><span>RR</span><i /></div><div className="tag-row">{post.tags.map((tag) => <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`}>#{tag}</Link>)}</div></div></div>
 
       <div className="shell article-shell"><Engagement slug={post.slug} title={post.title} initialLikes={post.likes}/></div>
 
