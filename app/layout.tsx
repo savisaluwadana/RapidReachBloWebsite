@@ -47,7 +47,6 @@ export const metadata: Metadata = {
     siteName: "RapidReach",
     title: "RapidReach — Developer Intelligence",
     description: "Signal for people who build software: fast-moving developer news, practical analysis, and tool intelligence.",
-    url: siteUrl,
     locale: "en_US",
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "RapidReach — Developer Intelligence" }],
   },
