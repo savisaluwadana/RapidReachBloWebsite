@@ -8,6 +8,7 @@ import "./nav-auth.css";
 import "./intelligence.css";
 import "./cms-layout.css";
 import "./collection-picker.css";
+import "./article-editor.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { serializeJsonLd } from "@/lib/json-ld";
