@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import {
   applyReactionCookie,
@@ -28,10 +29,10 @@ export async function GET(
   if (!hasDatabase()) return noStoreJson({ error: "Upvotes require MongoDB configuration." }, { status: 503 });
 
   const { slug } = await params;
-  const { db, tool } = await findPublishedTool(slug);
+  const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
   if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request);
+  const identity = getReactionIdentity(request, user?.id);
   const reacted = await hasReaction(db, {
     kind: "tool-upvote",
     target: slug,
@@ -49,10 +50,10 @@ export async function POST(
   if (!hasDatabase()) return noStoreJson({ error: "Upvotes require MongoDB configuration." }, { status: 503 });
 
   const { slug } = await params;
-  const { db, tool } = await findPublishedTool(slug);
+  const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
   if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request);
+  const identity = getReactionIdentity(request, user?.id);
   const reaction = {
     kind: "tool-upvote" as const,
     target: slug,
