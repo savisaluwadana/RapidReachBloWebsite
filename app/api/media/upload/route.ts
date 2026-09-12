@@ -6,8 +6,8 @@ const mediaKinds = new Set(["submission-logo", "submission-screenshot"]);
 const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody;
   try {
+    const body = (await request.json()) as HandleUploadBody;
     const response = await handleUpload({
       body,
       request,
@@ -15,7 +15,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         const user = await getCurrentUser();
         if (!user) throw new Error("Sign in before uploading submission media.");
         let kind = "";
-        try { kind = String(JSON.parse(clientPayload || "{}").kind || ""); } catch { throw new Error("Invalid upload metadata."); }
+        try {
+          kind = String(JSON.parse(clientPayload || "{}").kind || "");
+        } catch {
+          throw new Error("Invalid upload metadata.");
+        }
         if (!mediaKinds.has(kind)) throw new Error("Unsupported media type.");
         if (!pathname.startsWith(`rapidreach/${kind}/`)) throw new Error("Invalid upload path.");
         return {
