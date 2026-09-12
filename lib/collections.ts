@@ -30,22 +30,14 @@ function normalize(doc: Record<string, unknown>): EditorialCollection {
 
 export async function getCollections(includeDrafts = false) {
   if (!hasDatabase()) return starterCollections;
-  try {
-    const db = await getDb();
-    const docs = await db.collection("collections").find(includeDrafts ? {} : { status: "published" }).sort({ featured: -1, updatedAt: -1, createdAt: -1 }).toArray();
-    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
-  } catch {
-    return starterCollections;
-  }
+  const db = await getDb();
+  const docs = await db.collection("collections").find(includeDrafts ? {} : { status: "published" }).sort({ featured: -1, updatedAt: -1, createdAt: -1 }).toArray();
+  return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
 }
 
 export async function getCollectionBySlug(slug: string, includeDrafts = false) {
   if (!hasDatabase()) return starterCollections.find((item) => item.slug === slug) || null;
-  try {
-    const db = await getDb();
-    const doc = await db.collection("collections").findOne(includeDrafts ? { slug } : { slug, status: "published" });
-    return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
-  } catch {
-    return starterCollections.find((item) => item.slug === slug) || null;
-  }
+  const db = await getDb();
+  const doc = await db.collection("collections").findOne(includeDrafts ? { slug } : { slug, status: "published" });
+  return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
 }
