@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCollections } from "@/lib/collections";
 
-export const metadata: Metadata = { title: "Developer Tool Collections", description: "Editorially curated developer stacks and reading lists from RapidReach.", alternates: { canonical: "/collections" } };
+const description = "Editorially curated developer stacks and reading lists from RapidReach.";
+
+export const metadata: Metadata = {
+  title: "Developer Tool Collections",
+  description,
+  alternates: { canonical: "/collections" },
+  openGraph: { title: "Developer Tool Collections | RapidReach", description, url: "/collections", type: "website" },
+  twitter: { card: "summary_large_image", title: "Developer Tool Collections | RapidReach", description },
+};
 export const revalidate = 60;
 
 export default async function CollectionsPage() {
