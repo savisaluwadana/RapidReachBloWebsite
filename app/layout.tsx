@@ -10,6 +10,7 @@ import "./cms-layout.css";
 import "./collection-picker.css";
 import "./article-editor.css";
 import "./brand.css";
+import "./comment-actions.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { serializeJsonLd } from "@/lib/json-ld";
