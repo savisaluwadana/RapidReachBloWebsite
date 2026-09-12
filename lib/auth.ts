@@ -9,10 +9,28 @@ import type { User, UserRole } from "@/lib/types";
 const scrypt = promisify(scryptCallback);
 const SESSION_COOKIE = "rapidreach_session";
 const SESSION_DAYS = 30;
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 320;
+const MIN_PASSWORD_LENGTH = 10;
+const MAX_PASSWORD_LENGTH = 1024;
 let indexesPromise: Promise<void> | null = null;
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function validEmail(email: string) {
+  return Boolean(email && email.length <= MAX_EMAIL_LENGTH && /^\S+@\S+\.\S+$/.test(email));
+}
+
+function validPasswordLength(password: string) {
+  return password.length >= MIN_PASSWORD_LENGTH && password.length <= MAX_PASSWORD_LENGTH;
+}
+
+function secretsEqual(actual: string, expected: string) {
+  const actualHash = createHash("sha256").update(actual).digest();
+  const expectedHash = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(actualHash, expectedHash);
 }
 
 function publicUser(doc: Record<string, unknown>): User {
@@ -54,7 +72,7 @@ export async function hashPassword(password: string) {
 
 export async function verifyPassword(password: string, stored: string) {
   const [scheme, salt, expectedHex] = stored.split("$");
-  if (scheme !== "scrypt" || !salt || !expectedHex) return false;
+  if (scheme !== "scrypt" || !salt || !expectedHex || !validPasswordLength(password)) return false;
   const actual = (await scrypt(password, salt, 64)) as Buffer;
   const expected = Buffer.from(expectedHex, "hex");
   return actual.length === expected.length && timingSafeEqual(actual, expected);
@@ -84,9 +102,9 @@ export async function registerUser(input: { name: string; email: string; passwor
   if (!hasDatabase()) return { ok: false as const, error: "MongoDB must be configured before accounts can be created." };
   const name = input.name.trim();
   const email = normalizeEmail(input.email);
-  if (name.length < 2) return { ok: false as const, error: "Enter your name." };
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false as const, error: "Enter a valid email address." };
-  if (input.password.length < 10) return { ok: false as const, error: "Use at least 10 characters for your password." };
+  if (name.length < 2 || name.length > MAX_NAME_LENGTH) return { ok: false as const, error: "Enter a name between 2 and 100 characters." };
+  if (!validEmail(email)) return { ok: false as const, error: "Enter a valid email address." };
+  if (!validPasswordLength(input.password)) return { ok: false as const, error: `Use between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters for your password.` };
 
   await ensureAccountIndexes();
   const db = await getDb();
@@ -111,20 +129,20 @@ export async function registerUser(input: { name: string; email: string; passwor
 
 async function maybeBootstrapAdmin(email: string, password: string) {
   const configuredPassword = process.env.ADMIN_PASSWORD;
-  const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!configuredPassword || password !== configuredPassword) return null;
-  if (configuredEmail && email !== configuredEmail) return null;
+  const configuredEmail = normalizeEmail(process.env.ADMIN_EMAIL || "");
+  if (!configuredPassword || !validEmail(configuredEmail) || !validPasswordLength(configuredPassword)) return null;
+  if (email !== configuredEmail || !secretsEqual(password, configuredPassword)) return null;
 
   await ensureAccountIndexes();
   const db = await getDb();
   const existingAdmin = await db.collection("users").findOne({ role: "admin" });
   if (existingAdmin) return null;
   const now = new Date().toISOString();
-  const existingUser = await db.collection("users").findOne({ email });
+  const existingUser = await db.collection("users").findOne({ email: configuredEmail });
   if (existingUser) {
     await db.collection("users").updateOne(
       { _id: existingUser._id },
-      { $set: { role: "admin", status: "active", passwordHash: await hashPassword(password), updatedAt: now } },
+      { $set: { role: "admin", status: "active", passwordHash: await hashPassword(configuredPassword), updatedAt: now } },
     );
     return db.collection("users").findOne({ _id: existingUser._id });
   }
@@ -132,8 +150,8 @@ async function maybeBootstrapAdmin(email: string, password: string) {
   try {
     const result = await db.collection("users").insertOne({
       name: "RapidReach Admin",
-      email,
-      passwordHash: await hashPassword(password),
+      email: configuredEmail,
+      passwordHash: await hashPassword(configuredPassword),
       role: "admin",
       status: "active",
       createdAt: now,
@@ -141,7 +159,9 @@ async function maybeBootstrapAdmin(email: string, password: string) {
     });
     return db.collection("users").findOne({ _id: result.insertedId });
   } catch (error) {
-    if (error instanceof MongoServerError && error.code === 11000) return db.collection("users").findOne({ email });
+    if (error instanceof MongoServerError && error.code === 11000) {
+      return db.collection("users").findOne({ email: configuredEmail, role: "admin" });
+    }
     throw error;
   }
 }
@@ -149,6 +169,8 @@ async function maybeBootstrapAdmin(email: string, password: string) {
 export async function loginUser(input: { email: string; password: string; requireRole?: UserRole }) {
   if (!hasDatabase()) return { ok: false as const, error: "MongoDB must be configured before signing in." };
   const email = normalizeEmail(input.email);
+  if (!validEmail(email) || !validPasswordLength(input.password)) return { ok: false as const, error: "Email or password is incorrect." };
+
   await ensureAccountIndexes();
   const db = await getDb();
   let doc = await db.collection("users").findOne({ email });
