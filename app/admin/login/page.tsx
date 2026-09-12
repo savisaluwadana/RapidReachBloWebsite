@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
-import { loginAdmin } from "@/app/admin/actions";
+import { loginAdminAccount } from "@/app/account-actions";
 
 export default async function AdminLogin({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await isAdmin()) redirect("/admin");
@@ -11,7 +11,7 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
         <span className="section-kicker">RapidReach CMS</span>
         <h1>Editorial access.</h1>
         <p>Admin accounts use the same secure account system as RapidReach members, with publishing permissions enforced by role.</p>
-        <form action={loginAdmin} className="cms-stack">
+        <form action={loginAdminAccount} className="cms-stack">
           <label>Email<input type="email" name="email" required autoComplete="email" autoFocus /></label>
           <label>Password<input type="password" name="password" required autoComplete="current-password" /></label>
           {error && <p className="cms-error">{error}</p>}
