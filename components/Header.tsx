@@ -20,7 +20,6 @@ export function Header() {
           <Link href="/signals">Signal Desk</Link>
           <Link href="/briefing">Brief</Link>
           <Link className="nav-tools-link" href="/tools">Tools <span>New</span></Link>
-          <Link href="/launches">Launch Radar</Link>
           <Link href="/about">About</Link>
           <Link className="nav-search" href="/search" aria-label="Search RapidReach">Search <span aria-hidden="true">⌕</span></Link>
         </nav>
@@ -29,7 +28,7 @@ export function Header() {
         </div>
       </div>
       <nav className="mobile-nav shell" aria-label="Mobile navigation">
-        <Link href="/signals">Signal Desk</Link><Link href="/briefing">Brief</Link><Link href="/tools">Tools</Link><Link href="/launches">Launch Radar</Link><Link href="/about">About</Link><Link href="/search">Search</Link><AccountNav mobile />
+        <Link href="/signals">Signal Desk</Link><Link href="/briefing">Brief</Link><Link href="/tools">Tools</Link><Link href="/about">About</Link><Link href="/search">Search</Link><AccountNav mobile />
       </nav>
     </header>
   );

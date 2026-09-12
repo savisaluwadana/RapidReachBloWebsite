@@ -21,7 +21,7 @@ export default async function ToolsPage() {
         <span className="section-kicker">Developer tool intelligence</span>
         <h1>Find the right tool, not just another tool.</h1>
         <p>Search, filter, compare, and evaluate developer products with pricing context, open-source signals, editorial verdicts, alternatives, and practical fit.</p>
-        <div className="tools-hero-actions"><Link className="account-primary" href="/submit-tool">Submit a tool for review</Link><Link className="account-secondary" href="/launches">This week’s launch board</Link><Link className="account-secondary" href="/collections">Editorial collections</Link></div>
+        <div className="tools-hero-actions"><Link className="account-primary" href="/submit-tool">Submit a tool for review</Link><Link className="account-secondary" href="/collections">Editorial collections</Link></div>
         <div className="tools-category-strip">{categories.map((category) => <Link key={category.slug} href={`/tools/category/${category.slug}`}>{category.name}</Link>)}</div>
       </header>
 

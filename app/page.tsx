@@ -27,7 +27,7 @@ export default async function Home() {
         <aside className="hero-index" aria-label="RapidReach intelligence index"><div className="index-head"><span>RapidReach / Intelligence</span><span>Signal desk</span></div><div className="index-stat"><strong>{posts.length}</strong><span>published signals and analysis pieces</span></div><div className="index-stat"><strong>{tools.length}</strong><span>developer tools tracked in discovery</span></div><p>Fast signal when something moves. Deeper analysis when it deserves your time.</p></aside>
       </section>
 
-      <section className="brand-proof-strip" aria-label="RapidReach editorial formats"><div className="shell brand-proof-row"><span>Follow the signal</span><Link href="/signals">Signal Desk <span>Live</span></Link><Link href="/briefing">RapidReach Brief <span>Briefing</span></Link><Link href="/launches">Launch Radar <span>New</span></Link><Link href="/collections">Builder Stacks <span>Curated</span></Link></div></section>
+      <section className="brand-proof-strip" aria-label="RapidReach editorial formats"><div className="shell brand-proof-row"><span>Follow the signal</span><Link href="/signals">Signal Desk <span>Live</span></Link><Link href="/briefing">RapidReach Brief <span>Briefing</span></Link><Link href="/tools">Tool Watch <span>Directory</span></Link><Link href="/collections">Builder Stacks <span>Curated</span></Link></div></section>
 
       <section className="topic-strip" id="topics"><div className="shell topic-row"><span>Intelligence beats</span>{categories.map((category) => <Link key={category} href={`/category/${encodeURIComponent(category)}`}>{category}</Link>)}<Link className="topic-search" href="/about">How RapidReach works ↗</Link></div></section>
 
@@ -38,7 +38,7 @@ export default async function Home() {
         <div className="brand-format-grid">
           <article className="brand-format-card"><span>01 / Daily signal</span><h3>Signal Desk</h3><p>The dense view of what is moving across developer technology, with the important story surfaced first.</p><Link href="/signals">Open the desk →</Link></article>
           <article className="brand-format-card"><span>02 / Briefing</span><h3>RapidReach Brief</h3><p>The small set of stories worth carrying into your day or week, with context instead of headline volume.</p><Link href="/briefing">Read the brief →</Link></article>
-          <article className="brand-format-card"><span>03 / Discovery</span><h3>Launch Radar</h3><p>New developer products and releases filtered for usefulness, not launch-day hype.</p><Link href="/launches">Scan launches →</Link></article>
+          <article className="brand-format-card"><span>03 / Discovery</span><h3>Tool Watch</h3><p>Developer products evaluated with practical context, comparisons, pricing signals, and editorial judgment.</p><Link href="/tools">Explore tools →</Link></article>
           <article className="brand-format-card"><span>04 / Workflow</span><h3>Builder Stacks</h3><p>Curated combinations of tools and patterns for real engineering jobs, workflows, and platform problems.</p><Link href="/collections">Explore stacks →</Link></article>
         </div>
       </section>

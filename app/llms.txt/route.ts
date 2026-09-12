@@ -9,12 +9,11 @@ export async function GET() {
   const lines = [
     "# RapidReach",
     "",
-    "> Developer intelligence for people who build software: fast signal, practical analysis, curated stacks, launches, and developer-tool intelligence.",
+    "> Developer intelligence for people who build software: fast signal, practical analysis, curated stacks, and developer-tool intelligence.",
     "",
     "## Editorial surfaces",
     `- Signal Desk: ${siteUrl}/signals`,
     `- RapidReach Brief: ${siteUrl}/briefing`,
-    `- Launch Radar: ${siteUrl}/launches`,
     `- Builder Stacks: ${siteUrl}/collections`,
     `- Tool Watch: ${siteUrl}/tools`,
     `- Editorial standards: ${siteUrl}/about`,
