@@ -72,6 +72,28 @@ async function requireExistingSlugs(
   if (missing.length) throw new Error(`${label} not found: ${missing.join(", ")}`);
 }
 
+async function pullStringReference(
+  database: Awaited<ReturnType<typeof getDb>>,
+  collectionName: string,
+  filter: Record<string, unknown>,
+  field: string,
+  value: string,
+) {
+  await database.collection(collectionName).updateMany(filter, [
+    {
+      $set: {
+        [field]: {
+          $filter: {
+            input: { $ifNull: [`$${field}`, []] },
+            as: "item",
+            cond: { $ne: ["$$item", value] },
+          },
+        },
+      },
+    },
+  ]);
+}
+
 export async function loginAdmin(form: FormData) {
   const result = await loginUser({ email: text(form, "email"), password: text(form, "password"), requireRole: "admin" });
   if (!result.ok) redirect(`/admin/login?error=${encodeURIComponent(result.error)}`);
@@ -150,9 +172,12 @@ export async function deleteCategory(form: FormData) {
 
   await database.collection("categories").deleteOne({ slug, kind });
   if (kind === "post") {
-    await database.collection("user_preferences").updateMany(
+    await pullStringReference(
+      database,
+      "user_preferences",
       { followedTopics: String(category.name || "") },
-      { $pull: { followedTopics: String(category.name || "") } },
+      "followedTopics",
+      String(category.name || ""),
     );
   }
   revalidatePath("/");
@@ -249,9 +274,9 @@ export async function deletePost(form: FormData) {
   const result = await database.collection("posts").deleteOne({ slug });
   if (result.deletedCount) {
     await Promise.all([
-      database.collection("tools").updateMany({ relatedPostSlugs: slug }, { $pull: { relatedPostSlugs: slug } }),
-      database.collection("collections").updateMany({ postSlugs: slug }, { $pull: { postSlugs: slug } }),
-      database.collection("user_preferences").updateMany({ savedPosts: slug }, { $pull: { savedPosts: slug } }),
+      pullStringReference(database, "tools", { relatedPostSlugs: slug }, "relatedPostSlugs", slug),
+      pullStringReference(database, "collections", { postSlugs: slug }, "postSlugs", slug),
+      pullStringReference(database, "user_preferences", { savedPosts: slug }, "savedPosts", slug),
       database.collection("comments").deleteMany({ postSlug: slug }),
       database.collection("engagement_reactions").deleteMany({ kind: "post-like", target: slug }),
     ]);
@@ -386,10 +411,10 @@ export async function deleteTool(form: FormData) {
   const result = await database.collection("tools").deleteOne({ slug });
   if (result.deletedCount) {
     await Promise.all([
-      database.collection("posts").updateMany({ relatedToolSlugs: slug }, { $pull: { relatedToolSlugs: slug } }),
-      database.collection("tools").updateMany({ alternatives: slug }, { $pull: { alternatives: slug } }),
-      database.collection("collections").updateMany({ toolSlugs: slug }, { $pull: { toolSlugs: slug } }),
-      database.collection("user_preferences").updateMany({ savedTools: slug }, { $pull: { savedTools: slug } }),
+      pullStringReference(database, "posts", { relatedToolSlugs: slug }, "relatedToolSlugs", slug),
+      pullStringReference(database, "tools", { alternatives: slug }, "alternatives", slug),
+      pullStringReference(database, "collections", { toolSlugs: slug }, "toolSlugs", slug),
+      pullStringReference(database, "user_preferences", { savedTools: slug }, "savedTools", slug),
       database.collection("engagement_reactions").deleteMany({ kind: "tool-upvote", target: slug }),
     ]);
   }
