@@ -121,26 +121,18 @@ function fallback(options?: { category?: string; featured?: boolean; includeDraf
 
 export async function getTools(options?: { category?: string; featured?: boolean; includeDrafts?: boolean; launchBoard?: boolean }) {
   if (!hasDatabase()) return fallback(options);
-  try {
-    const db = await getDb();
-    const query: Record<string, unknown> = options?.includeDrafts ? {} : { status: "published" };
-    if (options?.category) query.category = options.category;
-    if (options?.featured !== undefined) query.featured = options.featured;
-    if (options?.launchBoard !== undefined) query.launchBoard = options.launchBoard;
-    const docs = await db.collection("tools").find(query).sort({ featured: -1, launchedAt: -1 }).toArray();
-    return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
-  } catch {
-    return fallback(options);
-  }
+  const db = await getDb();
+  const query: Record<string, unknown> = options?.includeDrafts ? {} : { status: "published" };
+  if (options?.category) query.category = options.category;
+  if (options?.featured !== undefined) query.featured = options.featured;
+  if (options?.launchBoard !== undefined) query.launchBoard = options.launchBoard;
+  const docs = await db.collection("tools").find(query).sort({ featured: -1, launchedAt: -1 }).toArray();
+  return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
 }
 
 export async function getToolBySlug(slug: string, includeDrafts = false) {
   if (!hasDatabase()) return starterTools.find((tool) => tool.slug === slug) || null;
-  try {
-    const db = await getDb();
-    const doc = await db.collection("tools").findOne(includeDrafts ? { slug } : { slug, status: "published" });
-    return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
-  } catch {
-    return starterTools.find((tool) => tool.slug === slug) || null;
-  }
+  const db = await getDb();
+  const doc = await db.collection("tools").findOne(includeDrafts ? { slug } : { slug, status: "published" });
+  return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
 }
