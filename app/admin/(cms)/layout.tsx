@@ -14,6 +14,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
           <Link href="/admin">Overview</Link>
           <Link href="/admin/submissions">Submissions</Link>
           <Link href="/admin/posts">Posts</Link>
+          <Link href="/admin/comments">Comments</Link>
           <Link href="/admin/tools">Tools</Link>
           <Link href="/admin/collections">Collections</Link>
           <Link href="/admin/briefing">Weekly briefing</Link>

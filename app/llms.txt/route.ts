@@ -1,15 +1,23 @@
 import { getCollections } from "@/lib/collections";
 import { getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev";
+import { normalizedSiteUrl } from "@/lib/public-format";
 
 export async function GET() {
+  const siteUrl = normalizedSiteUrl();
   const [posts, tools, collections] = await Promise.all([getPosts(), getTools(), getCollections()]);
   const lines = [
     "# RapidReach",
     "",
-    "> Developer news, analysis, comparisons, curated stacks, launch signals, and developer-tool intelligence for people who build software.",
+    "> Developer intelligence for people who build software: fast signal, practical analysis, curated stacks, launches, and developer-tool intelligence.",
+    "",
+    "## Editorial surfaces",
+    `- Signal Desk: ${siteUrl}/signals`,
+    `- RapidReach Brief: ${siteUrl}/briefing`,
+    `- Launch Radar: ${siteUrl}/launches`,
+    `- Builder Stacks: ${siteUrl}/collections`,
+    `- Tool Watch: ${siteUrl}/tools`,
+    `- Editorial standards: ${siteUrl}/about`,
     "",
     "## Machine-readable resources",
     `- Posts API: ${siteUrl}/api/posts`,
@@ -17,7 +25,6 @@ export async function GET() {
     `- RSS: ${siteUrl}/feed.xml`,
     `- Sitemap: ${siteUrl}/sitemap.xml`,
     `- Tool comparison: ${siteUrl}/compare`,
-    `- Weekly launch board: ${siteUrl}/launches`,
     "",
     "## Published stories",
     ...posts.map((post) => `- [${post.title}](${siteUrl}/news/${post.slug}): ${post.summary}`),

@@ -20,6 +20,8 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
       ? db.collection("tools").findOne({ slug: submission.convertedToolSlug }, { projection: { _id: 1 } })
       : Promise.resolve(null),
   ]);
+  const hasConvertedTool = Boolean(submission.convertedToolSlug && convertedTool);
+
   return (
     <section className="cms-page">
       <header className="cms-page-head"><div><span className="section-kicker">Submission review</span><h1>{submission.name}</h1><p>{submission.tagline}</p></div><Link className="cms-secondary" href="/admin/submissions">Back to queue</Link></header>
@@ -33,13 +35,19 @@ export default async function AdminSubmissionDetail({ params }: { params: Promis
         </div>
         <aside className="cms-panel submission-review-actions">
           <div className="cms-panel-head"><h2>Editorial decision</h2></div>
-          {submission.convertedToolSlug && convertedTool && <div className="cms-success">Converted to draft: <Link href={`/admin/tools/${submission.convertedToolSlug}/edit`}>{submission.convertedToolSlug}</Link></div>}
-          {submission.convertedToolSlug && !convertedTool && <div className="cms-warning">The converted draft <strong>{submission.convertedToolSlug}</strong> was later removed. The submission history is preserved, but there is no tool draft to open.</div>}
+          {hasConvertedTool && <div className="cms-success">Converted to draft: <Link href={`/admin/tools/${submission.convertedToolSlug}/edit`}>{submission.convertedToolSlug}</Link></div>}
+          {submission.convertedToolSlug && !convertedTool && <div className="cms-warning">The converted draft <strong>{submission.convertedToolSlug}</strong> was later removed. The approval is preserved and the draft can be recreated below.</div>}
+
           {submission.status !== "approved" && <>
             <form action={approveSubmission} className="cms-stack"><input type="hidden" name="id" value={submission.id} /><label>Approval note<textarea name="adminNotes" rows={3} defaultValue={submission.adminNotes} placeholder="Optional note recorded with the approval" /></label><button className="cms-primary" type="submit">Approve → create tool draft</button></form>
             <form action={reviewSubmission} className="cms-stack cms-review-form"><input type="hidden" name="id" value={submission.id} /><label>Review note<textarea name="adminNotes" rows={4} defaultValue={submission.adminNotes} placeholder="Tell the submitter what is needed, or record why it was rejected." /></label><div className="cms-decision-grid"><button className="cms-secondary" name="status" value="in_review" type="submit">Mark in review</button><button className="cms-secondary" name="status" value="changes_requested" type="submit">Request changes</button><button className="cms-danger bordered" name="status" value="rejected" type="submit">Reject</button></div></form>
           </>}
-          {submission.status === "approved" && <p className="cms-warning">This request has already been converted into an editable tool draft. Publishing is controlled from the tool editor.</p>}
+
+          {submission.status === "approved" && hasConvertedTool && <p className="cms-warning">This request has already been converted into an editable tool draft. Publishing is controlled from the tool editor.</p>}
+          {submission.status === "approved" && !hasConvertedTool && <>
+            <p className="cms-warning">This submission is approved, but its converted tool draft is missing. Recreate the draft without changing the approval history.</p>
+            <form action={approveSubmission} className="cms-stack"><input type="hidden" name="id" value={submission.id} /><label>Recovery note<textarea name="adminNotes" rows={3} defaultValue={submission.adminNotes} placeholder="Optional note about why the draft was recreated" /></label><button className="cms-primary" type="submit">Recreate tool draft</button></form>
+          </>}
         </aside>
       </div>
     </section>
