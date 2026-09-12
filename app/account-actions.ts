@@ -53,6 +53,16 @@ export async function loginAccount(form: FormData) {
   redirect(result.user.role === "admin" && next === "/dashboard" ? "/admin" : next);
 }
 
+export async function loginAdminAccount(form: FormData) {
+  const result = await loginUser({
+    email: text(form, "email"),
+    password: raw(form, "password"),
+    requireRole: "admin",
+  });
+  if (!result.ok) redirect(`/admin/login?error=${encodeURIComponent(result.error)}`);
+  redirect("/admin");
+}
+
 export async function logoutAccount() {
   await logoutUser();
   redirect("/");

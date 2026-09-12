@@ -22,7 +22,7 @@ function renderLink(label: string, href: string, key: string): ReactNode {
 
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
-  const tokenPattern = /(\[[^\]]+\]\((?:https?:\/\/|\/)[^)\s]+\)|https?:\/\/[^\s<]+|\*\*[^*]+\*\*)/g;
+  const tokenPattern = /(\[[^\]]+\]\((?:https?:\/\/|\/)[^)\s]+\)|https?:\/\/[^\s<]+|\*\*[^*]+\*\*|~~[^~]+~~|`[^`]+`|\*[^*\n]+\*)/g;
   let cursor = 0;
   let match: RegExpExecArray | null;
   let key = 0;
@@ -37,6 +37,12 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(renderLink(markdownLink[1], markdownLink[2], `link-${key++}`));
     } else if (token.startsWith("**") && token.endsWith("**")) {
       nodes.push(<strong key={`strong-${key++}`}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith("~~") && token.endsWith("~~")) {
+      nodes.push(<s key={`strike-${key++}`}>{token.slice(2, -2)}</s>);
+    } else if (token.startsWith("`") && token.endsWith("`")) {
+      nodes.push(<code key={`code-${key++}`}>{token.slice(1, -1)}</code>);
+    } else if (token.startsWith("*") && token.endsWith("*")) {
+      nodes.push(<em key={`em-${key++}`}>{token.slice(1, -1)}</em>);
     } else {
       const trailingMatch = token.match(/^(.*?)([.,;:!?]+)?$/);
       const href = trailingMatch?.[1] || token;
@@ -58,6 +64,8 @@ function isBlockStart(line: string) {
     /^\s*[-*]\s+/.test(line) ||
     /^\s*\d+\.\s+/.test(line) ||
     /^>\s?/.test(line) ||
+    /^```/.test(line) ||
+    /^!\[[^\]]*\]\((?:https?:\/\/|\/)[^)]+\)\s*$/.test(line) ||
     /^\s*(---|\*\*\*)\s*$/.test(line)
   );
 }
@@ -73,6 +81,36 @@ export function ArticleContent({ content }: { content: string }) {
 
     if (!line.trim()) {
       index += 1;
+      continue;
+    }
+
+    const image = line.trim().match(/^!\[([^\]]*)\]\(((?:https?:\/\/|\/)[^)\s]+)(?:\s+"([^"]*)")?\)$/);
+    if (image) {
+      const [, alt, src, caption] = image;
+      blocks.push(
+        <figure className={styles.inlineImage} key={`block-${blockKey++}`}>
+          <img src={src} alt={alt} loading="lazy" />
+          {caption && <figcaption>{caption}</figcaption>}
+        </figure>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (/^```/.test(line)) {
+      const language = line.replace(/^```/, "").trim();
+      const codeLines: string[] = [];
+      index += 1;
+      while (index < lines.length && !/^```\s*$/.test(lines[index])) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      blocks.push(
+        <pre className={styles.codeBlock} key={`block-${blockKey++}`}>
+          <code data-language={language || undefined}>{codeLines.join("\n")}</code>
+        </pre>,
+      );
       continue;
     }
 
