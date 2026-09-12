@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import {
   applyReactionCookie,
@@ -26,10 +27,10 @@ export async function GET(
   }
 
   const { slug } = await params;
-  const { db, post } = await findPublishedPost(slug);
+  const [{ db, post }, user] = await Promise.all([findPublishedPost(slug), getCurrentUser()]);
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request);
+  const identity = getReactionIdentity(request, user?.id);
   const reacted = await hasReaction(db, {
     kind: "post-like",
     target: slug,
@@ -50,10 +51,10 @@ export async function POST(
   }
 
   const { slug } = await params;
-  const { db, post } = await findPublishedPost(slug);
+  const [{ db, post }, user] = await Promise.all([findPublishedPost(slug), getCurrentUser()]);
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request);
+  const identity = getReactionIdentity(request, user?.id);
   const reaction = {
     kind: "post-like" as const,
     target: slug,
