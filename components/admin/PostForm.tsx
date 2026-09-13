@@ -11,6 +11,8 @@ const initialState: PostSaveState = { error: "" };
 export function PostForm({ post, categories }: { post?: Post | null; categories: Category[] }) {
   const [state, formAction, pending] = useActionState(savePostWithFeedback, initialState);
   const hasCategories = categories.length > 0;
+  const sourcesValue = post?.sources?.map((source) => `${source.title} | ${source.url}`).join("\n") || "";
+  const correctionsValue = post?.corrections?.map((correction) => `${correction.date} | ${correction.note}`).join("\n") || "";
 
   return (
     <form action={formAction} className="cms-editor">
@@ -23,6 +25,8 @@ export function PostForm({ post, categories }: { post?: Post | null; categories:
       <label>Tags<input name="tags" defaultValue={post?.tags.join(", ")} placeholder="kubernetes, devtools, open source" /></label>
       <label>Related tool slugs<input name="relatedToolSlugs" defaultValue={post?.relatedToolSlugs?.join(", ")} placeholder="openchoreo, opentelemetry" /><small>These tools appear directly below the article as related software.</small></label>
       <label>Key takeaways<textarea name="keyTakeaways" rows={4} defaultValue={post?.keyTakeaways.join("\n")} placeholder="One takeaway per line" /></label>
+      <label>Sources<textarea name="sources" rows={5} defaultValue={sourcesValue} placeholder="Kubernetes docs | https://kubernetes.io/docs/..." /><small>One source per line using: source title | https://source-url</small></label>
+      <label>Corrections / update notes<textarea name="corrections" rows={4} defaultValue={correctionsValue} placeholder="2026-09-13 | Clarified the deployment behavior after upstream documentation changed." /><small>One entry per line using: YYYY-MM-DD | correction or material update note.</small></label>
       <RichArticleEditor initialContent={post?.content || ""} />
       {state.error && <div className="cms-warning" role="alert"><strong>Couldn’t save this post.</strong><br />{state.error}</div>}
       <div className="cms-editor-actions"><button className="cms-primary" type="submit" disabled={pending || !hasCategories}>{pending ? "Saving…" : post ? "Save changes" : "Create post"}</button><a className="cms-secondary" href="/admin/posts">Cancel</a></div>

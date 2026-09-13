@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { authorSlug } from "@/lib/authors";
 import { getCategoriesByKind } from "@/lib/categories";
 import { getCollections } from "@/lib/collections";
 import { getPosts } from "@/lib/posts";
@@ -37,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getCollections(),
   ]);
   const postCategories = [...new Set(posts.map((post) => post.category).filter(Boolean))];
+  const authors = [...new Set(posts.map((post) => authorSlug(post.author)).filter(Boolean))];
   const latestPostDate = latestIso(posts.map((post) => post.updatedAt || post.publishedAt));
   const latestToolDate = latestIso(tools.map((tool) => tool.updatedAt || tool.launchedAt));
   const latestCollectionDate = latestIso(collections.map((item) => item.updatedAt || item.createdAt));
@@ -50,6 +52,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     datedEntry(`${siteUrl}/briefing`, latestSiteDate, "weekly", 0.7),
     datedEntry(`${siteUrl}/compare`, latestToolDate, "weekly", 0.6),
     { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
+    ...authors.map((slug) => datedEntry(
+      `${siteUrl}/authors/${encodedPathSegment(slug)}`,
+      latestIso(posts.filter((post) => authorSlug(post.author) === slug).map((post) => post.updatedAt || post.publishedAt)),
+      "weekly",
+      0.7,
+    )),
     ...collections.map((item) => datedEntry(
       `${siteUrl}/collections/${encodedPathSegment(item.slug)}`,
       item.updatedAt || item.createdAt,

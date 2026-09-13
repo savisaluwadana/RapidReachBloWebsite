@@ -1,3 +1,13 @@
+export type PostSource = {
+  title: string;
+  url: string;
+};
+
+export type PostCorrection = {
+  date: string;
+  note: string;
+};
+
 export type Post = {
   slug: string;
   title: string;
@@ -12,6 +22,8 @@ export type Post = {
   tags: string[];
   keyTakeaways: string[];
   relatedToolSlugs?: string[];
+  sources?: PostSource[];
+  corrections?: PostCorrection[];
   likes: number;
   status: "published" | "draft";
 };
