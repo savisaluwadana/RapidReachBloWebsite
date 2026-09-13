@@ -4,7 +4,9 @@ import { MongoServerError } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
+import { authorSlug } from "@/lib/authors";
 import { getDb, hasDatabase } from "@/lib/mongodb";
+import type { PostCorrection, PostSource } from "@/lib/types";
 
 export type PostSaveState = { error: string };
 
@@ -34,6 +36,31 @@ function validHttpsUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function parseSources(form: FormData): PostSource[] {
+  return lines(form, "sources").slice(0, 30).map((line, index) => {
+    const separator = line.indexOf("|");
+    if (separator < 1) throw new Error(`Source ${index + 1} must use: title | https://url`);
+    const title = line.slice(0, separator).trim().slice(0, 240);
+    const url = line.slice(separator + 1).trim().slice(0, 2048);
+    if (!title || !validHttpsUrl(url)) throw new Error(`Source ${index + 1} must include a title and valid HTTPS URL.`);
+    return { title, url };
+  });
+}
+
+function parseCorrections(form: FormData): PostCorrection[] {
+  return lines(form, "corrections").slice(0, 20).map((line, index) => {
+    const separator = line.indexOf("|");
+    if (separator < 1) throw new Error(`Correction ${index + 1} must use: YYYY-MM-DD | note`);
+    const rawDate = line.slice(0, separator).trim();
+    const note = line.slice(separator + 1).trim().slice(0, 1000);
+    const date = new Date(`${rawDate}T00:00:00.000Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate) || Number.isNaN(date.getTime()) || !note) {
+      throw new Error(`Correction ${index + 1} must include a valid YYYY-MM-DD date and note.`);
+    }
+    return { date: rawDate, note };
+  });
 }
 
 function iso(value: string) {
@@ -75,6 +102,7 @@ export async function savePostWithFeedback(
 
   let savedSlug = "";
   let originalSlug = "";
+  let savedAuthor = "RapidReach Editorial";
 
   try {
     if (!hasDatabase()) throw new Error("MongoDB must be configured before saving posts.");
@@ -108,6 +136,7 @@ export async function savePostWithFeedback(
 
     const relatedToolSlugs = uniqueList(form, "relatedToolSlugs", 12);
     await requireExistingToolSlugs(database, relatedToolSlugs);
+    const author = text(form, "author").slice(0, 160) || "RapidReach Editorial";
 
     const document = {
       slug,
@@ -115,7 +144,7 @@ export async function savePostWithFeedback(
       summary,
       content,
       category,
-      author: text(form, "author").slice(0, 160) || "RapidReach Editorial",
+      author,
       publishedAt: iso(text(form, "publishedAt")),
       updatedAt: new Date().toISOString(),
       featuredImageUrl: featuredImageUrl || undefined,
@@ -123,6 +152,8 @@ export async function savePostWithFeedback(
       tags: uniqueList(form, "tags", 20).map((tag) => tag.slice(0, 100)),
       keyTakeaways: lines(form, "keyTakeaways").slice(0, 12).map((item) => item.slice(0, 500)),
       relatedToolSlugs,
+      sources: parseSources(form),
+      corrections: parseCorrections(form),
       status: text(form, "status") === "published" ? "published" : "draft",
     };
 
@@ -166,6 +197,7 @@ export async function savePostWithFeedback(
     }
 
     savedSlug = slug;
+    savedAuthor = author;
   } catch (error) {
     console.error("RapidReach post save failed", error);
     return { error: friendlySaveError(error) };
@@ -177,6 +209,8 @@ export async function savePostWithFeedback(
   revalidatePath("/search");
   revalidatePath("/admin/posts");
   revalidatePath(`/news/${savedSlug}`);
+  revalidatePath(`/news/${savedSlug}/markdown`);
+  revalidatePath(`/authors/${authorSlug(savedAuthor)}`);
   revalidatePath("/tools");
   if (originalSlug && originalSlug !== savedSlug) revalidatePath(`/news/${originalSlug}`);
   redirect("/admin/posts");
