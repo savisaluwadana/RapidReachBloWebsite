@@ -98,14 +98,30 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
   }, [slug]);
 
   async function like() {
-    if (!likeKnown || liked || liking) return;
+    if (!likeKnown || !viewerKnown || liked || liking) return;
+    if (!signedIn) {
+      window.location.assign(loginHref);
+      return;
+    }
+
     setLiking(true);
+    setMessage("");
     try {
       const response = await fetch(`/api/posts/${encodeURIComponent(slug)}/like`, { method: "POST" });
-      if (!response.ok) return;
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        setSignedIn(false);
+        setMessage("Sign in to like this article.");
+        return;
+      }
+      if (!response.ok) {
+        setMessage(typeof data.error === "string" ? data.error : "Could not like this article.");
+        return;
+      }
       setLikes((current) => Number(data.likes ?? current));
       setLiked(Boolean(data.reacted));
+    } catch {
+      setMessage("Could not like this article. Check your connection and try again.");
     } finally {
       setLiking(false);
     }
@@ -261,6 +277,12 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
     }
   }
 
+  const likeTitle = effectiveLiked
+    ? "You already liked this article"
+    : signedIn
+      ? "Like this article"
+      : "Sign in to like this article";
+
   return (
     <section className="engagement" aria-label="Article discussion and sharing">
       <div className="engagement-toolbar">
@@ -269,7 +291,7 @@ export function Engagement({ slug, title, initialLikes }: { slug: string; title:
           <p>If this was useful, save the signal or send it to someone building the same thing.</p>
         </div>
         <div className="engagement-actions">
-          <button className={effectiveLiked ? "action-button active" : "action-button"} onClick={like} aria-pressed={effectiveLiked} disabled={!likeKnown || liking || effectiveLiked} title={effectiveLiked ? "You already liked this article" : "Like this article"}>♥ {likes}</button>
+          <button className={effectiveLiked ? "action-button active" : "action-button"} onClick={like} aria-pressed={effectiveLiked} disabled={!likeKnown || !viewerKnown || liking || effectiveLiked} title={likeTitle}>♥ {likes}</button>
           <button className="action-button" onClick={nativeShare}>Share ↗</button>
           <button className="action-button ghost" onClick={() => share("x")}>X</button>
           <button className="action-button ghost" onClick={() => share("linkedin")}>LinkedIn</button>

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import {
-  applyReactionCookie,
   claimReaction,
   getReactionIdentity,
   hasReaction,
@@ -30,16 +29,26 @@ export async function GET(
   const [{ db, post }, user] = await Promise.all([findPublishedPost(slug), getCurrentUser()]);
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request, user?.id);
+  if (!user) {
+    return NextResponse.json({
+      likes: Number(post.likes || 0),
+      reacted: false,
+      canReact: false,
+    });
+  }
+
+  const identity = getReactionIdentity(request, user.id);
   const reacted = await hasReaction(db, {
     kind: "post-like",
     target: slug,
     actorHash: identity.actorHash,
   });
 
-  const response = NextResponse.json({ likes: Number(post.likes || 0), reacted });
-  applyReactionCookie(response, identity.newCookieToken);
-  return response;
+  return NextResponse.json({
+    likes: Number(post.likes || 0),
+    reacted,
+    canReact: true,
+  });
 }
 
 export async function POST(
@@ -53,8 +62,14 @@ export async function POST(
   const { slug } = await params;
   const [{ db, post }, user] = await Promise.all([findPublishedPost(slug), getCurrentUser()]);
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
+  if (!user) {
+    return NextResponse.json(
+      { error: "Sign in to like this article.", reacted: false, canReact: false },
+      { status: 401 },
+    );
+  }
 
-  const identity = getReactionIdentity(request, user?.id);
+  const identity = getReactionIdentity(request, user.id);
   const reaction = {
     kind: "post-like" as const,
     target: slug,
@@ -77,7 +92,10 @@ export async function POST(
     likes = Number(updated.likes || 0);
   }
 
-  const response = NextResponse.json({ likes, reacted: true, added: claimed });
-  applyReactionCookie(response, identity.newCookieToken);
-  return response;
+  return NextResponse.json({
+    likes,
+    reacted: true,
+    added: claimed,
+    canReact: true,
+  });
 }
