@@ -30,12 +30,22 @@ export function AccountNav({ mobile = false }: { mobile?: boolean }) {
     const href = me.role === "admin" ? "/admin" : "/dashboard";
     const label = me.role === "admin" ? "Admin" : "Dashboard";
 
-    if (mobile) return <Link href={href}>{label}</Link>;
+    if (mobile) {
+      return (
+        <Fragment>
+          <Link href="/for-you">For You</Link>
+          <Link href={href}>{label}</Link>
+        </Fragment>
+      );
+    }
 
     return (
-      <Link href={href} className="nav-pill" aria-live="polite">
-        {label} <span aria-hidden="true">↗</span>
-      </Link>
+      <div className="nav-auth-links" aria-live="polite">
+        <Link href="/for-you" className="nav-login-link">For You</Link>
+        <Link href={href} className="nav-pill">
+          {label} <span aria-hidden="true">↗</span>
+        </Link>
+      </div>
     );
   }
 
