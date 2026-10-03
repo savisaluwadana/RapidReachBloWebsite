@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { authorSlug } from "@/lib/authors";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import type { PostCorrection, PostSource } from "@/lib/types";
+import { markMediaAttached, mediaUrlsFromText } from "@/lib/media";
 
 export type PostSaveState = { error: string };
 
@@ -196,6 +197,7 @@ export async function savePostWithFeedback(
       await posts.insertOne({ ...document, likes: 0 });
     }
 
+    await markMediaAttached([featuredImageUrl, ...mediaUrlsFromText(content)]);
     savedSlug = slug;
     savedAuthor = author;
   } catch (error) {
