@@ -20,10 +20,13 @@ async function requireExistingSlugs(
   collectionName: "posts" | "tools",
   slugs: string[],
   label: string,
+  publishedOnly = false,
 ) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection(collectionName)
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -62,11 +65,12 @@ export async function saveCollection(form: FormData) {
   const slug = slugify(text(form, "slug") || title);
   if (!title || !slug) throw new Error("Collection title is required.");
 
+  const status = text(form, "status") === "published" ? "published" : "draft";
   const toolSlugs = uniqueList(form, "toolSlugs", 30);
   const postSlugs = uniqueList(form, "postSlugs", 30);
   await Promise.all([
-    requireExistingSlugs(database, "tools", toolSlugs, "Collection tool"),
-    requireExistingSlugs(database, "posts", postSlugs, "Collection post"),
+    requireExistingSlugs(database, "tools", toolSlugs, "Collection tool", status === "published"),
+    requireExistingSlugs(database, "posts", postSlugs, "Collection post", status === "published"),
   ]);
 
   const now = new Date().toISOString();
@@ -77,7 +81,7 @@ export async function saveCollection(form: FormData) {
     toolSlugs,
     postSlugs,
     featured: form.get("featured") === "on",
-    status: text(form, "status") === "published" ? "published" : "draft",
+    status,
     updatedAt: now,
   };
 
