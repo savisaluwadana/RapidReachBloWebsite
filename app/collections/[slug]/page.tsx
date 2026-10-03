@@ -7,6 +7,7 @@ import { getTools } from "@/lib/tools";
 import { getPosts } from "@/lib/posts";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { encodedPathSegment, normalizedSiteUrl } from "@/lib/public-format";
+import { publicPostsForAgents } from "@/lib/agent-content";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return collection ? {
     title: collection.title,
     description: collection.description,
-    alternates: { canonical: `/collections/${slug}` },
+    alternates: { canonical: `/collections/${slug}`, types: { "text/markdown": `/collections/${slug}/index.md` } },
     openGraph: { title: collection.title, description: collection.description, url: `/collections/${slug}`, type: "website" },
     twitter: { card: "summary_large_image", title: collection.title, description: collection.description },
   } : {};
@@ -25,8 +26,9 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
   const collection = await getCollectionBySlug(slug);
   if (!collection) notFound();
   const [allTools, allPosts] = await Promise.all([getTools(), getPosts()]);
+  const publicPosts = publicPostsForAgents(allPosts);
   const tools = collection.toolSlugs.map((item) => allTools.find((tool) => tool.slug === item)).filter(Boolean) as typeof allTools;
-  const posts = collection.postSlugs.map((item) => allPosts.find((post) => post.slug === item)).filter(Boolean) as typeof allPosts;
+  const posts = collection.postSlugs.map((item) => publicPosts.find((post) => post.slug === item)).filter(Boolean) as typeof publicPosts;
   const siteUrl = normalizedSiteUrl();
   const pageUrl = `${siteUrl}/collections/${encodedPathSegment(collection.slug)}`;
   const listItems = [

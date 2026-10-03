@@ -55,7 +55,7 @@ Public routes:
 - `/tools/category/[slug]`
 - `/api/tools`
 
-Tool profiles use `SoftwareApplication` JSON-LD and are included in the sitemap and `llms.txt`.
+Tool profiles use `SoftwareApplication` JSON-LD, appear in the sitemap and agent catalog, and expose a Markdown alternate at `/tools/[slug]/index.md`. Published stories and collections expose equivalent `index.md` representations, while `/llms.txt` remains a concise discovery index rather than a full content dump.
 
 ## Database setup
 

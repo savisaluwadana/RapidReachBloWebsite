@@ -31,3 +31,12 @@ export function formatDate(
 export function encodedPathSegment(value: string) {
   return encodeURIComponent(value.trim());
 }
+
+
+export function slugPathSegment(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}

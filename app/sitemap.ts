@@ -4,7 +4,8 @@ import { getCategoriesByKind } from "@/lib/categories";
 import { getCollections } from "@/lib/collections";
 import { getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
-import { encodedPathSegment, normalizedSiteUrl, validDate } from "@/lib/public-format";
+import { encodedPathSegment, normalizedSiteUrl, slugPathSegment, validDate } from "@/lib/public-format";
+import { publicPostsForAgents } from "@/lib/agent-content";
 
 function datedEntry(
   url: string,
@@ -31,12 +32,13 @@ function latestIso(values: Array<string | undefined>) {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = normalizedSiteUrl();
-  const [posts, tools, toolCategories, collections] = await Promise.all([
+  const [allPosts, tools, toolCategories, collections] = await Promise.all([
     getPosts(),
     getTools(),
     getCategoriesByKind("tool"),
     getCollections(),
   ]);
+  const posts = publicPostsForAgents(allPosts);
   const postCategories = [...new Set(posts.map((post) => post.category).filter(Boolean))];
   const authors = [...new Set(posts.map((post) => authorSlug(post.author)).filter(Boolean))];
   const latestPostDate = latestIso(posts.map((post) => post.updatedAt || post.publishedAt));
@@ -65,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       0.8,
     )),
     ...postCategories.map((category) => datedEntry(
-      `${siteUrl}/category/${encodedPathSegment(category)}`,
+      `${siteUrl}/category/${slugPathSegment(category)}`,
       latestIso(posts.filter((post) => post.category === category).map((post) => post.updatedAt || post.publishedAt)),
       "daily",
       0.7,

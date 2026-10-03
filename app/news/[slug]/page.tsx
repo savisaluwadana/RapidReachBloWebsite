@@ -12,7 +12,7 @@ import { serializeJsonLd } from "@/lib/json-ld";
 import { getPostBySlug, getPosts } from "@/lib/posts";
 import { relatedPostsFor } from "@/lib/recommendations";
 import { getTools } from "@/lib/tools";
-import { encodedPathSegment, formatDate, isoDate, normalizedSiteUrl } from "@/lib/public-format";
+import { encodedPathSegment, formatDate, isoDate, normalizedSiteUrl, slugPathSegment } from "@/lib/public-format";
 
 export async function generateStaticParams() {
   const posts = await getPosts();
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     category: post.category,
     alternates: {
       canonical: `/news/${post.slug}`,
-      types: { "text/markdown": `/news/${post.slug}/markdown` },
+      types: { "text/markdown": `/news/${post.slug}/index.md` },
     },
     openGraph: {
       type: "article",
@@ -105,7 +105,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     "@id": `${articleUrl}#breadcrumbs`,
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "RapidReach", item: siteUrl },
-      { "@type": "ListItem", position: 2, name: post.category, item: `${siteUrl}/category/${encodedPathSegment(post.category)}` },
+      { "@type": "ListItem", position: 2, name: post.category, item: `${siteUrl}/category/${slugPathSegment(post.category)}` },
       { "@type": "ListItem", position: 3, name: post.title, item: articleUrl },
     ],
   };
@@ -114,10 +114,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return (
     <article className="article-page">
       <header className="article-hero shell article-shell">
-        <div className="article-hero-top"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link><span>•</span><time dateTime={publishedIso}>{formatDate(post.publishedAt, { dateStyle: "long" })}</time>{post.updatedAt && <><span>•</span><span>Updated {formatDate(post.updatedAt, { dateStyle: "medium" })}</span></>}</div><span className="article-type">RapidReach Analysis</span></div>
+        <div className="article-hero-top"><div className="eyebrow"><Link href={`/category/${slugPathSegment(post.category)}`}>{post.category}</Link><span>•</span><time dateTime={publishedIso}>{formatDate(post.publishedAt, { dateStyle: "long" })}</time>{post.updatedAt && <><span>•</span><span>Updated {formatDate(post.updatedAt, { dateStyle: "medium" })}</span></>}</div><span className="article-type">RapidReach Analysis</span></div>
         <h1>{post.title}</h1><p className="dek">{post.summary}</p>
         <div className="article-ledger"><div><span>Written by</span><strong><Link href={`/authors/${author.slug}`}>{post.author}</Link></strong></div><div><span>Reading time</span><strong>{post.readingMinutes} minutes</strong></div><div><span>Filed under</span><strong>{post.category}</strong></div></div>
-        <div className="article-personal-actions"><PreferenceButton kind="post" value={post.slug} label="Save story" savedLabel="Saved ✓" /><PreferenceButton kind="topic" value={post.category} label={`Follow ${post.category}`} savedLabel={`Following ${post.category} ✓`} /><Link className="quiet-link" href={`/news/${post.slug}/markdown`}>Markdown ↗</Link></div>
+        <div className="article-personal-actions"><PreferenceButton kind="post" value={post.slug} label="Save story" savedLabel="Saved ✓" /><PreferenceButton kind="topic" value={post.category} label={`Follow ${post.category}`} savedLabel={`Following ${post.category} ✓`} /><Link className="quiet-link" href={`/news/${post.slug}/index.md`}>Markdown ↗</Link></div>
       </header>
 
       {post.featuredImageUrl && <figure className="article-featured-media shell"><img src={post.featuredImageUrl} alt={`Featured image for ${post.title}`} /></figure>}
@@ -131,7 +131,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <div className="shell article-shell"><Engagement slug={post.slug} title={post.title} initialLikes={post.likes}/></div>
 
       {relatedTools.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Tools behind the story</span><h2>Explore the software in this context</h2></div><Link className="quiet-link" href="/tools">All tools ↗</Link></div><div className="tool-list">{relatedTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}</div></section>}
-      {related.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Keep reading</span><h2>More on {post.category}</h2></div><Link className="quiet-link" href={`/category/${encodeURIComponent(post.category)}`}>Topic page ↗</Link></div><div className="related-grid">{related.map((item) => <ArticleCard key={item.slug} post={item} compact />)}</div></section>}
+      {related.length > 0 && <section className="shell related-section"><div className="section-heading"><div><span className="section-kicker">Keep reading</span><h2>More on {post.category}</h2></div><Link className="quiet-link" href={`/category/${slugPathSegment(post.category)}`}>Topic page ↗</Link></div><div className="related-grid">{related.map((item) => <ArticleCard key={item.slug} post={item} compact />)}</div></section>}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
     </article>
   );
