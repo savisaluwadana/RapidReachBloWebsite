@@ -15,8 +15,9 @@ import "./responsive.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { normalizedSiteUrl } from "@/lib/public-format";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev").replace(/\/+$/, "");
+const siteUrl = normalizedSiteUrl();
 const description = "RapidReach tracks what is changing across AI engineering, developer tools, cloud-native infrastructure, open source, and software building — then explains why it matters.";
 
 export const metadata: Metadata = {
