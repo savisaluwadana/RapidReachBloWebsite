@@ -54,10 +54,13 @@ async function requireExistingSlugs(
   collectionName: "posts" | "tools",
   slugs: string[],
   label: string,
+  publishedOnly = false,
 ) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection(collectionName)
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -118,8 +121,8 @@ export async function saveTool(form: FormData) {
   }
   const relatedPostSlugs = uniqueList(form, "relatedPostSlugs", 12);
   await Promise.all([
-    requireExistingSlugs(database, "tools", alternatives, "Alternative tool"),
-    requireExistingSlugs(database, "posts", relatedPostSlugs, "Related post"),
+    requireExistingSlugs(database, "tools", alternatives, "Alternative tool", status === "published"),
+    requireExistingSlugs(database, "posts", relatedPostSlugs, "Related post", status === "published"),
   ]);
 
   const pricing = ["free", "freemium", "paid", "open-source"].includes(text(form, "pricing")) ? text(form, "pricing") : "free";
