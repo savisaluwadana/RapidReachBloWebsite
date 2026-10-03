@@ -45,12 +45,12 @@ export function collectionMarkdownUrl(siteUrl: string, collection: EditorialColl
   return `${collectionCanonicalUrl(siteUrl, collection)}/index.md`;
 }
 
-export function markdownDiscoveryHeaders(canonical: string, siteUrl: string, lastModified?: string) {
+export function markdownDiscoveryHeaders(canonical: string, siteUrl: string, lastModified?: string, describedBy?: string) {
   const modified = validDate(lastModified);
   return {
     "content-type": "text/markdown; charset=utf-8",
     "cache-control": "public, s-maxage=300, stale-while-revalidate=600",
-    Link: `<${canonical}>; rel="canonical"; type="text/html", <${siteUrl}/llms.txt>; rel="describedby"`,
+    Link: `<${canonical}>; rel="canonical"; type="text/html", <${describedBy || `${siteUrl}/llms.txt`}>; rel="describedby"`,
     ...(modified ? { "last-modified": modified.toUTCString() } : {}),
   };
 }
