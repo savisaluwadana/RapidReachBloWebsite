@@ -10,9 +10,9 @@ import {
 } from "@/lib/agent-content";
 
 function nestedDocument(markdown: string) {
-  return markdown
-    .replace(/^## /gm, "#### ")
-    .replace(/^# /gm, "### ");
+  return markdown.replace(/^(#{1,4}) /gm, (_match, hashes: string) =>
+    `${"#".repeat(Math.min(6, hashes.length + 2))} `,
+  );
 }
 
 export async function GET() {
