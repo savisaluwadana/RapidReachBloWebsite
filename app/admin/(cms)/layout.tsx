@@ -20,6 +20,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
           <Link href="/admin/briefing">Weekly briefing</Link>
           <Link href="/admin/categories">Categories</Link>
           <Link href="/admin/users">Users</Link>
+          <Link href="/admin/audit">Audit log</Link>
           <Link href="/" target="_blank">View site ↗</Link>
         </nav>
         <div className="cms-admin-identity"><span>Signed in as</span><strong>{admin.name}</strong><small>{admin.email}</small></div>
