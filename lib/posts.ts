@@ -59,9 +59,7 @@ function normalize(post: Record<string, unknown>): Post {
 }
 
 function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}");
 }
 
 function publishedNowFilter() {
