@@ -30,6 +30,11 @@ export async function GET() {
         canonical: siteUrl,
         description: "Developer intelligence, software-engineering analysis, developer-tool profiles, and curated engineering collections.",
         llms: `${siteUrl}/llms.txt`,
+        sectionIndexes: {
+          stories: `${siteUrl}/news/llms.txt`,
+          tools: `${siteUrl}/tools/llms.txt`,
+          collections: `${siteUrl}/collections/llms.txt`,
+        },
         fullContext: `${siteUrl}/llms-full.txt`,
         editorialStandards: `${siteUrl}/about`,
         rss: `${siteUrl}/feed.xml`,
