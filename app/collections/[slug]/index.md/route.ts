@@ -29,6 +29,6 @@ export async function GET(
   const siteUrl = normalizedSiteUrl();
   const canonical = collectionCanonicalUrl(siteUrl, collection);
   return new Response(renderCollectionMarkdown(collection, siteUrl, tools, posts), {
-    headers: markdownDiscoveryHeaders(canonical, siteUrl, collection.updatedAt || collection.createdAt),
+    headers: markdownDiscoveryHeaders(canonical, siteUrl, collection.updatedAt || collection.createdAt, `${siteUrl}/collections/llms.txt`),
   });
 }
