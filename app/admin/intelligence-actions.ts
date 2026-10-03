@@ -8,6 +8,7 @@ import { getDb, hasDatabase } from "@/lib/mongodb";
 import { getAdminPosts, getPosts } from "@/lib/posts";
 import { normalizedSiteUrl } from "@/lib/public-format";
 import { getTools } from "@/lib/tools";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) { return String(form.get(key) || "").trim(); }
 function list(form: FormData, key: string) { return text(form, key).split(",").map((item) => item.trim()).filter(Boolean); }
@@ -57,7 +58,7 @@ export async function getCollectionOptions() {
 }
 
 export async function saveCollection(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const collections = database.collection("collections");
   const title = text(form, "title").slice(0, 240);
@@ -99,6 +100,13 @@ export async function saveCollection(form: FormData) {
     await collections.insertOne({ ...document, createdAt: now });
   }
 
+  await recordAdminAudit(database, {
+    actorId: admin.id,
+    action: originalSlug ? "collection.update" : "collection.create",
+    targetType: "collection",
+    targetId: slug,
+    metadata: { status },
+  });
   revalidatePath("/collections");
   revalidatePath(`/collections/${slug}`);
   revalidatePath("/tools");
@@ -106,11 +114,14 @@ export async function saveCollection(form: FormData) {
 }
 
 export async function deleteCollection(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const slug = text(form, "slug");
   if (!slug) throw new Error("Collection is required.");
-  await database.collection("collections").deleteOne({ slug });
+  const result = await database.collection("collections").deleteOne({ slug });
+  if (result.deletedCount) {
+    await recordAdminAudit(database, { actorId: admin.id, action: "collection.delete", targetType: "collection", targetId: slug });
+  }
   revalidatePath("/collections");
   revalidatePath(`/collections/${slug}`);
   revalidatePath("/tools");
