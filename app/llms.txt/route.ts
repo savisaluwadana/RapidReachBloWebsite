@@ -2,55 +2,68 @@ import { getCollections } from "@/lib/collections";
 import { getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
 import { normalizedSiteUrl } from "@/lib/public-format";
+import {
+  agentLinkLabel,
+  cleanAgentInline,
+  collectionMarkdownUrl,
+  postMarkdownUrl,
+  publicPostsForAgents,
+  toolMarkdownUrl,
+} from "@/lib/agent-content";
+
+const MAX_STORIES = 24;
+const MAX_TOOLS = 24;
+const MAX_COLLECTIONS = 16;
 
 export async function GET() {
   const siteUrl = normalizedSiteUrl();
-  const [posts, tools, collections] = await Promise.all([getPosts(), getTools(), getCollections()]);
+  const [allPosts, tools, collections] = await Promise.all([getPosts(), getTools(), getCollections()]);
+  const posts = publicPostsForAgents(allPosts);
+
   const lines = [
     "# RapidReach",
     "",
-    "> Independent developer intelligence for people who build software: fast signal, practical analysis, curated stacks, and developer-tool intelligence.",
+    "> Developer intelligence, software-engineering analysis, developer-tool profiles, and curated engineering collections.",
     "",
-    "## About",
-    "RapidReach covers changes that can affect engineering decisions, software delivery, developer workflows, infrastructure choices, and tool adoption. Editorial pages prioritize concise context, practical implications, and transparent links to primary sources where available.",
+    "This index is generated from RapidReach’s currently public content. Draft records are excluded, and future-dated stories are omitted from agent discovery. RapidReach verdicts and recommendations are editorial analysis; decision-critical product facts should be verified against the official website or repository linked from each tool page.",
     "",
-    "## Core coverage",
-    "- AI engineering and agentic software development",
-    "- Developer tools and software infrastructure",
-    "- Cloud-native infrastructure, Kubernetes, and CNCF ecosystems",
-    "- Platform engineering, DevOps, SRE, and developer experience",
-    "- Open source projects and software-delivery workflows",
+    "## Core",
     "",
-    "## Editorial surfaces",
-    `- Signal Desk: ${siteUrl}/signals`,
-    `- RapidReach Brief: ${siteUrl}/briefing`,
-    `- Builder Stacks: ${siteUrl}/collections`,
-    `- Tool Watch: ${siteUrl}/tools`,
-    `- Editorial standards: ${siteUrl}/about`,
+    `- [Full machine-readable context](${siteUrl}/llms-full.txt): Expanded RapidReach context containing current public stories, tools, collections, sources, and editorial analysis.`,
+    `- [Agent catalog](${siteUrl}/api/agent/catalog): Structured JSON index of the same public entities with canonical and Markdown URLs.`,
+    `- [Editorial standards](${siteUrl}/about): How RapidReach handles sourcing, analysis, corrections, and tool coverage.`,
     "",
-    "## Machine-readable resources",
-    `- Full LLM context: ${siteUrl}/llms-full.txt`,
-    `- Posts API: ${siteUrl}/api/posts`,
-    `- Tools API: ${siteUrl}/api/tools`,
-    `- RSS: ${siteUrl}/feed.xml`,
-    `- Sitemap: ${siteUrl}/sitemap.xml`,
-    `- Tool comparison: ${siteUrl}/compare`,
-    "- Every published story also exposes a text/markdown representation at /news/{slug}/markdown.",
+    "## Latest stories",
     "",
-    "## Citation guidance",
-    `- Prefer canonical RapidReach URLs under ${siteUrl}/news/, ${siteUrl}/tools/, and ${siteUrl}/collections/.`,
-    "- Preserve article titles, publication dates, author attribution, and source attribution when citing RapidReach.",
-    "- Treat editorial verdicts and recommendations as RapidReach analysis rather than vendor claims.",
-    "- When an article includes a Sources section, use those primary links to corroborate factual claims.",
-    "",
-    "## Published stories",
-    ...posts.map((post) => `- [${post.title}](${siteUrl}/news/${post.slug}): ${post.summary} Markdown: ${siteUrl}/news/${post.slug}/markdown`),
+    ...posts.slice(0, MAX_STORIES).map((post) =>
+      `- [${agentLinkLabel(post.title)}](${postMarkdownUrl(siteUrl, post)}): ${cleanAgentInline(post.summary)}`,
+    ),
     "",
     "## Developer tools",
-    ...tools.map((tool) => `- [${tool.name}](${siteUrl}/tools/${tool.slug}): ${tool.verdict || tool.tagline}`),
     "",
-    "## Editorial collections",
-    ...collections.map((item) => `- [${item.title}](${siteUrl}/collections/${item.slug}): ${item.description}`),
+    ...tools.slice(0, MAX_TOOLS).map((tool) =>
+      `- [${agentLinkLabel(tool.name)}](${toolMarkdownUrl(siteUrl, tool)}): ${cleanAgentInline(tool.tagline)}`,
+    ),
+    "",
+    "## Collections",
+    "",
+    ...collections.slice(0, MAX_COLLECTIONS).map((collection) =>
+      `- [${agentLinkLabel(collection.title)}](${collectionMarkdownUrl(siteUrl, collection)}): ${cleanAgentInline(collection.description)}`,
+    ),
+    "",
+    "## Optional",
+    "",
+    `- [Signal Desk](${siteUrl}/signals): Human-readable stream of current RapidReach stories.`,
+    `- [Tool directory](${siteUrl}/tools): Human-readable developer-tool discovery surface.`,
+    `- [Collections index](${siteUrl}/collections): Human-readable curated engineering collections.`,
+    `- [RSS feed](${siteUrl}/feed.xml): Published story feed.`,
+    `- [XML sitemap](${siteUrl}/sitemap.xml): Indexable human-facing URLs.`,
   ];
-  return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, s-maxage=300, stale-while-revalidate=600" } });
+
+  return new Response(lines.join("\n"), {
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "public, s-maxage=300, stale-while-revalidate=600",
+    },
+  });
 }
