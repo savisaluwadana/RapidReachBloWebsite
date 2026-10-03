@@ -1,4 +1,5 @@
 import type { Db } from "mongodb";
+import { ensureDatabaseIndexes } from "@/lib/db-indexes";
 
 export async function recordAdminAudit(
   db: Db,
@@ -10,6 +11,7 @@ export async function recordAdminAudit(
     metadata?: Record<string, unknown>;
   },
 ) {
+  await ensureDatabaseIndexes(db);
   await db.collection("admin_audit_log").insertOne({
     ...input,
     metadata: input.metadata || {},
