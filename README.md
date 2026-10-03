@@ -162,14 +162,21 @@ Media fields:
 
 ## SEO / AEO / GEO / agents
 
-Published stories expose `NewsArticle` JSON-LD and use featured images in social metadata when available. Tool pages expose `SoftwareApplication` JSON-LD and include logos/screenshots in metadata. RapidReach also exposes:
+Published stories expose `NewsArticle` JSON-LD and use featured images in social metadata when available. Tool pages expose `SoftwareApplication` JSON-LD and include logos/screenshots in metadata.
 
-- `/sitemap.xml`
-- `/robots.txt`
-- `/feed.xml`
-- `/llms.txt`
-- `/api/posts`
-- `/api/tools`
+Agent-facing discovery is separated from full content:
+
+- `/llms.txt` — concise, spec-aligned discovery index linking to agent-friendly resources
+- `/llms-full.txt` — expanded public story, tool, and collection context
+- `/api/agent/catalog` — structured JSON catalog with canonical URLs, Markdown URLs, timestamps, provenance, and relationships
+- `/news/[slug]/index.md` — canonical Markdown representation of a published story
+- `/tools/[slug]/index.md` — canonical Markdown representation of a published tool profile
+- `/collections/[slug]/index.md` — canonical Markdown representation of a published collection
+- `/news/[slug]/markdown` — legacy article Markdown alias kept for compatibility
+- `/sitemap.xml`, `/robots.txt`, and `/feed.xml` — standard discovery/feed surfaces
+- `/api/posts` and `/api/tools` — public application APIs
+
+HTML story, tool, and collection pages advertise their Markdown representation through `rel="alternate"` metadata. Markdown and agent API responses link back to `/llms.txt` with `rel="describedby"`. Draft content is excluded from these public agent surfaces, and the agent index also filters future-dated stories.
 
 ## Production notes
 
