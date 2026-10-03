@@ -13,6 +13,6 @@ export async function GET(
   const siteUrl = normalizedSiteUrl();
   const canonical = postCanonicalUrl(siteUrl, post);
   return new Response(renderPostMarkdown(post, siteUrl), {
-    headers: markdownDiscoveryHeaders(canonical, siteUrl, post.updatedAt || post.publishedAt),
+    headers: markdownDiscoveryHeaders(canonical, siteUrl, post.updatedAt || post.publishedAt, `${siteUrl}/news/llms.txt`),
   });
 }
