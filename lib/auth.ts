@@ -142,7 +142,6 @@ export async function registerUser(input: { name: string; email: string; passwor
       passwordHash: await hashPassword(input.password),
       role: "user",
       status: "active",
-      emailVerifiedAt: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -182,6 +181,7 @@ async function maybeBootstrapAdmin(email: string, password: string) {
       passwordHash: await hashPassword(configuredPassword),
       role: "admin",
       status: "active",
+      emailVerifiedAt: now,
       createdAt: now,
       updatedAt: now,
     });
