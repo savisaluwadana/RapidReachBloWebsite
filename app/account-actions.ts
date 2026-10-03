@@ -3,8 +3,10 @@
 import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { loginUser, logoutUser, registerUser, requireUser } from "@/lib/auth";
+import { loginUser, logoutUser, registerUser, requireUser, verifyPassword } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
+import { requestPasswordResetEmail, resetPasswordWithToken, sendVerificationEmail } from "@/lib/account-email";
+import { markMediaAttached } from "@/lib/media";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -51,7 +53,32 @@ function validHttpsUrl(value: string) {
 export async function registerAccount(form: FormData) {
   const result = await registerUser({ name: text(form, "name"), email: text(form, "email"), password: raw(form, "password") });
   if (!result.ok) redirect(`/register?error=${encodeURIComponent(result.error)}`);
-  redirect("/dashboard");
+  const sent = await sendVerificationEmail(result.user.id, result.user.email);
+  redirect(`/dashboard?verify=${sent ? "sent" : "unavailable"}`);
+}
+
+export async function resendVerificationEmail() {
+  const user = await requireUser();
+  if (user.emailVerified) redirect("/dashboard?verify=already");
+  const sent = await sendVerificationEmail(user.id, user.email);
+  redirect(`/dashboard?verify=${sent ? "sent" : "unavailable"}`);
+}
+
+export async function requestPasswordReset(form: FormData) {
+  const email = text(form, "email").toLowerCase();
+  const result = await requestPasswordResetEmail(email);
+  if (!result.configured) redirect("/forgot-password?error=config");
+  redirect("/forgot-password?sent=1");
+}
+
+export async function resetPasswordAccount(form: FormData) {
+  const token = text(form, "token");
+  const password = raw(form, "password");
+  const confirm = raw(form, "confirmPassword");
+  if (password !== confirm) redirect(`/reset-password?token=${encodeURIComponent(token)}&error=${encodeURIComponent("Passwords do not match.")}`);
+  const result = await resetPasswordWithToken(token, password);
+  if (!result.ok) redirect(`/reset-password?token=${encodeURIComponent(token)}&error=${encodeURIComponent(result.error)}`);
+  redirect("/login?reset=1");
 }
 
 export async function loginAccount(form: FormData) {
@@ -137,6 +164,33 @@ export async function saveToolSubmission(form: FormData) {
     await db.collection("tool_submissions").insertOne({ ...payload, status: "pending", submittedAt: now });
   }
 
+  await markMediaAttached([logoUrl, ...screenshots], user.id);
   revalidatePath("/dashboard");
   redirect("/dashboard?submitted=1");
+}
+
+export async function deleteAccount(form: FormData) {
+  const user = await requireUser();
+  if (user.role === "admin") redirect("/dashboard?account=admin-protected");
+  const password = raw(form, "password");
+  const db = await getDb();
+  const doc = await db.collection("users").findOne(
+    { _id: new ObjectId(user.id) },
+    { projection: { passwordHash: 1 } },
+  );
+  if (!doc || !(await verifyPassword(password, String(doc.passwordHash || "")))) {
+    redirect("/dashboard?account=wrong-password");
+  }
+
+  await Promise.all([
+    db.collection("sessions").deleteMany({ userId: user.id }),
+    db.collection("user_preferences").deleteMany({ userId: user.id }),
+    db.collection("comments").deleteMany({ userId: user.id }),
+    db.collection("tool_submissions").deleteMany({ userId: user.id }),
+    db.collection("account_tokens").deleteMany({ userId: user.id }),
+    db.collection("newsletter_subscribers").deleteMany({ email: user.email }),
+  ]);
+  await db.collection("users").deleteOne({ _id: new ObjectId(user.id) });
+  await logoutUser();
+  redirect("/?account=deleted");
 }
