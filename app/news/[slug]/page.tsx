@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     category: post.category,
     alternates: {
       canonical: `/news/${post.slug}`,
-      types: { "text/markdown": `/news/${post.slug}/markdown` },
+      types: { "text/markdown": `/news/${post.slug}/index.md` },
     },
     openGraph: {
       type: "article",
@@ -117,7 +117,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="article-hero-top"><div className="eyebrow"><Link href={`/category/${encodeURIComponent(post.category)}`}>{post.category}</Link><span>•</span><time dateTime={publishedIso}>{formatDate(post.publishedAt, { dateStyle: "long" })}</time>{post.updatedAt && <><span>•</span><span>Updated {formatDate(post.updatedAt, { dateStyle: "medium" })}</span></>}</div><span className="article-type">RapidReach Analysis</span></div>
         <h1>{post.title}</h1><p className="dek">{post.summary}</p>
         <div className="article-ledger"><div><span>Written by</span><strong><Link href={`/authors/${author.slug}`}>{post.author}</Link></strong></div><div><span>Reading time</span><strong>{post.readingMinutes} minutes</strong></div><div><span>Filed under</span><strong>{post.category}</strong></div></div>
-        <div className="article-personal-actions"><PreferenceButton kind="post" value={post.slug} label="Save story" savedLabel="Saved ✓" /><PreferenceButton kind="topic" value={post.category} label={`Follow ${post.category}`} savedLabel={`Following ${post.category} ✓`} /><Link className="quiet-link" href={`/news/${post.slug}/markdown`}>Markdown ↗</Link></div>
+        <div className="article-personal-actions"><PreferenceButton kind="post" value={post.slug} label="Save story" savedLabel="Saved ✓" /><PreferenceButton kind="topic" value={post.category} label={`Follow ${post.category}`} savedLabel={`Following ${post.category} ✓`} /><Link className="quiet-link" href={`/news/${post.slug}/index.md`}>Markdown ↗</Link></div>
       </header>
 
       {post.featuredImageUrl && <figure className="article-featured-media shell"><img src={post.featuredImageUrl} alt={`Featured image for ${post.title}`} /></figure>}
