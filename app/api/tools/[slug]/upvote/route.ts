@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import {
-  applyReactionCookie,
   claimReaction,
   getReactionIdentity,
   hasReaction,
+  reactionCount,
   releaseReaction,
 } from "@/lib/reactions";
 
@@ -32,15 +32,23 @@ export async function GET(
   const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
   if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request, user?.id);
+  if (!user) {
+    return noStoreJson({ upvotes: Number(tool.upvotes || 0), reacted: false, canReact: false });
+  }
+
+  const identity = getReactionIdentity(request, user.id);
   const reacted = await hasReaction(db, {
     kind: "tool-upvote",
     target: slug,
     actorHash: identity.actorHash,
   });
-  const response = noStoreJson({ upvotes: Number(tool.upvotes || 0), reacted });
-  applyReactionCookie(response, identity.newCookieToken);
-  return response;
+  const storedUpvotes = Number(tool.upvotes || 0);
+  const recordedUpvotes = await reactionCount(db, "tool-upvote", slug);
+  const upvotes = Math.max(storedUpvotes, recordedUpvotes);
+  if (upvotes !== storedUpvotes) {
+    await db.collection("tools").updateOne({ slug, status: "published" }, { $set: { upvotes } });
+  }
+  return noStoreJson({ upvotes, reacted, canReact: true });
 }
 
 export async function POST(
@@ -53,7 +61,9 @@ export async function POST(
   const [{ db, tool }, user] = await Promise.all([findPublishedTool(slug), getCurrentUser()]);
   if (!tool) return noStoreJson({ error: "Tool not found." }, { status: 404 });
 
-  const identity = getReactionIdentity(request, user?.id);
+  if (!user) return noStoreJson({ error: "Sign in to upvote this tool.", reacted: false, canReact: false }, { status: 401 });
+
+  const identity = getReactionIdentity(request, user.id);
   const reaction = {
     kind: "tool-upvote" as const,
     target: slug,
@@ -76,7 +86,10 @@ export async function POST(
     upvotes = Number(updated.upvotes || 0);
   }
 
-  const response = noStoreJson({ upvotes, reacted: true, added: claimed });
-  applyReactionCookie(response, identity.newCookieToken);
-  return response;
+  const recordedUpvotes = await reactionCount(db, "tool-upvote", slug);
+  if (recordedUpvotes > upvotes) {
+    upvotes = recordedUpvotes;
+    await db.collection("tools").updateOne({ slug, status: "published" }, { $set: { upvotes } });
+  }
+  return noStoreJson({ upvotes, reacted: true, added: claimed, canReact: true });
 }
