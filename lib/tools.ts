@@ -111,22 +111,37 @@ function normalize(doc: Record<string, unknown>): Tool {
   };
 }
 
-function fallback(options?: { category?: string; featured?: boolean; includeDrafts?: boolean; launchBoard?: boolean }) {
-  return starterTools.filter((tool) =>
+type ToolQueryOptions = {
+  category?: string;
+  featured?: boolean;
+  includeDrafts?: boolean;
+  launchBoard?: boolean;
+  limit?: number;
+  skip?: number;
+};
+
+function fallback(options?: ToolQueryOptions) {
+  const filtered = starterTools.filter((tool) =>
     (!options?.category || tool.category === options.category) &&
     (options?.featured === undefined || tool.featured === options.featured) &&
     (options?.launchBoard === undefined || Boolean(tool.launchBoard) === options.launchBoard)
   );
+  const skip = Math.max(0, options?.skip || 0);
+  const items = filtered.slice(skip);
+  const limit = options?.limit ? Math.max(1, Math.min(options.limit, 200)) : undefined;
+  return limit ? items.slice(0, limit) : items;
 }
 
-export async function getTools(options?: { category?: string; featured?: boolean; includeDrafts?: boolean; launchBoard?: boolean }) {
+export async function getTools(options?: ToolQueryOptions) {
   if (!hasDatabase()) return fallback(options);
   const db = await getDb();
   const query: Record<string, unknown> = options?.includeDrafts ? {} : { status: "published" };
   if (options?.category) query.category = options.category;
   if (options?.featured !== undefined) query.featured = options.featured;
   if (options?.launchBoard !== undefined) query.launchBoard = options.launchBoard;
-  const docs = await db.collection("tools").find(query).sort({ featured: -1, launchedAt: -1 }).toArray();
+  let cursor = db.collection("tools").find(query).sort({ featured: -1, launchedAt: -1 }).skip(Math.max(0, options?.skip || 0));
+  if (options?.limit) cursor = cursor.limit(Math.max(1, Math.min(options.limit, 200)));
+  const docs = await cursor.toArray();
   return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
 }
 

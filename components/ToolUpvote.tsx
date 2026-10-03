@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-type VoteState = { slug: string; upvotes: number; voted: boolean };
+type VoteState = { slug: string; upvotes: number; voted: boolean; canVote: boolean };
 
 export function ToolUpvote({ slug, initialUpvotes, large = false }: { slug: string; initialUpvotes: number; large?: boolean }) {
   const [state, setState] = useState<VoteState | null>(null);
   const [voting, setVoting] = useState(false);
+  const router = useRouter();
   const known = state?.slug === slug;
   const upvotes = known ? state.upvotes : initialUpvotes;
   const voted = known ? state.voted : false;
@@ -21,10 +23,11 @@ export function ToolUpvote({ slug, initialUpvotes, large = false }: { slug: stri
           slug,
           upvotes: Number(data?.upvotes ?? initialUpvotes),
           voted: Boolean(data?.reacted),
+          canVote: Boolean(data?.canReact),
         });
       })
       .catch(() => {
-        if (!cancelled) setState({ slug, upvotes: initialUpvotes, voted: false });
+        if (!cancelled) setState({ slug, upvotes: initialUpvotes, voted: false, canVote: false });
       });
     return () => {
       cancelled = true;
@@ -33,12 +36,20 @@ export function ToolUpvote({ slug, initialUpvotes, large = false }: { slug: stri
 
   async function vote() {
     if (!known || voted || voting) return;
+    if (!state.canVote) {
+      router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     setVoting(true);
     try {
       const response = await fetch(`/api/tools/${encodeURIComponent(slug)}/upvote`, { method: "POST" });
+      if (response.status === 401) {
+        window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
       if (!response.ok) return;
       const data = await response.json();
-      setState({ slug, upvotes: Number(data.upvotes ?? upvotes), voted: Boolean(data.reacted) });
+      setState({ slug, upvotes: Number(data.upvotes ?? upvotes), voted: Boolean(data.reacted), canVote: Boolean(data.canReact) });
     } finally {
       setVoting(false);
     }

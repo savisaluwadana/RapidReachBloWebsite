@@ -62,10 +62,21 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export async function getPosts(): Promise<Post[]> {
-  if (!hasDatabase()) return starterPosts;
+function publishedNowFilter() {
+  return { status: "published", publishedAt: { $lte: new Date().toISOString() } };
+}
+
+export async function getPosts(options: { limit?: number; skip?: number } = {}): Promise<Post[]> {
+  const limit = options.limit ? Math.max(1, Math.min(options.limit, 200)) : undefined;
+  const skip = Math.max(0, options.skip || 0);
+  if (!hasDatabase()) {
+    const items = starterPosts.slice(skip);
+    return limit ? items.slice(0, limit) : items;
+  }
   const db = await getDb();
-  const docs = await db.collection("posts").find({ status: "published" }).sort({ publishedAt: -1 }).toArray();
+  let cursor = db.collection("posts").find(publishedNowFilter()).sort({ publishedAt: -1 }).skip(skip);
+  if (limit) cursor = cursor.limit(limit);
+  const docs = await cursor.toArray();
   return docs.map((doc) => normalize(doc as unknown as Record<string, unknown>));
 }
 
@@ -80,7 +91,7 @@ export async function searchPosts(query: string, limit = 50): Promise<Post[]> {
   }
 
   const db = await getDb();
-  const filter: Record<string, unknown> = { status: "published" };
+  const filter: Record<string, unknown> = publishedNowFilter();
   if (cleanQuery) {
     const matcher = { $regex: escapeRegex(cleanQuery), $options: "i" };
     filter.$or = [
@@ -105,7 +116,7 @@ export async function getAdminPosts(): Promise<Post[]> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   if (!hasDatabase()) return starterPosts.find((post) => post.slug === slug) || null;
   const db = await getDb();
-  const doc = await db.collection("posts").findOne({ slug, status: "published" });
+  const doc = await db.collection("posts").findOne({ slug, ...publishedNowFilter() });
   return doc ? normalize(doc as unknown as Record<string, unknown>) : null;
 }
 

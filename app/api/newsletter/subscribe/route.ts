@@ -1,9 +1,13 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { MongoServerError } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDatabaseIndexes } from "@/lib/db-indexes";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 
 const MAX_EMAIL_LENGTH = 320;
 const MAX_SOURCE_PATH_LENGTH = 180;
+const SIGNUP_RATE_WINDOW_MS = 60 * 60 * 1000;
+const SIGNUP_RATE_LIMIT = 10;
 
 function signupSourcePath(request: NextRequest) {
   const referer = request.headers.get("referer");
@@ -13,6 +17,14 @@ function signupSourcePath(request: NextRequest) {
   } catch {
     return undefined;
   }
+}
+
+function signupRateKey(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ip = forwarded || request.headers.get("x-real-ip")?.trim() || "unknown";
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  const salt = process.env.NEWSLETTER_RATE_LIMIT_SALT || process.env.COMMENT_RATE_LIMIT_SALT || "rapidreach-newsletter-rate";
+  return createHash("sha256").update(`${salt}\n${ip}\n${userAgent}`).digest("hex");
 }
 
 export async function POST(request: NextRequest) {
@@ -27,57 +39,71 @@ export async function POST(request: NextRequest) {
   }
 
   const db = await getDb();
-  const subscribers = db.collection("newsletter_subscribers");
-  await subscribers.createIndex({ email: 1 }, { unique: true, name: "unique_newsletter_email" });
+  await ensureDatabaseIndexes(db);
 
-  const existing = await subscribers.findOne(
-    { email },
-    { projection: { status: 1, unsubscribeToken: 1 } },
-  );
-  const now = new Date().toISOString();
-  const sourcePath = signupSourcePath(request);
-
-  if (existing?.status === "unsubscribed") {
-    await subscribers.updateOne(
-      { email },
-      {
-        $set: {
-          lastSignupAttemptAt: now,
-          ...(sourcePath ? { lastSourcePath: sourcePath } : {}),
-        },
-      },
-    );
-    return NextResponse.json(
-      { error: "This address is currently unsubscribed. Use the subscription-management link from a previous RapidReach email to resubscribe." },
-      { status: 409 },
-    );
+  const rateKey = signupRateKey(request);
+  const nowDate = new Date();
+  const recent = await db.collection("newsletter_signup_events").countDocuments({
+    key: rateKey,
+    createdAt: { $gte: new Date(nowDate.getTime() - SIGNUP_RATE_WINDOW_MS) },
+  });
+  if (recent >= SIGNUP_RATE_LIMIT) {
+    return NextResponse.json({ error: "Too many subscription attempts. Try again later." }, { status: 429 });
   }
+  await db.collection("newsletter_signup_events").insertOne({
+    key: rateKey,
+    createdAt: nowDate,
+    expiresAt: new Date(nowDate.getTime() + SIGNUP_RATE_WINDOW_MS * 2),
+  });
 
-  if (existing?.status === "active") {
-    await subscribers.updateOne(
+  const subscribers = db.collection("newsletter_subscribers");
+  const now = nowDate.toISOString();
+  const sourcePath = signupSourcePath(request);
+  const unsubscribeToken = randomBytes(24).toString("hex");
+
+  let previous;
+  try {
+    previous = await subscribers.findOneAndUpdate(
       { email },
       {
         $set: {
+          status: "active",
           updatedAt: now,
           lastSignupAt: now,
           ...(sourcePath ? { lastSourcePath: sourcePath } : {}),
         },
+        $setOnInsert: {
+          email,
+          createdAt: now,
+          subscribedAt: now,
+          unsubscribeToken,
+          ...(sourcePath ? { sourcePath } : {}),
+        },
       },
+      { upsert: true, returnDocument: "before", projection: { status: 1, unsubscribeToken: 1 } },
     );
-    return NextResponse.json({ ok: true, alreadySubscribed: true });
+  } catch (error) {
+    if (!(error instanceof MongoServerError) || error.code !== 11000) throw error;
+    previous = await subscribers.findOne({ email }, { projection: { status: 1, unsubscribeToken: 1 } });
+    await subscribers.updateOne(
+      { email },
+      { $set: { status: "active", updatedAt: now, lastSignupAt: now, ...(sourcePath ? { lastSourcePath: sourcePath } : {}) } },
+    );
   }
 
-  const unsubscribeToken = randomBytes(24).toString("hex");
-  await subscribers.insertOne({
-    email,
-    status: "active",
-    createdAt: now,
-    subscribedAt: now,
-    updatedAt: now,
-    lastSignupAt: now,
-    unsubscribeToken,
-    ...(sourcePath ? { sourcePath, lastSourcePath: sourcePath } : {}),
-  });
+  const current = await subscribers.findOne({ email }, { projection: { unsubscribeToken: 1 } });
+  if (!current?.unsubscribeToken) {
+    await subscribers.updateOne({ email }, { $set: { unsubscribeToken: randomBytes(24).toString("hex") } });
+  }
 
-  return NextResponse.json({ ok: true, alreadySubscribed: false }, { status: 201 });
+  const alreadySubscribed = previous?.status === "active";
+  const resubscribed = previous?.status === "unsubscribed";
+  if (resubscribed) {
+    await subscribers.updateOne({ email }, { $set: { resubscribedAt: now } });
+  }
+
+  return NextResponse.json(
+    { ok: true, alreadySubscribed, resubscribed },
+    { status: previous ? 200 : 201 },
+  );
 }

@@ -4,6 +4,7 @@ import { MongoServerError, ObjectId } from "mongodb";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb, hasDatabase } from "@/lib/mongodb";
+import { ensureDatabaseIndexes } from "@/lib/db-indexes";
 import type { User, UserRole } from "@/lib/types";
 
 const scrypt = promisify(scryptCallback);
@@ -18,7 +19,6 @@ const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_RATE_LIMIT = 10;
 const REGISTER_RATE_WINDOW_MS = 30 * 60 * 1000;
 const REGISTER_RATE_LIMIT = 5;
-let indexesPromise: Promise<void> | null = null;
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -45,30 +45,19 @@ function publicUser(doc: Record<string, unknown>): User {
     email: String(doc.email || ""),
     role: doc.role === "admin" ? "admin" : "user",
     status: doc.status === "disabled" ? "disabled" : "active",
+    emailVerified: Boolean(doc.emailVerifiedAt),
     createdAt: String(doc.createdAt || new Date().toISOString()),
     updatedAt: doc.updatedAt ? String(doc.updatedAt) : undefined,
   };
 }
 
 async function ensureAccountIndexes() {
-  if (!indexesPromise) {
-    indexesPromise = (async () => {
-      const db = await getDb();
-      await Promise.all([
-        db.collection("users").createIndex({ email: 1 }, { unique: true }),
-        db.collection("sessions").createIndex({ tokenHash: 1 }, { unique: true }),
-        db.collection("sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-        db.collection("tool_submissions").createIndex({ userId: 1, updatedAt: -1 }),
-        db.collection("tool_submissions").createIndex({ status: 1, updatedAt: -1 }),
-        db.collection(AUTH_RATE_COLLECTION).createIndex({ key: 1, createdAt: -1 }),
-        db.collection(AUTH_RATE_COLLECTION).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-      ]);
-    })().catch((error) => {
-      indexesPromise = null;
-      throw error;
-    });
-  }
-  return indexesPromise;
+  const db = await getDb();
+  await ensureDatabaseIndexes(db);
+  await Promise.all([
+    db.collection(AUTH_RATE_COLLECTION).createIndex({ key: 1, createdAt: -1 }, { name: "auth_rate_key" }),
+    db.collection(AUTH_RATE_COLLECTION).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "expire_auth_rate_events" }),
+  ]);
 }
 
 async function requestFingerprint() {
@@ -156,8 +145,9 @@ export async function registerUser(input: { name: string; email: string; passwor
       createdAt: now,
       updatedAt: now,
     });
-    await setSession(result.insertedId.toString());
-    return { ok: true as const };
+    const userId = result.insertedId.toString();
+    await setSession(userId);
+    return { ok: true as const, user: { id: userId, email } };
   } catch (error) {
     if (error instanceof MongoServerError && error.code === 11000) return { ok: false as const, error: "An account already exists for that email." };
     throw error;
@@ -179,7 +169,7 @@ async function maybeBootstrapAdmin(email: string, password: string) {
   if (existingUser) {
     await db.collection("users").updateOne(
       { _id: existingUser._id },
-      { $set: { role: "admin", status: "active", passwordHash: await hashPassword(configuredPassword), updatedAt: now } },
+      { $set: { role: "admin", status: "active", passwordHash: await hashPassword(configuredPassword), emailVerifiedAt: now, updatedAt: now } },
     );
     return db.collection("users").findOne({ _id: existingUser._id });
   }
@@ -191,6 +181,7 @@ async function maybeBootstrapAdmin(email: string, password: string) {
       passwordHash: await hashPassword(configuredPassword),
       role: "admin",
       status: "active",
+      emailVerifiedAt: now,
       createdAt: now,
       updatedAt: now,
     });

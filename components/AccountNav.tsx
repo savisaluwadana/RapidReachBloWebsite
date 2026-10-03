@@ -26,6 +26,10 @@ export function AccountNav({ mobile = false }: { mobile?: boolean }) {
     };
   }, []);
 
+  if (!loaded) {
+    return mobile ? null : <div className="nav-auth-links" aria-live="polite" aria-busy="true" />;
+  }
+
   if (me) {
     const href = me.role === "admin" ? "/admin" : "/dashboard";
     const label = me.role === "admin" ? "Admin" : "Dashboard";

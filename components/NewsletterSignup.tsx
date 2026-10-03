@@ -23,7 +23,7 @@ export function NewsletterSignup({ compact = false }: { compact?: boolean }) {
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setState("done");
-        setMessage(data.alreadySubscribed ? "You’re already on the weekly briefing list." : "You’re on the list. One useful briefing a week.");
+        setMessage(data.resubscribed ? "Welcome back. Your weekly briefing subscription is active again." : data.alreadySubscribed ? "You’re already on the weekly briefing list." : "You’re on the list. One useful briefing a week.");
         formElement.reset();
       } else {
         setState("error");

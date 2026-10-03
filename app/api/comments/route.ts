@@ -121,6 +121,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const recentDuplicate = await db.collection("comments").findOne(
+    {
+      postSlug: slug,
+      userId: user.id,
+      body,
+      createdAt: { $gte: new Date(now - COMMENT_DEDUPE_WINDOW_MS).toISOString() },
+    },
+    { projection: { _id: 1 } },
+  );
+  if (recentDuplicate) {
+    return noStoreJson({ error: "That comment was already submitted." }, { status: 409 });
+  }
+
   try {
     const result = await db.collection("comments").insertOne({
       postSlug: slug,

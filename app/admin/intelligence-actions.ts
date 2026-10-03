@@ -8,6 +8,7 @@ import { getDb, hasDatabase } from "@/lib/mongodb";
 import { getAdminPosts, getPosts } from "@/lib/posts";
 import { normalizedSiteUrl } from "@/lib/public-format";
 import { getTools } from "@/lib/tools";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) { return String(form.get(key) || "").trim(); }
 function list(form: FormData, key: string) { return text(form, key).split(",").map((item) => item.trim()).filter(Boolean); }
@@ -20,10 +21,13 @@ async function requireExistingSlugs(
   collectionName: "posts" | "tools",
   slugs: string[],
   label: string,
+  publishedOnly = false,
 ) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection(collectionName)
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -54,7 +58,7 @@ export async function getCollectionOptions() {
 }
 
 export async function saveCollection(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const collections = database.collection("collections");
   const title = text(form, "title").slice(0, 240);
@@ -62,11 +66,12 @@ export async function saveCollection(form: FormData) {
   const slug = slugify(text(form, "slug") || title);
   if (!title || !slug) throw new Error("Collection title is required.");
 
+  const status = text(form, "status") === "published" ? "published" : "draft";
   const toolSlugs = uniqueList(form, "toolSlugs", 30);
   const postSlugs = uniqueList(form, "postSlugs", 30);
   await Promise.all([
-    requireExistingSlugs(database, "tools", toolSlugs, "Collection tool"),
-    requireExistingSlugs(database, "posts", postSlugs, "Collection post"),
+    requireExistingSlugs(database, "tools", toolSlugs, "Collection tool", status === "published"),
+    requireExistingSlugs(database, "posts", postSlugs, "Collection post", status === "published"),
   ]);
 
   const now = new Date().toISOString();
@@ -77,7 +82,7 @@ export async function saveCollection(form: FormData) {
     toolSlugs,
     postSlugs,
     featured: form.get("featured") === "on",
-    status: text(form, "status") === "published" ? "published" : "draft",
+    status,
     updatedAt: now,
   };
 
@@ -95,6 +100,13 @@ export async function saveCollection(form: FormData) {
     await collections.insertOne({ ...document, createdAt: now });
   }
 
+  await recordAdminAudit(database, {
+    actorId: admin.id,
+    action: originalSlug ? "collection.update" : "collection.create",
+    targetType: "collection",
+    targetId: slug,
+    metadata: { status },
+  });
   revalidatePath("/collections");
   revalidatePath(`/collections/${slug}`);
   revalidatePath("/tools");
@@ -102,11 +114,14 @@ export async function saveCollection(form: FormData) {
 }
 
 export async function deleteCollection(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const slug = text(form, "slug");
   if (!slug) throw new Error("Collection is required.");
-  await database.collection("collections").deleteOne({ slug });
+  const result = await database.collection("collections").deleteOne({ slug });
+  if (result.deletedCount) {
+    await recordAdminAudit(database, { actorId: admin.id, action: "collection.delete", targetType: "collection", targetId: slug });
+  }
   revalidatePath("/collections");
   revalidatePath(`/collections/${slug}`);
   revalidatePath("/tools");
@@ -141,7 +156,8 @@ export async function sendWeeklyBriefing(form: FormData) {
 
   const finalPostSlugs = selectedPosts.map((item) => item.slug);
   const finalToolSlugs = selectedTools.map((item) => item.slug);
-  const sendKey = createHash("sha256").update(JSON.stringify({ subject, intro, postSlugs: finalPostSlugs, toolSlugs: finalToolSlugs })).digest("hex");
+  const campaignDate = new Date().toISOString().slice(0, 10);
+  const sendKey = createHash("sha256").update(JSON.stringify({ campaignDate, subject, intro, postSlugs: finalPostSlugs, toolSlugs: finalToolSlugs })).digest("hex");
   const jobs = database.collection("briefing_send_jobs");
   await jobs.createIndex({ sendKey: 1 }, { unique: true, name: "unique_briefing_send" });
 
@@ -166,6 +182,7 @@ export async function sendWeeklyBriefing(form: FormData) {
       toolSlugs: finalToolSlugs,
       recipientSnapshot,
       recipients: recipientSnapshot.length,
+      deliveredRecipients: 0,
       completedBatches: [],
       status: "sending",
       createdAt: new Date().toISOString(),
@@ -182,12 +199,27 @@ export async function sendWeeklyBriefing(form: FormData) {
     const batchIndex = Math.floor(start / 100);
     if (completedBatches.has(batchIndex)) continue;
 
-    const batch = recipientSnapshot.slice(start, start + 100).map((subscriber) => ({
+    const candidates = recipientSnapshot.slice(start, start + 100);
+    const activeDocs = await database.collection("newsletter_subscribers")
+      .find({ status: "active", email: { $in: candidates.map((subscriber) => String(subscriber.email)) } }, { projection: { email: 1 } })
+      .toArray();
+    const activeEmails = new Set(activeDocs.map((subscriber) => String(subscriber.email)));
+    const activeCandidates = candidates.filter((subscriber) => activeEmails.has(String(subscriber.email)));
+    const batch = activeCandidates.map((subscriber) => ({
       from,
       to: [String(subscriber.email)],
       subject,
       html: content.replace("</div>", `<p style="font-size:11px"><a href="${siteUrl}/unsubscribe?token=${encodeURIComponent(String(subscriber.unsubscribeToken))}">Manage subscription</a></p></div>`),
     }));
+
+    if (!batch.length) {
+      await jobs.updateOne(
+        { sendKey },
+        { $addToSet: { completedBatches: batchIndex }, $inc: { deliveredRecipients: batch.length }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
+      );
+      continue;
+    }
+
     const response = await fetch("https://api.resend.com/emails/batch", {
       method: "POST",
       headers: {
@@ -204,26 +236,29 @@ export async function sendWeeklyBriefing(form: FormData) {
     }
     await jobs.updateOne(
       { sendKey },
-      { $addToSet: { completedBatches: batchIndex }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
+      { $addToSet: { completedBatches: batchIndex }, $inc: { deliveredRecipients: batch.length }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
     );
   }
 
   const sentAt = new Date().toISOString();
-  await jobs.updateOne({ sendKey }, { $set: { status: "complete", sentAt, recipients: recipientSnapshot.length, updatedAt: sentAt } });
+  const completedJob = await jobs.findOne({ sendKey }, { projection: { deliveredRecipients: 1 } });
+  const deliveredRecipients = Number(completedJob?.deliveredRecipients || 0);
+  await jobs.updateOne({ sendKey }, { $set: { status: "complete", sentAt, recipients: deliveredRecipients, updatedAt: sentAt } });
   await database.collection("briefing_sends").updateOne(
     { sendKey },
     {
       $setOnInsert: {
         sendKey,
+        campaignDate,
         subject,
         intro,
         postSlugs: finalPostSlugs,
         toolSlugs: finalToolSlugs,
-        recipients: recipientSnapshot.length,
+        recipients: deliveredRecipients,
         sentAt,
       },
     },
     { upsert: true },
   );
-  redirect(`/admin/briefing?sent=${recipientSnapshot.length}`);
+  redirect(`/admin/briefing?sent=${deliveredRecipients}`);
 }

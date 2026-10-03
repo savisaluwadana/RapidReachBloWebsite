@@ -7,6 +7,8 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { authorSlug } from "@/lib/authors";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import type { PostCorrection, PostSource } from "@/lib/types";
+import { markMediaAttached, mediaUrlsFromText } from "@/lib/media";
+import { recordAdminAudit } from "@/lib/audit";
 
 export type PostSaveState = { error: string };
 
@@ -76,10 +78,12 @@ function readingMinutes(value: string) {
   return Math.max(1, Math.min(180, Math.round(parsed)));
 }
 
-async function requireExistingToolSlugs(database: Awaited<ReturnType<typeof getDb>>, slugs: string[]) {
+async function requireExistingToolSlugs(database: Awaited<ReturnType<typeof getDb>>, slugs: string[], publishedOnly = false) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection("tools")
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -98,7 +102,7 @@ export async function savePostWithFeedback(
   _previousState: PostSaveState,
   form: FormData,
 ): Promise<PostSaveState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   let savedSlug = "";
   let originalSlug = "";
@@ -134,8 +138,9 @@ export async function savePostWithFeedback(
       throw new Error(`The category “${category}” no longer exists. Refresh the editor and choose a current category.`);
     }
 
+    const status = text(form, "status") === "published" ? "published" : "draft";
     const relatedToolSlugs = uniqueList(form, "relatedToolSlugs", 12);
-    await requireExistingToolSlugs(database, relatedToolSlugs);
+    await requireExistingToolSlugs(database, relatedToolSlugs, status === "published");
     const author = text(form, "author").slice(0, 160) || "RapidReach Editorial";
 
     const document = {
@@ -154,7 +159,7 @@ export async function savePostWithFeedback(
       relatedToolSlugs,
       sources: parseSources(form),
       corrections: parseCorrections(form),
-      status: text(form, "status") === "published" ? "published" : "draft",
+      status,
     };
 
     if (originalSlug) {
@@ -196,6 +201,14 @@ export async function savePostWithFeedback(
       await posts.insertOne({ ...document, likes: 0 });
     }
 
+    await markMediaAttached([featuredImageUrl, ...mediaUrlsFromText(content)]);
+    await recordAdminAudit(database, {
+      actorId: admin.id,
+      action: originalSlug ? "post.update" : "post.create",
+      targetType: "post",
+      targetId: slug,
+      metadata: { status },
+    });
     savedSlug = slug;
     savedAuthor = author;
   } catch (error) {

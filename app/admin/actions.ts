@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { loginUser, logoutUser } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb, hasDatabase } from "@/lib/mongodb";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -106,7 +107,7 @@ export async function logoutAdmin() {
 }
 
 export async function saveCategory(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const categories = database.collection("categories");
   const name = text(form, "name").slice(0, 120);
@@ -149,13 +150,20 @@ export async function saveCategory(form: FormData) {
     revalidatePath(`/tools/category/${originalSlug}`);
   }
 
+  await recordAdminAudit(database, {
+    actorId: admin.id,
+    action: originalSlug ? "category.update" : "category.create",
+    targetType: "category",
+    targetId: `${kind}:${slug}`,
+    metadata: { name },
+  });
   revalidatePath("/");
   revalidatePath("/tools");
   revalidatePath("/admin/categories");
 }
 
 export async function deleteCategory(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const slug = text(form, "slug");
   const kind = text(form, "kind") === "tool" ? "tool" : "post";
@@ -180,6 +188,7 @@ export async function deleteCategory(form: FormData) {
       String(category.name || ""),
     );
   }
+  await recordAdminAudit(database, { actorId: admin.id, action: "category.delete", targetType: "category", targetId: `${kind}:${slug}`, metadata: { name: String(category.name || "") } });
   revalidatePath("/");
   revalidatePath("/tools");
   revalidatePath("/admin/categories");
@@ -266,7 +275,7 @@ export async function savePost(form: FormData) {
 }
 
 export async function deletePost(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await db();
   const slug = text(form, "slug");
   if (!slug) throw new Error("Post is required.");
@@ -280,6 +289,7 @@ export async function deletePost(form: FormData) {
       database.collection("comments").deleteMany({ postSlug: slug }),
       database.collection("engagement_reactions").deleteMany({ kind: "post-like", target: slug }),
     ]);
+    await recordAdminAudit(database, { actorId: admin.id, action: "post.delete", targetType: "post", targetId: slug });
   }
   revalidatePath("/");
   revalidatePath("/search");

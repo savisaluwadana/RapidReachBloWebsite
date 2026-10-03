@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
+import { markMediaAttached } from "@/lib/media";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -53,10 +55,13 @@ async function requireExistingSlugs(
   collectionName: "posts" | "tools",
   slugs: string[],
   label: string,
+  publishedOnly = false,
 ) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection(collectionName)
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -86,7 +91,7 @@ async function pullStringReference(
 }
 
 export async function saveTool(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await getDb();
   const tools = database.collection("tools");
   const originalSlug = text(form, "originalSlug");
@@ -117,8 +122,8 @@ export async function saveTool(form: FormData) {
   }
   const relatedPostSlugs = uniqueList(form, "relatedPostSlugs", 12);
   await Promise.all([
-    requireExistingSlugs(database, "tools", alternatives, "Alternative tool"),
-    requireExistingSlugs(database, "posts", relatedPostSlugs, "Related post"),
+    requireExistingSlugs(database, "tools", alternatives, "Alternative tool", status === "published"),
+    requireExistingSlugs(database, "posts", relatedPostSlugs, "Related post", status === "published"),
   ]);
 
   const pricing = ["free", "freemium", "paid", "open-source"].includes(text(form, "pricing")) ? text(form, "pricing") : "free";
@@ -193,6 +198,14 @@ export async function saveTool(form: FormData) {
     await tools.insertOne({ ...document, upvotes: 0 });
   }
 
+  await markMediaAttached([logoUrl, ...screenshots]);
+  await recordAdminAudit(database, {
+    actorId: admin.id,
+    action: originalSlug ? "tool.update" : "tool.create",
+    targetType: "tool",
+    targetId: slug,
+    metadata: { status },
+  });
   revalidatePath("/tools");
   revalidatePath(`/tools/${slug}`);
   revalidatePath("/launches");
@@ -203,7 +216,7 @@ export async function saveTool(form: FormData) {
 }
 
 export async function deleteTool(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await getDb();
   const slug = text(form, "slug");
   if (!slug) throw new Error("Tool is required.");
@@ -222,6 +235,7 @@ export async function deleteTool(form: FormData) {
         { $unset: { convertedToolSlug: "" }, $set: { updatedAt: now } },
       ),
     ]);
+    await recordAdminAudit(database, { actorId: admin.id, action: "tool.delete", targetType: "tool", targetId: slug });
   }
 
   revalidatePath("/tools");

@@ -97,6 +97,7 @@ export type User = {
   email: string;
   role: UserRole;
   status: AccountStatus;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt?: string;
 };

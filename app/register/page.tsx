@@ -16,6 +16,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
         <label>Password<input type="password" name="password" required minLength={10} autoComplete="new-password" /><small>At least 10 characters.</small></label>
         {error && <p className="account-error">{error}</p>}
         <button className="account-primary" type="submit">Create account</button>
+        <small>We’ll send a verification link when account email delivery is configured.</small>
         <p>Already registered? <Link href="/login">Sign in</Link></p>
       </form>
     </section>
