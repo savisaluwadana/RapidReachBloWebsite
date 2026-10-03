@@ -206,9 +206,6 @@ export async function saveTool(form: FormData) {
     targetId: slug,
     metadata: { status },
   });
-  if (result.deletedCount) {
-    await recordAdminAudit(database, { actorId: admin.id, action: "tool.delete", targetType: "tool", targetId: slug });
-  }
   revalidatePath("/tools");
   revalidatePath(`/tools/${slug}`);
   revalidatePath("/launches");
@@ -238,6 +235,7 @@ export async function deleteTool(form: FormData) {
         { $unset: { convertedToolSlug: "" }, $set: { updatedAt: now } },
       ),
     ]);
+    await recordAdminAudit(database, { actorId: admin.id, action: "tool.delete", targetType: "tool", targetId: slug });
   }
 
   revalidatePath("/tools");
