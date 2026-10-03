@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return collection ? {
     title: collection.title,
     description: collection.description,
-    alternates: { canonical: `/collections/${slug}` },
+    alternates: { canonical: `/collections/${slug}`, types: { "text/markdown": `/collections/${slug}/index.md` } },
     openGraph: { title: collection.title, description: collection.description, url: `/collections/${slug}`, type: "website" },
     twitter: { card: "summary_large_image", title: collection.title, description: collection.description },
   } : {};
