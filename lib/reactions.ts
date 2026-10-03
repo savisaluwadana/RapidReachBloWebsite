@@ -95,3 +95,8 @@ export async function releaseReaction(
 ) {
   await db.collection(REACTION_COLLECTION).deleteOne(input);
 }
+
+export async function reactionCount(db: Db, kind: ReactionKind, target: string) {
+  await ensureReactionIndexes(db);
+  return db.collection(REACTION_COLLECTION).countDocuments({ kind, target });
+}
