@@ -8,6 +8,7 @@ import { authorSlug } from "@/lib/authors";
 import { getDb, hasDatabase } from "@/lib/mongodb";
 import type { PostCorrection, PostSource } from "@/lib/types";
 import { markMediaAttached, mediaUrlsFromText } from "@/lib/media";
+import { recordAdminAudit } from "@/lib/audit";
 
 export type PostSaveState = { error: string };
 
@@ -101,7 +102,7 @@ export async function savePostWithFeedback(
   _previousState: PostSaveState,
   form: FormData,
 ): Promise<PostSaveState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   let savedSlug = "";
   let originalSlug = "";
@@ -201,6 +202,13 @@ export async function savePostWithFeedback(
     }
 
     await markMediaAttached([featuredImageUrl, ...mediaUrlsFromText(content)]);
+    await recordAdminAudit(database, {
+      actorId: admin.id,
+      action: originalSlug ? "post.update" : "post.create",
+      targetType: "post",
+      targetId: slug,
+      metadata: { status },
+    });
     savedSlug = slug;
     savedAuthor = author;
   } catch (error) {
