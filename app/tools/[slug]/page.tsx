@@ -10,6 +10,7 @@ import { serializeJsonLd } from "@/lib/json-ld";
 import { getToolBySlug, getTools } from "@/lib/tools";
 import { getPosts } from "@/lib/posts";
 import { encodedPathSegment, formatDate, normalizedSiteUrl } from "@/lib/public-format";
+import { publicPostsForAgents } from "@/lib/agent-content";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -32,7 +33,8 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) notFound();
-  const [category, allTools, posts] = await Promise.all([getCategory("tool", tool.category), getTools(), getPosts()]);
+  const [category, allTools, allPosts] = await Promise.all([getCategory("tool", tool.category), getTools(), getPosts()]);
+  const posts = publicPostsForAgents(allPosts);
   const screenshots = tool.screenshots || [];
   const alternativeTools = (tool.alternatives || []).map((item) => allTools.find((candidate) => candidate.slug === item)).filter(Boolean) as typeof allTools;
   const explicitPosts = (tool.relatedPostSlugs || []).map((item) => posts.find((post) => post.slug === item)).filter(Boolean) as typeof posts;
@@ -40,7 +42,8 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const siteUrl = normalizedSiteUrl();
   const toolPageUrl = `${siteUrl}/tools/${encodedPathSegment(tool.slug)}`;
   const externalUrls = [tool.website, tool.github].filter(Boolean) as string[];
-  const free = tool.pricing === "free" || tool.pricing === "open-source";
+  const free = tool.pricing === "free";
+  const sourceAvailable = tool.pricing === "open-source" || tool.openSource;
   const schema = {
     "@type": "SoftwareApplication",
     "@id": `${toolPageUrl}#software`,
@@ -49,7 +52,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
     url: toolPageUrl,
     image: [tool.logoUrl, ...screenshots].filter(Boolean),
     applicationCategory: category?.name || tool.category,
-    isAccessibleForFree: free,
+    isAccessibleForFree: free || sourceAvailable,
     offers: free
       ? { "@type": "Offer", price: "0", priceCurrency: "USD", url: tool.website, availability: "https://schema.org/InStock" }
       : { "@type": "Offer", url: tool.website, availability: "https://schema.org/InStock" },
