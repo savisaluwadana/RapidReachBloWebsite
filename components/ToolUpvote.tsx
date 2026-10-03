@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type VoteState = { slug: string; upvotes: number; voted: boolean; canVote: boolean };
 
 export function ToolUpvote({ slug, initialUpvotes, large = false }: { slug: string; initialUpvotes: number; large?: boolean }) {
   const [state, setState] = useState<VoteState | null>(null);
   const [voting, setVoting] = useState(false);
+  const router = useRouter();
   const known = state?.slug === slug;
   const upvotes = known ? state.upvotes : initialUpvotes;
   const voted = known ? state.voted : false;
@@ -35,7 +37,7 @@ export function ToolUpvote({ slug, initialUpvotes, large = false }: { slug: stri
   async function vote() {
     if (!known || voted || voting) return;
     if (!state.canVote) {
-      window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+      router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     setVoting(true);
