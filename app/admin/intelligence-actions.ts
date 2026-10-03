@@ -141,7 +141,8 @@ export async function sendWeeklyBriefing(form: FormData) {
 
   const finalPostSlugs = selectedPosts.map((item) => item.slug);
   const finalToolSlugs = selectedTools.map((item) => item.slug);
-  const sendKey = createHash("sha256").update(JSON.stringify({ subject, intro, postSlugs: finalPostSlugs, toolSlugs: finalToolSlugs })).digest("hex");
+  const campaignDate = new Date().toISOString().slice(0, 10);
+  const sendKey = createHash("sha256").update(JSON.stringify({ campaignDate, subject, intro, postSlugs: finalPostSlugs, toolSlugs: finalToolSlugs })).digest("hex");
   const jobs = database.collection("briefing_send_jobs");
   await jobs.createIndex({ sendKey: 1 }, { unique: true, name: "unique_briefing_send" });
 
@@ -166,6 +167,7 @@ export async function sendWeeklyBriefing(form: FormData) {
       toolSlugs: finalToolSlugs,
       recipientSnapshot,
       recipients: recipientSnapshot.length,
+      deliveredRecipients: 0,
       completedBatches: [],
       status: "sending",
       createdAt: new Date().toISOString(),
@@ -182,12 +184,27 @@ export async function sendWeeklyBriefing(form: FormData) {
     const batchIndex = Math.floor(start / 100);
     if (completedBatches.has(batchIndex)) continue;
 
-    const batch = recipientSnapshot.slice(start, start + 100).map((subscriber) => ({
+    const candidates = recipientSnapshot.slice(start, start + 100);
+    const activeDocs = await database.collection("newsletter_subscribers")
+      .find({ status: "active", email: { $in: candidates.map((subscriber) => String(subscriber.email)) } }, { projection: { email: 1 } })
+      .toArray();
+    const activeEmails = new Set(activeDocs.map((subscriber) => String(subscriber.email)));
+    const activeCandidates = candidates.filter((subscriber) => activeEmails.has(String(subscriber.email)));
+    const batch = activeCandidates.map((subscriber) => ({
       from,
       to: [String(subscriber.email)],
       subject,
       html: content.replace("</div>", `<p style="font-size:11px"><a href="${siteUrl}/unsubscribe?token=${encodeURIComponent(String(subscriber.unsubscribeToken))}">Manage subscription</a></p></div>`),
     }));
+
+    if (!batch.length) {
+      await jobs.updateOne(
+        { sendKey },
+        { $addToSet: { completedBatches: batchIndex }, $inc: { deliveredRecipients: batch.length }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
+      );
+      continue;
+    }
+
     const response = await fetch("https://api.resend.com/emails/batch", {
       method: "POST",
       headers: {
@@ -209,21 +226,24 @@ export async function sendWeeklyBriefing(form: FormData) {
   }
 
   const sentAt = new Date().toISOString();
-  await jobs.updateOne({ sendKey }, { $set: { status: "complete", sentAt, recipients: recipientSnapshot.length, updatedAt: sentAt } });
+  const completedJob = await jobs.findOne({ sendKey }, { projection: { deliveredRecipients: 1 } });
+  const deliveredRecipients = Number(completedJob?.deliveredRecipients || 0);
+  await jobs.updateOne({ sendKey }, { $set: { status: "complete", sentAt, recipients: deliveredRecipients, updatedAt: sentAt } });
   await database.collection("briefing_sends").updateOne(
     { sendKey },
     {
       $setOnInsert: {
         sendKey,
+        campaignDate,
         subject,
         intro,
         postSlugs: finalPostSlugs,
         toolSlugs: finalToolSlugs,
-        recipients: recipientSnapshot.length,
+        recipients: deliveredRecipients,
         sentAt,
       },
     },
     { upsert: true },
   );
-  redirect(`/admin/briefing?sent=${recipientSnapshot.length}`);
+  redirect(`/admin/briefing?sent=${deliveredRecipients}`);
 }
