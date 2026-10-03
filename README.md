@@ -167,8 +167,9 @@ Published stories expose `NewsArticle` JSON-LD and use featured images in social
 Agent-facing discovery is separated from full content:
 
 - `/llms.txt` — concise, spec-aligned discovery index linking to agent-friendly resources
+- `/news/llms.txt`, `/tools/llms.txt`, `/collections/llms.txt` — path-scoped indexes for each public content domain
 - `/llms-full.txt` — expanded public story, tool, and collection context
-- `/api/agent/catalog` — structured JSON catalog with canonical URLs, Markdown URLs, timestamps, provenance, and relationships
+- `/api/agent/catalog` — structured JSON catalog with canonical URLs, Markdown URLs, timestamps, provenance, relationships, and scoped index URLs
 - `/news/[slug]/index.md` — canonical Markdown representation of a published story
 - `/tools/[slug]/index.md` — canonical Markdown representation of a published tool profile
 - `/collections/[slug]/index.md` — canonical Markdown representation of a published collection
