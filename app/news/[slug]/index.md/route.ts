@@ -1,6 +1,6 @@
 import { getPostBySlug } from "@/lib/posts";
 import { normalizedSiteUrl } from "@/lib/public-format";
-import { markdownDiscoveryHeaders, postCanonicalUrl, renderPostMarkdown } from "@/lib/agent-content";
+import { markdownDiscoveryHeaders, postCanonicalUrl, publicPostsForAgents, renderPostMarkdown } from "@/lib/agent-content";
 
 export async function GET(
   _request: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return new Response("Not found", { status: 404 });
+  if (!post || publicPostsForAgents([post]).length === 0) return new Response("Not found", { status: 404 });
 
   const siteUrl = normalizedSiteUrl();
   const canonical = postCanonicalUrl(siteUrl, post);
