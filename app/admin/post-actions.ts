@@ -77,10 +77,12 @@ function readingMinutes(value: string) {
   return Math.max(1, Math.min(180, Math.round(parsed)));
 }
 
-async function requireExistingToolSlugs(database: Awaited<ReturnType<typeof getDb>>, slugs: string[]) {
+async function requireExistingToolSlugs(database: Awaited<ReturnType<typeof getDb>>, slugs: string[], publishedOnly = false) {
   if (!slugs.length) return;
+  const query: Record<string, unknown> = { slug: { $in: slugs } };
+  if (publishedOnly) query.status = "published";
   const existing = await database.collection("tools")
-    .find({ slug: { $in: slugs } }, { projection: { slug: 1 } })
+    .find(query, { projection: { slug: 1 } })
     .toArray();
   const found = new Set(existing.map((item) => String(item.slug)));
   const missing = slugs.filter((slug) => !found.has(slug));
@@ -135,8 +137,9 @@ export async function savePostWithFeedback(
       throw new Error(`The category “${category}” no longer exists. Refresh the editor and choose a current category.`);
     }
 
+    const status = text(form, "status") === "published" ? "published" : "draft";
     const relatedToolSlugs = uniqueList(form, "relatedToolSlugs", 12);
-    await requireExistingToolSlugs(database, relatedToolSlugs);
+    await requireExistingToolSlugs(database, relatedToolSlugs, status === "published");
     const author = text(form, "author").slice(0, 160) || "RapidReach Editorial";
 
     const document = {
@@ -155,7 +158,7 @@ export async function savePostWithFeedback(
       relatedToolSlugs,
       sources: parseSources(form),
       corrections: parseCorrections(form),
-      status: text(form, "status") === "published" ? "published" : "draft",
+      status,
     };
 
     if (originalSlug) {
