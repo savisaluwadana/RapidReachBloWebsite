@@ -63,6 +63,8 @@ export async function ensureDatabaseIndexes(db: Db) {
         db.collection("newsletter_signup_events").createIndex({ key: 1, createdAt: -1 }, { name: "newsletter_signup_rate" }),
         db.collection("newsletter_signup_events").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "expire_newsletter_signup_events" }),
         db.collection("briefing_send_jobs").createIndex({ sendKey: 1 }, { unique: true, name: "unique_briefing_send" }),
+        db.collection("admin_audit_log").createIndex({ createdAt: -1 }, { name: "audit_recent" }),
+        db.collection("admin_audit_log").createIndex({ actorId: 1, createdAt: -1 }, { name: "audit_by_actor" }),
       ]);
     })().catch((error) => {
       indexesPromise = null;
