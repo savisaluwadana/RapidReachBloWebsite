@@ -28,6 +28,6 @@ export async function GET(
   const siteUrl = normalizedSiteUrl();
   const canonical = toolCanonicalUrl(siteUrl, tool);
   return new Response(renderToolMarkdown(tool, siteUrl, { alternatives, relatedPosts }), {
-    headers: markdownDiscoveryHeaders(canonical, siteUrl, tool.updatedAt || tool.launchedAt),
+    headers: markdownDiscoveryHeaders(canonical, siteUrl, tool.updatedAt || tool.launchedAt, `${siteUrl}/tools/llms.txt`),
   });
 }
