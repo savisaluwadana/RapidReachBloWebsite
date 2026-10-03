@@ -221,7 +221,7 @@ export async function sendWeeklyBriefing(form: FormData) {
     }
     await jobs.updateOne(
       { sendKey },
-      { $addToSet: { completedBatches: batchIndex }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
+      { $addToSet: { completedBatches: batchIndex }, $inc: { deliveredRecipients: batch.length }, $set: { status: "sending", updatedAt: new Date().toISOString() } },
     );
   }
 
