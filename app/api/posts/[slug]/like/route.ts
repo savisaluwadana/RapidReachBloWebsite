@@ -5,6 +5,7 @@ import {
   claimReaction,
   getReactionIdentity,
   hasReaction,
+  reactionCount,
   releaseReaction,
 } from "@/lib/reactions";
 
@@ -44,8 +45,15 @@ export async function GET(
     actorHash: identity.actorHash,
   });
 
+  const storedLikes = Number(post.likes || 0);
+  const recordedLikes = await reactionCount(db, "post-like", slug);
+  const likes = Math.max(storedLikes, recordedLikes);
+  if (likes !== storedLikes) {
+    await db.collection("posts").updateOne({ slug, status: "published" }, { $set: { likes } });
+  }
+
   return NextResponse.json({
-    likes: Number(post.likes || 0),
+    likes,
     reacted,
     canReact: true,
   });
@@ -90,6 +98,12 @@ export async function POST(
       return NextResponse.json({ error: "Post not found." }, { status: 404 });
     }
     likes = Number(updated.likes || 0);
+  }
+
+  const recordedLikes = await reactionCount(db, "post-like", slug);
+  if (recordedLikes > likes) {
+    likes = recordedLikes;
+    await db.collection("posts").updateOne({ slug, status: "published" }, { $set: { likes } });
   }
 
   return NextResponse.json({
