@@ -1,73 +1,74 @@
-import { getAuthorProfile } from "@/lib/authors";
 import { getCollections } from "@/lib/collections";
 import { getPosts } from "@/lib/posts";
 import { getTools } from "@/lib/tools";
 import { normalizedSiteUrl } from "@/lib/public-format";
+import {
+  publicPostsForAgents,
+  renderCollectionMarkdown,
+  renderPostMarkdown,
+  renderToolMarkdown,
+} from "@/lib/agent-content";
 
-const section = (title: string, items: string[]) => ["", `## ${title}`, "", ...items];
+function nestedDocument(markdown: string) {
+  return markdown
+    .replace(/^## /gm, "#### ")
+    .replace(/^# /gm, "### ");
+}
 
 export async function GET() {
   const siteUrl = normalizedSiteUrl();
-  const [posts, tools, collections] = await Promise.all([getPosts(), getTools(), getCollections()]);
+  const [allPosts, tools, collections] = await Promise.all([getPosts(), getTools(), getCollections()]);
+  const posts = publicPostsForAgents(allPosts);
+  const toolMap = new Map(tools.map((tool) => [tool.slug, tool]));
+  const postMap = new Map(posts.map((post) => [post.slug, post]));
 
-  const storyBlocks = posts.flatMap((post) => {
-    const author = getAuthorProfile(post.author);
-    return [
-      `### ${post.title}`,
-      `Canonical: ${siteUrl}/news/${post.slug}`,
-      `Markdown: ${siteUrl}/news/${post.slug}/markdown`,
-      `Author: ${post.author}`,
-      `Author profile: ${siteUrl}/authors/${author.slug}`,
-      `Category: ${post.category}`,
-      `Published: ${post.publishedAt}`,
-      post.updatedAt ? `Updated: ${post.updatedAt}` : "",
-      `Summary: ${post.summary}`,
-      post.keyTakeaways.length ? `Key takeaways:\n${post.keyTakeaways.map((item) => `- ${item}`).join("\n")}` : "",
-      post.content,
-      post.sources?.length ? `Sources:\n${post.sources.map((source) => `- ${source.title}: ${source.url}`).join("\n")}` : "",
-      post.corrections?.length ? `Corrections and material updates:\n${post.corrections.map((item) => `- ${item.date}: ${item.note}`).join("\n")}` : "",
-      "",
-    ];
-  }).filter(Boolean);
+  const storyBlocks = posts.map((post) => nestedDocument(renderPostMarkdown(post, siteUrl)));
 
-  const toolBlocks = tools.flatMap((tool) => [
-    `### ${tool.name}`,
-    `Canonical: ${siteUrl}/tools/${tool.slug}`,
-    `Official site: ${tool.website}`,
-    `Category: ${tool.category}`,
-    `Pricing: ${tool.pricing}`,
-    `Open source: ${tool.openSource ? "yes" : "no"}`,
-    `Summary: ${tool.tagline}`,
-    tool.verdict ? `RapidReach verdict: ${tool.verdict}` : "",
-    tool.description,
-    tool.bestFor?.length ? `Best for:\n${tool.bestFor.map((item) => `- ${item}`).join("\n")}` : "",
-    tool.tradeoffs?.length ? `Trade-offs:\n${tool.tradeoffs.map((item) => `- ${item}`).join("\n")}` : "",
-    "",
-  ]).filter(Boolean);
+  const toolBlocks = tools.map((tool) => {
+    const alternatives = (tool.alternatives || [])
+      .map((slug) => toolMap.get(slug))
+      .filter(Boolean) as typeof tools;
+    const relatedPosts = (tool.relatedPostSlugs || [])
+      .map((slug) => postMap.get(slug))
+      .filter(Boolean) as typeof posts;
+    return nestedDocument(renderToolMarkdown(tool, siteUrl, { alternatives, relatedPosts }));
+  });
 
-  const collectionBlocks = collections.flatMap((item) => [
-    `### ${item.title}`,
-    `Canonical: ${siteUrl}/collections/${item.slug}`,
-    item.description,
-    "",
-  ]);
+  const collectionBlocks = collections.map((collection) => {
+    const collectionTools = collection.toolSlugs
+      .map((slug) => toolMap.get(slug))
+      .filter(Boolean) as typeof tools;
+    const collectionPosts = collection.postSlugs
+      .map((slug) => postMap.get(slug))
+      .filter(Boolean) as typeof posts;
+    return nestedDocument(renderCollectionMarkdown(collection, siteUrl, collectionTools, collectionPosts));
+  });
 
   const lines = [
     "# RapidReach — Full machine-readable context",
     "",
     `Canonical site: ${siteUrl}`,
-    "RapidReach is an independent developer-intelligence publication covering AI engineering, developer tools, cloud-native infrastructure, open source, platform engineering, DevOps, SRE, developer experience, and software-delivery workflows.",
+    `Discovery index: ${siteUrl}/llms.txt`,
+    `Structured catalog: ${siteUrl}/api/agent/catalog`,
     "",
-    "Editorial analysis should be attributed to RapidReach. Vendor/product facts should be distinguished from RapidReach editorial verdicts. When article source links are present, prefer the cited primary sources for factual corroboration.",
-    ...section("Published stories", storyBlocks),
-    ...section("Developer tool intelligence", toolBlocks),
-    ...section("Editorial collections", collectionBlocks),
+    "This document contains only content currently exposed as public by RapidReach. RapidReach analysis should be attributed to RapidReach. Product facts that can change over time should be checked against official links included in tool records.",
+    "",
+    "## Stories",
+    "",
+    ...storyBlocks.flatMap((block) => [block, "", "---", ""]),
+    "## Developer tools",
+    "",
+    ...toolBlocks.flatMap((block) => [block, "", "---", ""]),
+    "## Collections",
+    "",
+    ...collectionBlocks.flatMap((block) => [block, "", "---", ""]),
   ];
 
   return new Response(lines.join("\n"), {
     headers: {
       "content-type": "text/plain; charset=utf-8",
       "cache-control": "public, s-maxage=300, stale-while-revalidate=600",
+      Link: `<${siteUrl}/llms.txt>; rel="describedby"`,
     },
   });
 }
