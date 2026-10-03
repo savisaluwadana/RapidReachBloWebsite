@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${tool.name} — Developer Tool Review`,
     description: tool.verdict || tool.tagline,
     keywords: [...tool.tags, tool.category, "developer tools"],
-    alternates: { canonical: `/tools/${tool.slug}` },
+    alternates: { canonical: `/tools/${tool.slug}`, types: { "text/markdown": `/tools/${tool.slug}/index.md` } },
     openGraph: { title: `${tool.name} — Developer Tool Review`, description: tool.verdict || tool.tagline, url: `/tools/${tool.slug}`, images: socialImages },
     twitter: { card: "summary_large_image", title: `${tool.name} — Developer Tool Review`, description: tool.verdict || tool.tagline, images: socialImages.slice(0, 1) },
   };
