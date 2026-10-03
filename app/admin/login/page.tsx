@@ -6,7 +6,7 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
   if (await isAdmin()) redirect("/admin");
   const { error } = await searchParams;
   return (
-    <main className="cms-login-shell">
+    <div className="cms-login-shell">
       <section className="cms-login-card">
         <span className="section-kicker">RapidReach CMS</span>
         <h1>Editorial access.</h1>
@@ -19,6 +19,6 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
         </form>
         <p className="cms-login-help">On a fresh database, the first admin can be bootstrapped with <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code>.</p>
       </section>
-    </main>
+    </div>
   );
 }
