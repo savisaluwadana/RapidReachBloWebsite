@@ -1,6 +1,7 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/lib/admin-auth";
+import { completeMediaUpload, reserveMediaUpload } from "@/lib/media";
 
 const mediaKinds = new Set(["tool-logo", "tool-screenshot", "post-featured", "post-body"]);
 const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
@@ -12,7 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        if (!(await isAdmin())) throw new Error("Unauthorized media upload.");
+        const admin = await requireAdmin();
 
         let kind = "";
         try {
@@ -24,15 +25,20 @@ export async function POST(request: Request): Promise<NextResponse> {
         if (!mediaKinds.has(kind)) throw new Error("Unsupported media type.");
         if (!pathname.startsWith(`rapidreach/${kind}/`)) throw new Error("Invalid upload path.");
 
+        const eventId = await reserveMediaUpload(admin.id, kind, true);
         return {
           allowedContentTypes: imageTypes,
           maximumSizeInBytes: 8 * 1024 * 1024,
           addRandomSuffix: true,
-          tokenPayload: JSON.stringify({ kind }),
+          tokenPayload: JSON.stringify({ kind, userId: admin.id, eventId }),
         };
       },
-      onUploadCompleted: async () => {
-        // The CMS stores the returned public URL when the editor form is saved.
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        let eventId = "";
+        try {
+          eventId = String(JSON.parse(tokenPayload || "{}").eventId || "");
+        } catch {}
+        await completeMediaUpload(eventId, blob);
       },
     });
 
