@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -27,6 +28,7 @@ export async function reviewSubmission(form: FormData) {
     { $set: { status: requested, adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, updatedAt: now } },
   );
   if (!result.matchedCount) throw new Error("This submission has already been approved or no longer exists.");
+  await recordAdminAudit(db, { actorId: admin.id, action: "submission.review", targetType: "tool_submission", targetId: id, metadata: { status: requested } });
   revalidatePath("/admin/submissions");
   revalidatePath(`/admin/submissions/${id}`);
   revalidatePath("/dashboard");
@@ -132,6 +134,7 @@ export async function approveSubmission(form: FormData) {
     { _id: submissionId },
     { $set: { status: "approved", adminNotes: text(form, "adminNotes") || undefined, reviewedAt: now, reviewedBy: admin.id, convertedToolSlug: convertedSlug, updatedAt: now } },
   );
+  await recordAdminAudit(db, { actorId: admin.id, action: "submission.approve", targetType: "tool_submission", targetId: id, metadata: { convertedToolSlug: convertedSlug } });
 
   revalidatePath("/admin");
   revalidatePath("/admin/submissions");
@@ -151,5 +154,6 @@ export async function updateUserAccount(form: FormData) {
   const db = await getDb();
   await db.collection("users").updateOne({ _id: new ObjectId(id) }, { $set: { role, status, updatedAt: new Date().toISOString() } });
   if (status === "disabled") await db.collection("sessions").deleteMany({ userId: id });
+  await recordAdminAudit(db, { actorId: admin.id, action: "user.update", targetType: "user", targetId: id, metadata: { role, status } });
   revalidatePath("/admin/users");
 }
