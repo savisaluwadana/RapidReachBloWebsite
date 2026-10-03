@@ -7,6 +7,7 @@ import { loginUser, logoutUser, registerUser, requireUser, verifyPassword } from
 import { getDb } from "@/lib/mongodb";
 import { requestPasswordResetEmail, resetPasswordWithToken, sendVerificationEmail } from "@/lib/account-email";
 import { markMediaAttached } from "@/lib/media";
+import { userReactionActorHash } from "@/lib/reactions";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -186,6 +187,7 @@ export async function deleteAccount(form: FormData) {
     db.collection("sessions").deleteMany({ userId: user.id }),
     db.collection("user_preferences").deleteMany({ userId: user.id }),
     db.collection("comments").deleteMany({ userId: user.id }),
+    db.collection("engagement_reactions").deleteMany({ actorHash: userReactionActorHash(user.id) }),
     db.collection("tool_submissions").deleteMany({ userId: user.id }),
     db.collection("account_tokens").deleteMany({ userId: user.id }),
     db.collection("newsletter_subscribers").deleteMany({ email: user.email }),
