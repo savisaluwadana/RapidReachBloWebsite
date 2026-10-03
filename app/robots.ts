@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { normalizedSiteUrl } from "@/lib/public-format";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rapidreach.dev";
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = normalizedSiteUrl();
   return {
     rules: [{
       userAgent: "*",
