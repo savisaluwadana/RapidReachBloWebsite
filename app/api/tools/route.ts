@@ -7,9 +7,14 @@ function positiveInt(value: string | null, fallback: number, max: number) {
   return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
 }
 
+function nonNegativeInt(value: string | null, fallback = 0, max = 10_000) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? Math.min(parsed, max) : fallback;
+}
+
 export async function GET(request: NextRequest) {
   const limit = positiveInt(request.nextUrl.searchParams.get("limit"), 50, 100);
-  const offset = Math.max(0, Number(request.nextUrl.searchParams.get("offset") || 0) || 0);
+  const offset = nonNegativeInt(request.nextUrl.searchParams.get("offset"));
   const [tools, categories] = await Promise.all([
     getTools({ limit: limit + 1, skip: offset }),
     getCategoriesByKind("tool"),
