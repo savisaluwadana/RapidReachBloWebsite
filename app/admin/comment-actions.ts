@@ -4,13 +4,14 @@ import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
 }
 
 export async function moderateComment(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = text(form, "id");
   const action = text(form, "action");
   if (!ObjectId.isValid(id) || !["hide", "show", "delete"].includes(action)) {
@@ -34,6 +35,7 @@ export async function moderateComment(form: FormData) {
     );
   }
 
+  await recordAdminAudit(db, { actorId: admin.id, action: `comment.${action}`, targetType: "comment", targetId: id, metadata: { postSlug: String(comment.postSlug || "") } });
   const postSlug = String(comment.postSlug || "");
   revalidatePath("/admin/comments");
   if (postSlug) revalidatePath(`/news/${postSlug}`);
