@@ -1,11 +1,12 @@
 import { getPosts } from "@/lib/posts";
 import { encodedPathSegment, normalizedSiteUrl, validDate } from "@/lib/public-format";
+import { publicPostsForAgents } from "@/lib/agent-content";
 
 const esc = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
 export async function GET() {
   const siteUrl = normalizedSiteUrl();
-  const posts = await getPosts();
+  const posts = publicPostsForAgents(await getPosts());
   const latestDate = posts
     .map((post) => validDate(post.updatedAt || post.publishedAt))
     .filter((value): value is Date => Boolean(value))
