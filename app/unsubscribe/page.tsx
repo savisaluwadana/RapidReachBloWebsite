@@ -25,26 +25,26 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
 
   if (error === "invalid" || !validToken(token)) {
     return (
-      <main className="shell archive-page">
+      <section className="shell archive-page">
         <header className="archive-header">
           <span className="section-kicker">RapidReach briefing</span>
           <h1>That subscription link is invalid.</h1>
           <p>Open the subscription-management link from the most recent RapidReach email, or return to the briefing page.</p>
           <Link className="primary-button" href="/briefing">Back to the briefing</Link>
         </header>
-      </main>
+      </section>
     );
   }
 
   if (!hasDatabase()) {
     return (
-      <main className="shell archive-page">
+      <section className="shell archive-page">
         <header className="archive-header">
           <span className="section-kicker">RapidReach briefing</span>
           <h1>Subscription management is temporarily unavailable.</h1>
           <p>Please try this link again later.</p>
         </header>
-      </main>
+      </section>
     );
   }
 
@@ -56,20 +56,20 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
 
   if (!subscriber) {
     return (
-      <main className="shell archive-page">
+      <section className="shell archive-page">
         <header className="archive-header">
           <span className="section-kicker">RapidReach briefing</span>
           <h1>That subscription link has expired or is invalid.</h1>
           <p>No subscription was changed.</p>
           <Link className="primary-button" href="/briefing">Back to the briefing</Link>
         </header>
-      </main>
+      </section>
     );
   }
 
   const unsubscribed = subscriber.status === "unsubscribed";
   return (
-    <main className="shell archive-page">
+    <section className="shell archive-page">
       <header className="archive-header">
         <span className="section-kicker">RapidReach briefing</span>
         <h1>{unsubscribed ? "You’re currently unsubscribed." : "Manage your subscription."}</h1>
@@ -87,6 +87,6 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
         </form>
         <p><Link href="/briefing">Cancel and return to RapidReach</Link></p>
       </header>
-    </main>
+    </section>
   );
 }
