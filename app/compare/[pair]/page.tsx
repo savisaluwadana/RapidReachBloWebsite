@@ -43,9 +43,9 @@ export default async function PairComparePage({ params }: { params: Promise<{ pa
   if (!resolved) notFound();
   const [a, b] = resolved;
   return (
-    <main className="comparison-page shell">
+    <section className="comparison-page shell">
       <header className="comparison-hero"><span className="section-kicker">RapidReach comparison</span><h1>{a.name} <em>vs</em> {b.name}</h1><p>{a.tagline} Compare it with {b.name}: {b.tagline.toLowerCase()}</p></header>
       <ToolComparison tools={[a, b]} />
-    </main>
+    </section>
   );
 }
