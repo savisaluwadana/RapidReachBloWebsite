@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
 import { markMediaAttached } from "@/lib/media";
+import { recordAdminAudit } from "@/lib/audit";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -90,7 +91,7 @@ async function pullStringReference(
 }
 
 export async function saveTool(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await getDb();
   const tools = database.collection("tools");
   const originalSlug = text(form, "originalSlug");
@@ -198,6 +199,16 @@ export async function saveTool(form: FormData) {
   }
 
   await markMediaAttached([logoUrl, ...screenshots]);
+  await recordAdminAudit(database, {
+    actorId: admin.id,
+    action: originalSlug ? "tool.update" : "tool.create",
+    targetType: "tool",
+    targetId: slug,
+    metadata: { status },
+  });
+  if (result.deletedCount) {
+    await recordAdminAudit(database, { actorId: admin.id, action: "tool.delete", targetType: "tool", targetId: slug });
+  }
   revalidatePath("/tools");
   revalidatePath(`/tools/${slug}`);
   revalidatePath("/launches");
@@ -208,7 +219,7 @@ export async function saveTool(form: FormData) {
 }
 
 export async function deleteTool(form: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const database = await getDb();
   const slug = text(form, "slug");
   if (!slug) throw new Error("Tool is required.");
