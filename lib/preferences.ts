@@ -1,4 +1,5 @@
 import { getDb, hasDatabase } from "@/lib/mongodb";
+import { ensureDatabaseIndexes } from "@/lib/db-indexes";
 import type { UserPreferences } from "@/lib/types";
 
 const empty: UserPreferences = { savedTools: [], savedPosts: [], followedTopics: [] };
@@ -16,6 +17,7 @@ export async function getPreferences(userId: string): Promise<UserPreferences> {
   if (!hasDatabase()) return empty;
   try {
     const db = await getDb();
+    await ensureDatabaseIndexes(db);
     const doc = await db.collection<PreferenceDoc>("user_preferences").findOne({ userId });
     return {
       savedTools: doc?.savedTools || [],
@@ -29,6 +31,7 @@ export async function getPreferences(userId: string): Promise<UserPreferences> {
 
 export async function togglePreference(userId: string, kind: "tool" | "post" | "topic", value: string) {
   const db = await getDb();
+  await ensureDatabaseIndexes(db);
   const collection = db.collection<PreferenceDoc>("user_preferences");
   const current = await collection.findOne({ userId });
   const values = kind === "tool" ? current?.savedTools || [] : kind === "post" ? current?.savedPosts || [] : current?.followedTopics || [];
