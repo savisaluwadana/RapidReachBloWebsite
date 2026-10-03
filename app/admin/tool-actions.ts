@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
+import { markMediaAttached } from "@/lib/media";
 
 function text(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -193,6 +194,7 @@ export async function saveTool(form: FormData) {
     await tools.insertOne({ ...document, upvotes: 0 });
   }
 
+  await markMediaAttached([logoUrl, ...screenshots]);
   revalidatePath("/tools");
   revalidatePath(`/tools/${slug}`);
   revalidatePath("/launches");
