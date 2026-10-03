@@ -25,7 +25,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
         <div className="cms-admin-identity"><span>Signed in as</span><strong>{admin.name}</strong><small>{admin.email}</small></div>
         <form action={logoutAdmin}><button className="cms-logout" type="submit">Sign out</button></form>
       </aside>
-      <main className="cms-main"><div className="cms-page-frame">{children}</div></main>
+      <div className="cms-main"><div className="cms-page-frame">{children}</div></div>
     </div>
   );
 }
