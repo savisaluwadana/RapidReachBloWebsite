@@ -183,11 +183,27 @@ export async function deleteAccount(form: FormData) {
     redirect("/dashboard?account=wrong-password");
   }
 
+  const actorHash = userReactionActorHash(user.id);
+  const reactions = await db.collection("engagement_reactions").find(
+    { actorHash },
+    { projection: { kind: 1, target: 1 } },
+  ).toArray();
+  const postLikes = reactions.filter((reaction) => reaction.kind === "post-like").map((reaction) => String(reaction.target || ""));
+  const toolUpvotes = reactions.filter((reaction) => reaction.kind === "tool-upvote").map((reaction) => String(reaction.target || ""));
+
   await Promise.all([
+    ...postLikes.filter(Boolean).map((slug) => db.collection("posts").updateOne(
+      { slug },
+      [{ $set: { likes: { $max: [0, { $subtract: [{ $ifNull: ["$likes", 0] }, 1] }] } } }],
+    )),
+    ...toolUpvotes.filter(Boolean).map((slug) => db.collection("tools").updateOne(
+      { slug },
+      [{ $set: { upvotes: { $max: [0, { $subtract: [{ $ifNull: ["$upvotes", 0] }, 1] }] } } }],
+    )),
     db.collection("sessions").deleteMany({ userId: user.id }),
     db.collection("user_preferences").deleteMany({ userId: user.id }),
     db.collection("comments").deleteMany({ userId: user.id }),
-    db.collection("engagement_reactions").deleteMany({ actorHash: userReactionActorHash(user.id) }),
+    db.collection("engagement_reactions").deleteMany({ actorHash }),
     db.collection("tool_submissions").deleteMany({ userId: user.id }),
     db.collection("account_tokens").deleteMany({ userId: user.id }),
     db.collection("newsletter_subscribers").deleteMany({ email: user.email }),
