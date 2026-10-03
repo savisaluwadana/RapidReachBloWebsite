@@ -7,7 +7,10 @@ export function cleanAgentInline(value: string | undefined | null) {
 }
 
 export function agentLinkLabel(value: string) {
-  return cleanAgentInline(value).replace(/([\\\[\]])/g, "\\$1");
+  return cleanAgentInline(value)
+    .replaceAll("\\", "\\\\")
+    .replaceAll("[", "\\[")
+    .replaceAll("]", "\\]");
 }
 
 export function publicPostsForAgents(posts: Post[], now = Date.now()) {
