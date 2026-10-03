@@ -29,9 +29,9 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
   const bySlug = new Map(all.map((tool) => [tool.slug, tool]));
   const tools = slugs.map((slug) => bySlug.get(slug)).filter(Boolean) as typeof all;
   return (
-    <main className="comparison-page shell">
+    <section className="comparison-page shell">
       <header className="comparison-hero"><span className="section-kicker">Developer tool comparison</span><h1>Choose with context, not feature-count theater.</h1><p>Compare the things that actually affect adoption: fit, pricing, openness, strengths, trade-offs, and the RapidReach editorial take.</p></header>
       {tools.length >= 2 ? <ToolComparison tools={tools} /> : <div className="account-empty"><h3>Select at least two different tools.</h3><p>Use the directory comparison checkboxes to build a side-by-side view.</p><Link className="account-primary" href="/tools">Browse tools</Link></div>}
-    </main>
+    </section>
   );
 }
