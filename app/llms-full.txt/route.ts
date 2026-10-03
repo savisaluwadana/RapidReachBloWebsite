@@ -55,13 +55,13 @@ export async function GET() {
     "",
     "## Stories",
     "",
-    ...storyBlocks.flatMap((block) => [block, "", "---", ""]),
+    ...storyBlocks.flatMap((block) => [block, ""]),
     "## Developer tools",
     "",
-    ...toolBlocks.flatMap((block) => [block, "", "---", ""]),
+    ...toolBlocks.flatMap((block) => [block, ""]),
     "## Collections",
     "",
-    ...collectionBlocks.flatMap((block) => [block, "", "---", ""]),
+    ...collectionBlocks.flatMap((block) => [block, ""]),
   ];
 
   return new Response(lines.join("\n"), {
