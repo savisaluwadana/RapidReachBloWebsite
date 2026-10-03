@@ -18,10 +18,14 @@ function hashReactionToken(token: string) {
   return createHash("sha256").update(`rapidreach:v1:${token}`).digest("hex");
 }
 
+export function userReactionActorHash(userId: string) {
+  return hashReactionToken(`user:${userId}`);
+}
+
 export function getReactionIdentity(request: NextRequest, userId?: string | null) {
   if (userId) {
     return {
-      actorHash: hashReactionToken(`user:${userId}`),
+      actorHash: userReactionActorHash(userId),
       newCookieToken: null,
     };
   }
