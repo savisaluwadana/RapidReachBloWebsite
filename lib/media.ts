@@ -104,3 +104,8 @@ export async function cleanupOrphanedMedia(limit = 100) {
   }
   return deleted;
 }
+
+
+export function mediaUrlsFromText(value: string) {
+  return [...new Set(value.match(/https:\/\/[^\s)"'<>]+/g) || [])];
+}
